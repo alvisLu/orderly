@@ -1,12 +1,22 @@
 import { createClient } from '@/lib/supabase/server';
-import type { CreateProductInput, Product, UpdateProductInput } from './types';
+import type { CreateProductInput, Product, ProductQuery, UpdateProductInput } from './types';
 
-export async function findAllProducts(): Promise<Product[]> {
+export async function findAllProducts(query: ProductQuery = {}): Promise<Product[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select()
-    .order('created_at', { ascending: true });
+  const { search, is_favorite, sort_by = 'created_at', sort_order = 'asc' } = query;
+
+  let q = supabase.from('products').select();
+
+  if (search) {
+    q = q.ilike('name', `%${search}%`);
+  }
+  if (is_favorite !== undefined) {
+    q = q.eq('is_favorite', is_favorite);
+  }
+
+  q = q.order(sort_by, { ascending: sort_order === 'asc' });
+
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return data;
 }

@@ -1,8 +1,8 @@
 import { findAllProducts, findProductById, insertProduct, updateProduct, deleteProduct } from './repository'
-import type { CreateProductInput, Product, UpdateProductInput } from './types'
+import type { CreateProductInput, Product, ProductQuery, UpdateProductInput } from './types'
 
-export async function getProducts(): Promise<Product[]> {
-  return findAllProducts()
+export async function getProducts(query?: ProductQuery): Promise<Product[]> {
+  return findAllProducts(query)
 }
 
 export async function getProduct(id: string): Promise<Product | null> {

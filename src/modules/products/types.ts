@@ -14,3 +14,10 @@ export interface Product {
 
 export type CreateProductInput = Omit<Product, 'id' | 'created_at' | 'updated_at'>
 export type UpdateProductInput = Partial<CreateProductInput>
+
+export interface ProductQuery {
+  search?: string
+  is_favorite?: boolean
+  sort_by?: 'created_at' | 'name'
+  sort_order?: 'asc' | 'desc'
+}
