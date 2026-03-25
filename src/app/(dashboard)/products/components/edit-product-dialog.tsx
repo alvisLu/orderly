@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { Pencil } from 'lucide-react';
+import { apiUpdateProduct } from '@/app/api/products/api';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +39,7 @@ export function EditProductDialog({ product }: { product: Product }) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -54,13 +55,13 @@ export function EditProductDialog({ product }: { product: Product }) {
     },
   });
 
+  const booleanValues = useWatch({
+    control,
+    name: ['is_pos_available', 'is_menu_available', 'is_favorite'],
+  });
+
   async function onSubmit(values: FormValues) {
-    const res = await fetch(`/api/products/${product.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
-    });
-    if (!res.ok) return;
+    await apiUpdateProduct(product.id, values);
     setOpen(false);
     router.refresh();
   }
@@ -78,7 +79,9 @@ export function EditProductDialog({ product }: { product: Product }) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
           <div className='space-y-1'>
-            <Label htmlFor='name' className='text-base'>商品名稱 *</Label>
+            <Label htmlFor='name' className='text-base'>
+              商品名稱 *
+            </Label>
             <Input id='name' className='h-10' {...register('name')} />
             {errors.name && (
               <p className='text-sm text-destructive'>{errors.name.message}</p>
@@ -87,21 +90,43 @@ export function EditProductDialog({ product }: { product: Product }) {
 
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-1'>
-              <Label htmlFor='price' className='text-base'>售價 *</Label>
-              <Input id='price' type='number' className='h-10' {...register('price')} />
+              <Label htmlFor='price' className='text-base'>
+                售價 *
+              </Label>
+              <Input
+                id='price'
+                type='number'
+                className='h-10'
+                {...register('price')}
+              />
               {errors.price && (
-                <p className='text-sm text-destructive'>{errors.price.message}</p>
+                <p className='text-sm text-destructive'>
+                  {errors.price.message}
+                </p>
               )}
             </div>
             <div className='space-y-1'>
-              <Label htmlFor='cost' className='text-base'>成本</Label>
-              <Input id='cost' type='number' className='h-10' {...register('cost')} />
+              <Label htmlFor='cost' className='text-base'>
+                成本
+              </Label>
+              <Input
+                id='cost'
+                type='number'
+                className='h-10'
+                {...register('cost')}
+              />
             </div>
           </div>
 
           <div className='space-y-1'>
-            <Label htmlFor='description' className='text-base'>描述</Label>
-            <Input id='description' className='h-10' {...register('description')} />
+            <Label htmlFor='description' className='text-base'>
+              描述
+            </Label>
+            <Input
+              id='description'
+              className='h-10'
+              {...register('description')}
+            />
           </div>
 
           <div className='space-y-2'>
@@ -111,11 +136,11 @@ export function EditProductDialog({ product }: { product: Product }) {
                 { key: 'is_menu_available', label: '菜單上架' },
                 { key: 'is_favorite', label: '我的最愛' },
               ] as const
-            ).map(({ key, label }) => (
+            ).map(({ key, label }, i) => (
               <div key={key} className='flex items-center justify-between'>
                 <Label className='text-base'>{label}</Label>
                 <Switch
-                  checked={watch(key)}
+                  checked={booleanValues[i]}
                   onCheckedChange={(v) => setValue(key, v)}
                 />
               </div>
@@ -123,7 +148,11 @@ export function EditProductDialog({ product }: { product: Product }) {
           </div>
 
           <div className='flex justify-end gap-2 pt-2'>
-            <Button type='button' variant='ghost' onClick={() => setOpen(false)}>
+            <Button
+              type='button'
+              variant='ghost'
+              onClick={() => setOpen(false)}
+            >
               取消
             </Button>
             <Button type='submit' disabled={isSubmitting}>

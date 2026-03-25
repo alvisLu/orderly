@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { apiCreateProduct } from '@/app/api/products/api';
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ export function CreateProductDialog() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { errors, isSubmitting },
@@ -50,13 +51,13 @@ export function CreateProductDialog() {
     },
   });
 
+  const booleanValues = useWatch({
+    control,
+    name: ['is_pos_available', 'is_menu_available', 'is_favorite'],
+  });
+
   async function onSubmit(values: FormValues) {
-    const res = await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
-    });
-    if (!res.ok) return;
+    await apiCreateProduct({ ...values, image_urls: [], description: values.description ?? null });
     reset();
     setOpen(false);
     router.refresh();
@@ -132,11 +133,11 @@ export function CreateProductDialog() {
                 { key: 'is_menu_available', label: '菜單上架' },
                 { key: 'is_favorite', label: '我的最愛' },
               ] as const
-            ).map(({ key, label }) => (
+            ).map(({ key, label }, i) => (
               <div key={key} className='flex items-center justify-between'>
                 <Label className='text-base'>{label}</Label>
                 <Switch
-                  checked={watch(key)}
+                  checked={booleanValues[i]}
                   onCheckedChange={(v) => setValue(key, v)}
                 />
               </div>

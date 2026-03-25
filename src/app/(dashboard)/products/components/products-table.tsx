@@ -3,9 +3,9 @@
 import { ColumnDef } from '@tanstack/react-table';
 import Image from 'next/image';
 import { DataTable } from '../../../../components/shared/data-table';
-import { Switch } from '@/components/ui/switch';
 import type { Product } from '@/modules/products/types';
 import { EditProductDialog } from './edit-product-dialog';
+import { ToggleProductField } from './toggle-product-field';
 
 const columns: ColumnDef<Product>[] = [
   {
@@ -48,12 +48,16 @@ const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'is_pos_available',
     header: 'POS 上架',
-    cell: ({ row }) => <Switch checked={row.getValue('is_pos_available')} />,
+    cell: ({ row }) => (
+      <ToggleProductField productId={row.original.id} field='is_pos_available' checked={row.getValue('is_pos_available')} />
+    ),
   },
   {
     accessorKey: 'is_menu_available',
     header: '菜單上架',
-    cell: ({ row }) => <Switch checked={row.getValue('is_menu_available')} />,
+    cell: ({ row }) => (
+      <ToggleProductField productId={row.original.id} field='is_menu_available' checked={row.getValue('is_menu_available')} />
+    ),
   },
   {
     accessorKey: 'price',
@@ -68,7 +72,9 @@ const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'is_favorite',
     header: '我的最愛',
-    cell: ({ row }) => <Switch checked={row.getValue('is_favorite')} />,
+    cell: ({ row }) => (
+      <ToggleProductField productId={row.original.id} field='is_favorite' checked={row.getValue('is_favorite')} />
+    ),
   },
 ];
 
