@@ -4,8 +4,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import Image from 'next/image';
 import { DataTable } from '../../../../components/shared/data-table';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { Product } from '@/modules/products/types';
+import { EditProductDialog } from './edit-product-dialog';
 
 const columns: ColumnDef<Product>[] = [
   {
@@ -38,6 +38,12 @@ const columns: ColumnDef<Product>[] = [
   {
     accessorKey: 'name',
     header: '商品名稱',
+    cell: ({ row }) => (
+      <div className='flex items-center gap-2'>
+        <EditProductDialog product={row.original} />
+        <span>{row.getValue<string>('name')}</span>
+      </div>
+    ),
   },
   {
     accessorKey: 'is_pos_available',
