@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 const schema = z.object({
   name: z.string().min(1, "請輸入商品名稱"),
@@ -57,14 +58,18 @@ export function CreateProductDialog() {
   });
 
   async function onSubmit(values: FormValues) {
-    await apiCreateProduct({
-      ...values,
-      image_urls: [],
-      description: values.description ?? null,
-    });
-    reset();
-    setOpen(false);
-    router.refresh();
+    try {
+      await apiCreateProduct({
+        ...values,
+        image_urls: [],
+        description: values.description ?? null,
+      });
+      reset();
+      setOpen(false);
+      router.refresh();
+    } catch (error) {
+      toast.error(`新增商品失敗: ${error}`);
+    }
   }
 
   return (
