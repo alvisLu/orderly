@@ -27,3 +27,23 @@ export class ProductNotFoundError extends HttpError {
     this.name = "ProductNotFoundError";
   }
 }
+
+export class CategoryNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "Category not found";
+    const code = "2000";
+    super(status, message, code);
+    this.name = "CategoryNotFoundError";
+  }
+}
+
+export class CategoryAlreadyExistsError extends HttpError {
+  constructor() {
+    const status = 409;
+    const message = "Category already exists";
+    const code = "2001";
+    super(status, message, code);
+    this.name = "CategoryAlreadyExistsError";
+  }
+}
