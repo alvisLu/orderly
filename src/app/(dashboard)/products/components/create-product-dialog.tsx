@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 const schema = z.object({
   name: z.string().min(1, "請輸入商品名稱"),
@@ -128,9 +129,9 @@ export function CreateProductDialog() {
             <Label htmlFor="description" className="text-base">
               描述
             </Label>
-            <Input
+            <Textarea
               id="description"
-              className="h-10"
+              className="h-40"
               {...register("description")}
             />
           </div>

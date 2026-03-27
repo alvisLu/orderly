@@ -8,6 +8,17 @@ type RouteHandler = (
 
 export function routeHandler(handler: RouteHandler): RouteHandler {
   return async (request, context) => {
+    if (["POST", "PATCH"].includes(request.method)) {
+      const clone = request.clone();
+      clone
+        .json()
+        .then((body) => {
+          console.log(` ${request.method} ${request.url}`);
+          console.log(` BODY: ${JSON.stringify(body)}`);
+        })
+        .catch(() => {});
+    }
+
     try {
       return await handler(request, context);
     } catch (error) {

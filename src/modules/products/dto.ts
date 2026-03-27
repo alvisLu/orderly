@@ -2,13 +2,13 @@ import { z } from "zod";
 
 export const createProductDto = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().nullable().default(null),
+  description: z.string().max(500).nullable().optional(),
   price: z.number().nonnegative(),
-  cost: z.number().nonnegative(),
-  image_urls: z.array(z.url()).default([]),
-  is_favorite: z.boolean().default(false),
-  is_pos_available: z.boolean().default(false),
-  is_menu_available: z.boolean().default(false),
+  cost: z.number().nonnegative().optional(),
+  image_urls: z.array(z.url()).optional(),
+  is_favorite: z.boolean().optional(),
+  is_pos_available: z.boolean().optional(),
+  is_menu_available: z.boolean().optional(),
 });
 
 export const updateProductDto = createProductDto.partial();
