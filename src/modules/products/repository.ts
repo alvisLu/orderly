@@ -5,6 +5,7 @@ import type {
   ProductQuery,
   UpdateProductInput,
 } from "./types";
+import { DatabaseError } from "@/lib/http-error";
 
 export async function findAllProducts(
   query: ProductQuery = {}
@@ -29,7 +30,7 @@ export async function findAllProducts(
   q = q.order(sort_by, { ascending: sort_order === "asc" });
 
   const { data, error } = await q;
-  if (error) throw new Error(error.message);
+  if (error) throw new DatabaseError(error.message);
   return data;
 }
 
@@ -40,7 +41,7 @@ export async function findProductById(id: string): Promise<Product | null> {
     .select()
     .eq("id", id)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw new DatabaseError(error.message);
   return data;
 }
 
@@ -53,7 +54,7 @@ export async function insertProduct(
     .insert(input)
     .select()
     .single();
-  if (error) throw new Error(error.message);
+  if (error) throw new DatabaseError(error.message);
   return data;
 }
 
@@ -68,12 +69,12 @@ export async function updateProduct(
     .eq("id", id)
     .select()
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw new DatabaseError(error.message);
   return data;
 }
 
 export async function deleteProduct(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) throw new DatabaseError(error.message);
 }
