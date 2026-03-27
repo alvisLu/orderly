@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { Switch } from '@/components/ui/switch';
-import { apiUpdateProduct } from '@/app/api/products/api';
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
+import { apiUpdateProduct } from "@/app/api/products/api";
 
 interface ToggleProductFieldProps {
   productId: string;
-  field: 'is_pos_available' | 'is_menu_available' | 'is_favorite';
+  field: "is_pos_available" | "is_menu_available" | "is_favorite";
   checked: boolean;
 }
 
-export function ToggleProductField({ productId, field, checked }: ToggleProductFieldProps) {
+export function ToggleProductField({
+  productId,
+  field,
+  checked,
+}: ToggleProductFieldProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
