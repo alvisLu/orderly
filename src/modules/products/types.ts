@@ -8,13 +8,15 @@ export interface Product {
   is_favorite: boolean;
   is_pos_available: boolean;
   is_menu_available: boolean;
+  category_id: string | null;
+  category?: { id: string; name: string } | null;
   created_at: string;
   updated_at: string;
 }
 
 export type CreateProductInput = Omit<
   Product,
-  "id" | "created_at" | "updated_at"
+  "id" | "created_at" | "updated_at" | "category_id"
 >;
 export type UpdateProductInput = Partial<CreateProductInput>;
 

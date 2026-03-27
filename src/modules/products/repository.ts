@@ -18,7 +18,7 @@ export async function findAllProducts(
     sort_order = "asc",
   } = query;
 
-  let q = supabase.from("products").select();
+  let q = supabase.from("products").select("*, category:categories(id, name)");
 
   if (search) {
     q = q.ilike("name", `%${search}%`);
@@ -38,7 +38,7 @@ export async function findProductById(id: string): Promise<Product | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("products")
-    .select()
+    .select("*, category:categories(id, name)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new DatabaseError(error.message);

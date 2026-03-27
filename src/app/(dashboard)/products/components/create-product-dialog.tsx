@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { apiCreateProduct } from "@/app/api/products/api";
+import type { Category } from "@/modules/categories/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +33,7 @@ const schema = z.object({
   price: z.coerce.number().min(0, "價格不能為負數"),
   cost: z.coerce.number().min(0).default(0),
   description: z.string().optional(),
+  category_id: z.string().nullable().default(null),
   is_pos_available: z.boolean().default(true),
   is_menu_available: z.boolean().default(true),
   is_favorite: z.boolean().default(false),
@@ -32,7 +41,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function CreateProductDialog() {
+export function CreateProductDialog({
+  categories,
+}: {
+  categories: Category[];
+}) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -47,16 +60,20 @@ export function CreateProductDialog() {
     resolver: zodResolver(schema),
     defaultValues: {
       cost: 0,
+      category_id: null,
       is_pos_available: true,
       is_menu_available: true,
       is_favorite: false,
     },
   });
 
-  const booleanValues = useWatch({
-    control,
-    name: ["is_pos_available", "is_menu_available", "is_favorite"],
-  });
+  const [categoryId, booleanValues] = [
+    useWatch({ control, name: "category_id" }),
+    useWatch({
+      control,
+      name: ["is_pos_available", "is_menu_available", "is_favorite"],
+    }),
+  ];
 
   async function onSubmit(values: FormValues) {
     try {
@@ -123,6 +140,25 @@ export function CreateProductDialog() {
                 {...register("cost")}
               />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-base">目錄</Label>
+            <Select
+              value={categoryId ?? ""}
+              onValueChange={(v) => setValue("category_id", v || null)}
+            >
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="選擇目錄" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">

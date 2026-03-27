@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Product, ProductQuery } from "@/modules/products/types";
+import type { Category } from "@/modules/categories/types";
 import { apiGetProducts } from "@/app/api/products/api";
+import { apiGetCategories } from "@/app/api/categories/api";
 import { ProductsTable } from "./components/products-table";
 import { CreateProductDialog } from "./components/create-product-dialog";
 import { SearchProduct } from "./components/searech-product";
@@ -11,6 +13,11 @@ import { SearchProduct } from "./components/searech-product";
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    apiGetCategories().then(setCategories);
+  }, []);
 
   useEffect(() => {
     const query: ProductQuery = {
@@ -32,9 +39,9 @@ export default function ProductsPage() {
       <h1 className="text-xl font-semibold mb-4">商品管理</h1>
       <div className="flex items-center justify-between mb-4">
         <SearchProduct />
-        <CreateProductDialog />
+        <CreateProductDialog categories={categories} />
       </div>
-      <ProductsTable data={products} />
+      <ProductsTable data={products} categories={categories} />
     </div>
   );
 }

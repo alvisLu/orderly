@@ -1,13 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiUpdateProduct, apiDeleteProduct } from "@/app/api/products/api";
+import type { Category } from "@/modules/categories/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +35,7 @@ const schema = z.object({
   price: z.coerce.number().min(0, "價格不能為負數"),
   cost: z.coerce.number().min(0),
   description: z.string().optional(),
+  category_id: z.string().nullable(),
   is_pos_available: z.boolean(),
   is_menu_available: z.boolean(),
   is_favorite: z.boolean(),
@@ -34,7 +43,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function EditProductDialog({ product }: { product: Product }) {
+export function EditProductDialog({
+  product,
+  categories,
+}: {
+  product: Product;
+  categories: Category[];
+}) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -65,16 +80,20 @@ export function EditProductDialog({ product }: { product: Product }) {
       price: product.price,
       cost: product.cost,
       description: product.description ?? "",
+      category_id: product.category_id,
       is_pos_available: product.is_pos_available,
       is_menu_available: product.is_menu_available,
       is_favorite: product.is_favorite,
     },
   });
 
-  const booleanValues = useWatch({
-    control,
-    name: ["is_pos_available", "is_menu_available", "is_favorite"],
-  });
+  const [categoryId, booleanValues] = [
+    useWatch({ control, name: "category_id" }),
+    useWatch({
+      control,
+      name: ["is_pos_available", "is_menu_available", "is_favorite"],
+    }),
+  ];
 
   async function onSubmit(values: FormValues) {
     await apiUpdateProduct(product.id, values);
@@ -135,12 +154,31 @@ export function EditProductDialog({ product }: { product: Product }) {
           </div>
 
           <div className="space-y-1">
+            <Label className="text-base">目錄</Label>
+            <Select
+              value={categoryId ?? ""}
+              onValueChange={(v) => setValue("category_id", v || null)}
+            >
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="選擇目錄" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
             <Label htmlFor="description" className="text-base">
               描述
             </Label>
             <Textarea
               id="description"
-              className="h-10"
+              className="h-40"
               {...register("description")}
             />
           </div>

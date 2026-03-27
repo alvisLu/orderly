@@ -9,6 +9,7 @@ export const createProductDto = z.object({
   is_favorite: z.boolean().optional(),
   is_pos_available: z.boolean().optional(),
   is_menu_available: z.boolean().optional(),
+  category_id: z.string().nullable().optional(),
 });
 
 export const updateProductDto = createProductDto.partial();
