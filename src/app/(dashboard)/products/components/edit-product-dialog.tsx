@@ -5,8 +5,9 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
-import { apiUpdateProduct } from "@/app/api/products/api";
+import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { apiUpdateProduct, apiDeleteProduct } from "@/app/api/products/api";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,21 @@ type FormValues = z.infer<typeof schema>;
 
 export function EditProductDialog({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await apiDeleteProduct(product.id);
+      setOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("刪除商品失敗");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   const {
     register,
@@ -148,17 +163,28 @@ export function EditProductDialog({ product }: { product: Product }) {
             ))}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-between pt-2">
             <Button
               type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
             >
-              取消
+              <Trash2 className="h-4 w-4 mr-1" />
+              {isDeleting ? "刪除中..." : "刪除商品"}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "儲存中..." : "儲存"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "儲存中..." : "儲存"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
