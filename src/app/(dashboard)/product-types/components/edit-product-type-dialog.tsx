@@ -118,12 +118,12 @@ export function EditProductTypeDialog({
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">修改規格</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">修改選項</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="name" className="text-base">
-              規格名稱 *
+              名稱 *
             </Label>
             <Input id="name" className="h-10" {...register("name")} />
             {errors.name && (
@@ -193,7 +193,12 @@ export function EditProductTypeDialog({
                               checked={field.value}
                               onCheckedChange={(v) => {
                                 field.onChange(!!v);
-                                if (v) fields.forEach((_, j) => j !== i && setValue(`items.${j}.isDefault`, false));
+                                if (v)
+                                  fields.forEach(
+                                    (_, j) =>
+                                      j !== i &&
+                                      setValue(`items.${j}.isDefault`, false)
+                                  );
                               }}
                             />
                             預設
@@ -235,7 +240,12 @@ export function EditProductTypeDialog({
               type="button"
               size="sm"
               onClick={() =>
-                append({ name: "", price: 0, isDefault: false, isDisable: false })
+                append({
+                  name: "",
+                  price: 0,
+                  isDefault: false,
+                  isDisable: false,
+                })
               }
             >
               <Plus />

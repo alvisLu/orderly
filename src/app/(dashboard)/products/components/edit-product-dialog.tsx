@@ -173,15 +173,14 @@ export function EditProductDialog({
             <Select
               value={categoryId ?? ""}
               onValueChange={(v) => setValue("categoryId", v || null)}
+              disabled={categories.length === 0}
             >
               <SelectTrigger className="h-10 w-full">
-                <SelectValue placeholder="選擇目錄" />
+                <SelectValue placeholder={categories.length === 0 ? "沒有資料" : "選擇目錄"} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -200,20 +199,21 @@ export function EditProductDialog({
 
           <div className="space-y-1">
             <Label className="text-base">規格</Label>
-            <Select value="" onValueChange={addProductType}>
-              <SelectTrigger className="h-10 w-full">
-                <SelectValue placeholder="新增規格" />
-              </SelectTrigger>
-              <SelectContent>
-                {productTypes
-                  .filter((pt) => !productTypeIds.includes(pt.id))
-                  .map((pt) => (
-                    <SelectItem key={pt.id} value={pt.id}>
-                      {pt.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const available = productTypes.filter((pt) => !productTypeIds.includes(pt.id));
+              return (
+                <Select value="" onValueChange={addProductType} disabled={available.length === 0}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder={available.length === 0 ? "沒有資料" : "新增規格"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {available.map((pt) => (
+                      <SelectItem key={pt.id} value={pt.id}>{pt.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
             {productTypeIds.length > 0 && (
               <div className="flex flex-wrap gap-1 pt-1">
                 {productTypeIds.map((id) => {
