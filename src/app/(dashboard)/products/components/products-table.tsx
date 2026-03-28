@@ -23,7 +23,7 @@ function getColumns(categories: Category[]): ColumnDef<Product>[] {
       id: "image",
       header: "照片",
       cell: ({ row }) => {
-        const url = row.original.image_urls?.[0];
+        const url = row.original.imageUrls?.[0];
         return url ? (
           <Image
             src={url}
@@ -63,24 +63,24 @@ function getColumns(categories: Category[]): ColumnDef<Product>[] {
         ),
     },
     {
-      accessorKey: "is_pos_available",
+      accessorKey: "isPosAvailable",
       header: "POS 上架",
       cell: ({ row }) => (
         <ToggleProductField
           productId={row.original.id}
-          field="is_pos_available"
-          checked={row.getValue("is_pos_available")}
+          field="isPosAvailable"
+          checked={row.getValue("isPosAvailable")}
         />
       ),
     },
     {
-      accessorKey: "is_menu_available",
+      accessorKey: "isMenuAvailable",
       header: "菜單上架",
       cell: ({ row }) => (
         <ToggleProductField
           productId={row.original.id}
-          field="is_menu_available"
-          checked={row.getValue("is_menu_available")}
+          field="isMenuAvailable"
+          checked={row.getValue("isMenuAvailable")}
         />
       ),
     },
@@ -95,13 +95,13 @@ function getColumns(categories: Category[]): ColumnDef<Product>[] {
       cell: ({ row }) => row.getValue<number>("cost"),
     },
     {
-      accessorKey: "is_favorite",
+      accessorKey: "isFavorite",
       header: "我的最愛",
       cell: ({ row }) => (
         <ToggleProductField
           productId={row.original.id}
-          field="is_favorite"
-          checked={row.getValue("is_favorite")}
+          field="isFavorite"
+          checked={row.getValue("isFavorite")}
         />
       ),
     },

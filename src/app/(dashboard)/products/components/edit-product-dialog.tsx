@@ -35,10 +35,10 @@ const schema = z.object({
   price: z.coerce.number().min(0, "價格不能為負數"),
   cost: z.coerce.number().min(0),
   description: z.string().optional(),
-  category_id: z.string().nullable(),
-  is_pos_available: z.boolean(),
-  is_menu_available: z.boolean(),
-  is_favorite: z.boolean(),
+  categoryId: z.string().nullable(),
+  isPosAvailable: z.boolean(),
+  isMenuAvailable: z.boolean(),
+  isFavorite: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -80,18 +80,18 @@ export function EditProductDialog({
       price: product.price,
       cost: product.cost,
       description: product.description ?? "",
-      category_id: product.category_id,
-      is_pos_available: product.is_pos_available,
-      is_menu_available: product.is_menu_available,
-      is_favorite: product.is_favorite,
+      categoryId: product.categoryId,
+      isPosAvailable: product.isPosAvailable,
+      isMenuAvailable: product.isMenuAvailable,
+      isFavorite: product.isFavorite,
     },
   });
 
   const [categoryId, booleanValues] = [
-    useWatch({ control, name: "category_id" }),
+    useWatch({ control, name: "categoryId" }),
     useWatch({
       control,
-      name: ["is_pos_available", "is_menu_available", "is_favorite"],
+      name: ["isPosAvailable", "isMenuAvailable", "isFavorite"],
     }),
   ];
 
@@ -104,7 +104,7 @@ export function EditProductDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7">
+        <Button variant="secondary" size="icon" className="h-7 w-7">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
@@ -157,7 +157,7 @@ export function EditProductDialog({
             <Label className="text-base">目錄</Label>
             <Select
               value={categoryId ?? ""}
-              onValueChange={(v) => setValue("category_id", v || null)}
+              onValueChange={(v) => setValue("categoryId", v || null)}
             >
               <SelectTrigger className="h-10 w-full">
                 <SelectValue placeholder="選擇目錄" />
@@ -186,9 +186,9 @@ export function EditProductDialog({
           <div className="space-y-2">
             {(
               [
-                { key: "is_pos_available", label: "POS 上架" },
-                { key: "is_menu_available", label: "菜單上架" },
-                { key: "is_favorite", label: "我的最愛" },
+                { key: "isPosAvailable", label: "POS 上架" },
+                { key: "isMenuAvailable", label: "菜單上架" },
+                { key: "isFavorite", label: "我的最愛" },
               ] as const
             ).map(({ key, label }, i) => (
               <div key={key} className="flex items-center justify-between">

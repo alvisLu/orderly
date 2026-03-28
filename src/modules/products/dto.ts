@@ -5,11 +5,11 @@ export const createProductDto = z.object({
   description: z.string().max(500).nullable().optional(),
   price: z.number().nonnegative(),
   cost: z.number().nonnegative().optional(),
-  image_urls: z.array(z.url()).optional(),
-  is_favorite: z.boolean().optional(),
-  is_pos_available: z.boolean().optional(),
-  is_menu_available: z.boolean().optional(),
-  category_id: z.string().nullable().optional(),
+  imageUrls: z.array(z.url()).optional(),
+  isFavorite: z.boolean().optional(),
+  isPosAvailable: z.boolean().optional(),
+  isMenuAvailable: z.boolean().optional(),
+  categoryId: z.string().nullable().optional(),
 });
 
 export const updateProductDto = createProductDto.partial();

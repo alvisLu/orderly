@@ -33,10 +33,10 @@ const schema = z.object({
   price: z.coerce.number().min(0, "價格不能為負數"),
   cost: z.coerce.number().min(0).default(0),
   description: z.string().optional(),
-  category_id: z.string().nullable().default(null),
-  is_pos_available: z.boolean().default(true),
-  is_menu_available: z.boolean().default(true),
-  is_favorite: z.boolean().default(false),
+  categoryId: z.string().nullable().default(null),
+  isPosAvailable: z.boolean().default(true),
+  isMenuAvailable: z.boolean().default(true),
+  isFavorite: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -60,18 +60,18 @@ export function CreateProductDialog({
     resolver: zodResolver(schema),
     defaultValues: {
       cost: 0,
-      category_id: null,
-      is_pos_available: true,
-      is_menu_available: true,
-      is_favorite: false,
+      categoryId: null,
+      isPosAvailable: true,
+      isMenuAvailable: true,
+      isFavorite: false,
     },
   });
 
   const [categoryId, booleanValues] = [
-    useWatch({ control, name: "category_id" }),
+    useWatch({ control, name: "categoryId" }),
     useWatch({
       control,
-      name: ["is_pos_available", "is_menu_available", "is_favorite"],
+      name: ["isPosAvailable", "isMenuAvailable", "isFavorite"],
     }),
   ];
 
@@ -79,7 +79,7 @@ export function CreateProductDialog({
     try {
       await apiCreateProduct({
         ...values,
-        image_urls: [],
+        imageUrls: [],
         description: values.description ?? null,
       });
       reset();
@@ -146,7 +146,7 @@ export function CreateProductDialog({
             <Label className="text-base">目錄</Label>
             <Select
               value={categoryId ?? ""}
-              onValueChange={(v) => setValue("category_id", v || null)}
+              onValueChange={(v) => setValue("categoryId", v || null)}
             >
               <SelectTrigger className="h-10 w-full">
                 <SelectValue placeholder="選擇目錄" />
@@ -175,9 +175,9 @@ export function CreateProductDialog({
           <div className="space-y-2">
             {(
               [
-                { key: "is_pos_available", label: "POS 上架" },
-                { key: "is_menu_available", label: "菜單上架" },
-                { key: "is_favorite", label: "我的最愛" },
+                { key: "isPosAvailable", label: "POS 上架" },
+                { key: "isMenuAvailable", label: "菜單上架" },
+                { key: "isFavorite", label: "我的最愛" },
               ] as const
             ).map(({ key, label }, i) => (
               <div key={key} className="flex items-center justify-between">

@@ -7,7 +7,7 @@ import { apiUpdateProduct } from "@/app/api/products/api";
 
 interface ToggleProductFieldProps {
   productId: string;
-  field: "is_pos_available" | "is_menu_available" | "is_favorite";
+  field: "isPosAvailable" | "isMenuAvailable" | "isFavorite";
   checked: boolean;
 }
 
