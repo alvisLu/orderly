@@ -1,16 +1,22 @@
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import { DatabaseError } from "@/lib/http-error";
 import type {
   CreateProductInput,
   Product,
   ProductQuery,
   UpdateProductInput,
 } from "./types";
-import { DatabaseError } from "@/lib/http-error";
+
+const sortByMap = {
+  created_at: "createdAt",
+  name: "name",
+} as const;
+
+const include = { category: true } as const;
 
 export async function findAllProducts(
   query: ProductQuery = {}
 ): Promise<Product[]> {
-  const supabase = createClient();
   const {
     search,
     is_favorite,
@@ -18,63 +24,53 @@ export async function findAllProducts(
     sort_order = "asc",
   } = query;
 
-  let q = supabase.from("products").select("*, category:categories(id, name)");
-
-  if (search) {
-    q = q.ilike("name", `%${search}%`);
+  try {
+    return await prisma.product.findMany({
+      where: {
+        ...(search && { name: { contains: search, mode: "insensitive" } }),
+        ...(is_favorite !== undefined && { isFavorite: is_favorite }),
+      },
+      orderBy: { [sortByMap[sort_by]]: sort_order },
+      include,
+    });
+  } catch (e) {
+    throw new DatabaseError(String(e));
   }
-  if (is_favorite !== undefined) {
-    q = q.eq("is_favorite", is_favorite);
-  }
-
-  q = q.order(sort_by, { ascending: sort_order === "asc" });
-
-  const { data, error } = await q;
-  if (error) throw new DatabaseError(error.message);
-  return data;
 }
 
 export async function findProductById(id: string): Promise<Product | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select("*, category:categories(id, name)")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.product.findUnique({ where: { id }, include });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function insertProduct(
   input: CreateProductInput
 ): Promise<Product> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("products")
-    .insert(input)
-    .select()
-    .single();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.product.create({ data: input, include });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function updateProduct(
   id: string,
   input: UpdateProductInput
 ): Promise<Product | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("products")
-    .update(input)
-    .eq("id", id)
-    .select()
-    .maybeSingle();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.product.update({ where: { id }, data: input, include });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const supabase = createClient();
-  const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) throw new DatabaseError(error.message);
+  try {
+    await prisma.product.delete({ where: { id } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }

@@ -1,81 +1,64 @@
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import { DatabaseError } from "@/lib/http-error";
 import type {
   Category,
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "./types";
-import { DatabaseError } from "@/lib/http-error";
 
 export async function findAllCategories(): Promise<Category[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select()
-    .order("rank", { ascending: true });
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.findMany({ orderBy: { rank: "asc" } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function findCategoryById(id: string): Promise<Category | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select()
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.findUnique({ where: { id } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function findCategoryByName(
   name: string
 ): Promise<Category | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select()
-    .eq("name", name)
-    .maybeSingle();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.findUnique({ where: { name } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function findCategoryByIds(ids: string[]): Promise<Category[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select()
-    .in("id", ids);
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.findMany({ where: { id: { in: ids } } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function insertCategory(
   input: CreateCategoryInput
 ): Promise<Category> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .insert(input)
-    .select()
-    .single();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.create({ data: input });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function updateCategory(
   id: string,
   input: UpdateCategoryInput
 ): Promise<Category | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .update(input)
-    .eq("id", id)
-    .select()
-    .maybeSingle();
-  if (error) throw new DatabaseError(error.message);
-  return data;
+  try {
+    return await prisma.category.update({ where: { id }, data: input });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function updateCategoryRankBy(
@@ -86,7 +69,9 @@ export async function updateCategoryRankBy(
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const supabase = createClient();
-  const { error } = await supabase.from("categories").delete().eq("id", id);
-  if (error) throw new DatabaseError(error.message);
+  try {
+    await prisma.category.delete({ where: { id } });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }

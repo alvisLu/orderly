@@ -1,10 +1,6 @@
-export interface Category {
-  id: string;
-  name: string;
-  rank: number;
-  created_at: string;
-  updated_at: string;
-}
+import type { Category } from "@/generated/prisma/client";
+
+export type { Category };
 
 export type CreateCategoryInput = Pick<Category, "name" | "rank">;
 export type UpdateCategoryInput = Pick<Category, "rank">;
