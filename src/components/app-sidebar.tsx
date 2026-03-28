@@ -51,7 +51,7 @@ const navItems = [
         icon: Package,
         sub: [
           { title: "商品列表", url: "/products" },
-          { title: "商品選項", url: "/products/options" },
+          { title: "商品選項", url: "/product-types" },
         ],
       },
       { title: "菜單管理", url: "/menus", icon: ShoppingBag },

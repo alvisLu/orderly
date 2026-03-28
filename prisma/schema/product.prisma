@@ -12,7 +12,6 @@ model Product {
   updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   categoryId      String?       @map("category_id") @db.Uuid
   category        Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  productTypes    ProductType[]
 
   @@map("products")
 }

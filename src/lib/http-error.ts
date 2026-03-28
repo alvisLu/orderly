@@ -47,3 +47,14 @@ export class CategoryAlreadyExistsError extends HttpError {
     this.name = "CategoryAlreadyExistsError";
   }
 }
+
+export class ProductTypeNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "Product type not found";
+    const code = "3000";
+    super(status, message, code);
+    this.name = "ProductTypeNotFoundError";
+  }
+}
+
