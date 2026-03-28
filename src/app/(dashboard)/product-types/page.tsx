@@ -19,7 +19,7 @@ export default function ProductTypesPage() {
       .catch(() => toast.error("載入商品失敗"));
     apiGetProductTypes()
       .then((res) => setProductTypes(res.data))
-      .catch(() => toast.error("載入規格失敗"));
+      .catch(() => toast.error("載入商品選項失敗"));
   }, []);
 
   return (
@@ -34,6 +34,7 @@ export default function ProductTypesPage() {
       </div>
       <ProductTypesTable
         data={productTypes}
+        products={products}
         onUpdated={(updated) =>
           setProductTypes((prev) =>
             prev.map((pt) => (pt.id === updated.id ? updated : pt))

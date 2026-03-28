@@ -68,8 +68,19 @@ export async function updateProductType(
   id: string,
   input: UpdateProductTypeInput
 ): Promise<ProductType | null> {
+  const { productIds, ...data } = input;
   try {
-    const row = await prisma.productType.update({ where: { id }, data: input });
+    const row = await prisma.$transaction(async (tx) => {
+      if (productIds !== undefined) {
+        await tx.productToProductType.deleteMany({ where: { productTypeId: id } });
+        if (productIds.length > 0) {
+          await tx.productToProductType.createMany({
+            data: productIds.map((productId) => ({ productId, productTypeId: id })),
+          });
+        }
+      }
+      return tx.productType.update({ where: { id }, data });
+    });
     return toProductType(row);
   } catch (e) {
     throw new DatabaseError(String(e));

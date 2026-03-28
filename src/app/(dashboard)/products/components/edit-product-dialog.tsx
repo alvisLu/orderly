@@ -103,11 +103,15 @@ export function EditProductDialog({
   ];
 
   function addProductType(id: string) {
-    if (!productTypeIds.includes(id)) setValue("productTypeIds", [...productTypeIds, id]);
+    if (!productTypeIds.includes(id))
+      setValue("productTypeIds", [...productTypeIds, id]);
   }
 
   function removeProductType(id: string) {
-    setValue("productTypeIds", productTypeIds.filter((v) => v !== id));
+    setValue(
+      "productTypeIds",
+      productTypeIds.filter((v) => v !== id)
+    );
   }
 
   async function onSubmit(values: FormValues) {
@@ -176,11 +180,17 @@ export function EditProductDialog({
               disabled={categories.length === 0}
             >
               <SelectTrigger className="h-10 w-full">
-                <SelectValue placeholder={categories.length === 0 ? "沒有資料" : "選擇目錄"} />
+                <SelectValue
+                  placeholder={
+                    categories.length === 0 ? "沒有資料" : "選擇目錄"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -198,17 +208,29 @@ export function EditProductDialog({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-base">規格</Label>
+            <Label className="text-base">加料選項</Label>
             {(() => {
-              const available = productTypes.filter((pt) => !productTypeIds.includes(pt.id));
+              const available = productTypes.filter(
+                (pt) => !productTypeIds.includes(pt.id)
+              );
               return (
-                <Select value="" onValueChange={addProductType} disabled={available.length === 0}>
+                <Select
+                  value=""
+                  onValueChange={addProductType}
+                  disabled={available.length === 0}
+                >
                   <SelectTrigger className="h-10 w-full">
-                    <SelectValue placeholder={available.length === 0 ? "沒有資料" : "新增規格"} />
+                    <SelectValue
+                      placeholder={
+                        available.length === 0 ? "沒有資料" : "新增選項"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {available.map((pt) => (
-                      <SelectItem key={pt.id} value={pt.id}>{pt.name}</SelectItem>
+                      <SelectItem key={pt.id} value={pt.id}>
+                        {pt.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -224,7 +246,10 @@ export function EditProductDialog({
                       className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full"
                     >
                       {pt.name}
-                      <button type="button" onClick={() => removeProductType(id)}>
+                      <button
+                        type="button"
+                        onClick={() => removeProductType(id)}
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </span>

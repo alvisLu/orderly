@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import type { ProductType } from "@/modules/product-types/types";
 import type { ProductTypeItem } from "@/modules/product-types/types";
 import { EditProductTypeDialog } from "./edit-product-type-dialog";
+import type { Product } from "@/modules/products/types";
 
 function getColumns(
+  products: Product[],
   onUpdated: (pt: ProductType) => void,
   onDeleted: (id: string) => void
 ): ColumnDef<ProductType>[] {
@@ -22,11 +24,12 @@ function getColumns(
     },
     {
       accessorKey: "name",
-      header: "規格名稱",
+      header: "選項名稱",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <EditProductTypeDialog
             productType={row.original}
+            products={products}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
           />
@@ -84,14 +87,20 @@ function getColumns(
 
 interface Props {
   data: ProductType[];
+  products: Product[];
   onUpdated: (pt: ProductType) => void;
   onDeleted: (id: string) => void;
 }
 
-export function ProductTypesTable({ data, onUpdated, onDeleted }: Props) {
+export function ProductTypesTable({
+  data,
+  products,
+  onUpdated,
+  onDeleted,
+}: Props) {
   return (
     <DataTable
-      columns={getColumns(onUpdated, onDeleted)}
+      columns={getColumns(products, onUpdated, onDeleted)}
       data={data}
       pagination
     />

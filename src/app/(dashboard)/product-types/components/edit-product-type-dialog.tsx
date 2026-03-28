@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   apiUpdateProductType,
   apiDeleteProductType,
+  apiGetProductType,
 } from "@/app/api/product-types/api";
 import {
   Dialog,
@@ -17,6 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sortable,
   SortableContent,
@@ -29,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { ProductType } from "@/modules/product-types/types";
+import type { Product } from "@/modules/products/types";
 
 const itemSchema = z.object({
   name: z.string(),
@@ -38,22 +47,25 @@ const itemSchema = z.object({
 });
 
 const schema = z.object({
-  name: z.string().min(1, "請輸入規格名稱"),
+  name: z.string().min(1, "請輸入選項名稱"),
   max: z.string(),
   min: z.string(),
   items: z.array(itemSchema).default([]),
+  productIds: z.array(z.string()).default([]),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
   productType: ProductType;
+  products: Product[];
   onUpdated: (productType: ProductType) => void;
   onDeleted: (id: string) => void;
 }
 
 export function EditProductTypeDialog({
   productType,
+  products,
   onUpdated,
   onDeleted,
 }: Props) {
@@ -65,6 +77,7 @@ export function EditProductTypeDialog({
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema as never),
@@ -73,8 +86,39 @@ export function EditProductTypeDialog({
       max: String(productType.max),
       min: String(productType.min),
       items: productType.items,
+      productIds: [],
     },
   });
+
+  const productIds = useWatch({ control, name: "productIds" });
+
+  async function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next) {
+      const full = await apiGetProductType(productType.id);
+      reset({
+        name: full.name,
+        max: String(full.max),
+        min: String(full.min),
+        items: full.items,
+        productIds:
+          full.products?.map(
+            (p) => (p as { productId: string; product: Product }).productId
+          ) ?? [],
+      });
+    }
+  }
+
+  function addProduct(id: string) {
+    if (!productIds.includes(id)) setValue("productIds", [...productIds, id]);
+  }
+
+  function removeProduct(id: string) {
+    setValue(
+      "productIds",
+      productIds.filter((v) => v !== id)
+    );
+  }
 
   const { fields, append, remove, move } = useFieldArray({
     control,
@@ -88,11 +132,12 @@ export function EditProductTypeDialog({
         max: values.max ? parseInt(values.max) : undefined,
         min: values.min ? parseInt(values.min) : undefined,
         items: values.items,
+        productIds: values.productIds,
       });
       setOpen(false);
       onUpdated(updated);
     } catch {
-      toast.error("修改規格失敗");
+      toast.error("修改選項失敗");
     }
   }
 
@@ -103,14 +148,14 @@ export function EditProductTypeDialog({
       setOpen(false);
       onDeleted(productType.id);
     } catch {
-      toast.error("刪除規格失敗");
+      toast.error("刪除選項失敗");
     } finally {
       setIsDeleting(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="icon" className="h-7 w-7">
           <Pencil className="h-3.5 w-3.5" />
@@ -128,6 +173,55 @@ export function EditProductTypeDialog({
             <Input id="name" className="h-10" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label>套用商品</Label>
+            {(() => {
+              const available = products.filter(
+                (p) => !productIds.includes(p.id)
+              );
+              return (
+                <Select
+                  value=""
+                  onValueChange={addProduct}
+                  disabled={available.length === 0}
+                >
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue
+                      placeholder={
+                        available.length === 0 ? "沒有資料" : "新增套用商品"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {available.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
+            {productIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {productIds.map((id) => {
+                  const p = products.find((p) => p.id === id);
+                  return p ? (
+                    <span
+                      key={id}
+                      className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full"
+                    >
+                      {p.name}
+                      <button type="button" onClick={() => removeProduct(id)}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
             )}
           </div>
 
@@ -261,7 +355,7 @@ export function EditProductTypeDialog({
               disabled={isDeleting}
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              {isDeleting ? "刪除中..." : "刪除規格"}
+              {isDeleting ? "刪除中..." : "刪除選項"}
             </Button>
             <div className="flex gap-2">
               <Button

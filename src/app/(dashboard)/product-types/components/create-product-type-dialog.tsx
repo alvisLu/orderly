@@ -93,7 +93,10 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
   }
 
   function removeProduct(id: string) {
-    setValue("productIds", productIds.filter((v) => v !== id));
+    setValue(
+      "productIds",
+      productIds.filter((v) => v !== id)
+    );
   }
 
   async function onSubmit(values: FormValues) {
@@ -115,14 +118,14 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
       setOpen(false);
       onCreated(productType);
     } catch {
-      toast.error("新增規格失敗");
+      toast.error("新增選項失敗");
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg">新增規格</Button>
+        <Button size="lg">新增選項</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -134,15 +137,9 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
         <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
           <div className="space-y-1">
             <Label>類型(必填)</Label>
-            <Input
-              className="h-10"
-              placeholder="name"
-              {...register("name")}
-            />
+            <Input className="h-10" placeholder="name" {...register("name")} />
             {errors.name && (
-              <p className="text-sm text-destructive">
-                {errors.name.message}
-              </p>
+              <p className="text-sm text-destructive">{errors.name.message}</p>
             )}
           </div>
 
@@ -220,7 +217,12 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
                               checked={field.value}
                               onCheckedChange={(v) => {
                                 field.onChange(!!v);
-                                if (v) fields.forEach((_, j) => j !== i && setValue(`options.${j}.isDefault`, false));
+                                if (v)
+                                  fields.forEach(
+                                    (_, j) =>
+                                      j !== i &&
+                                      setValue(`options.${j}.isDefault`, false)
+                                  );
                               }}
                             />
                             預設

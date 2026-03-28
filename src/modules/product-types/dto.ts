@@ -21,6 +21,7 @@ export const productTypeQueryDto = paginationDto;
 
 export const updateProductTypeDto = z.object({
   name: z.string().min(1).max(100).optional(),
+  productIds: z.array(z.string()).optional(),
   isDisable: z.boolean().optional(),
   max: z.number().int().nonnegative().optional(),
   min: z.number().int().nonnegative().optional(),

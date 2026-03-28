@@ -211,7 +211,7 @@ export function CreateProductDialog({
                   <SelectTrigger className="h-10 w-full">
                     <SelectValue
                       placeholder={
-                        available.length === 0 ? "沒有資料" : "新增規格"
+                        available.length === 0 ? "沒有資料" : "新增選項"
                       }
                     />
                   </SelectTrigger>
