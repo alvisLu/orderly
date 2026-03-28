@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "sonner";
 
 const apiClient = axios.create({
   baseURL: "/api",
@@ -13,7 +14,8 @@ apiClient.interceptors.response.use(
         window.location.href = "/login";
       }
       const message = error.response?.data?.error ?? error.message;
-      return Promise.reject(new Error(message));
+      const code = error.response?.data?.code ?? "";
+      return Promise.reject(toast.error(`Server error: [${code}] ${message}`));
     }
     return Promise.reject(error);
   }
