@@ -1,0 +1,15 @@
+model LineItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  price       Decimal  @db.Decimal(10, 2)
+  quantity    Int      @default(1)
+  rank        Int      @default(0)
+  orderId     String?  @map("order_id") @db.Uuid
+  productId   String?  @map("product_id") @db.Uuid
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  itemOptions Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("line_items")
+}

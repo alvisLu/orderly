@@ -1,0 +1,38 @@
+enum OrderStatus {
+  pending
+  processing
+  cancelled
+  done
+}
+
+enum OrderFinancialStatus {
+  pending
+  payed
+  refunded
+}
+
+enum OrderFulfillmentStatus {
+  pending
+  fulfilled
+  unfulfilled
+}
+
+model Order {
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  note              String?
+  total             Decimal                @db.Decimal(10, 2)
+  source            String?                @db.VarChar(255)
+  status            OrderStatus            @default(pending)
+  financialStatus   OrderFinancialStatus   @default(pending)
+  fulfillmentStatus OrderFulfillmentStatus @default(pending)
+  isDineIn          Boolean                @default(true) @map("is_dine_in")
+  lineItems         LineItem[]
+  discount          Decimal                @db.Decimal(10, 2)
+  userPhone         String?                @map("user_phone") @db.VarChar(20)
+  userNote          String?
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("orders")
+}

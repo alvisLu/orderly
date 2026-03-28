@@ -58,3 +58,13 @@ export class ProductTypeNotFoundError extends HttpError {
   }
 }
 
+export class OrderNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "Order not found";
+    const code = "4000";
+    super(status, message, code);
+    this.name = "OrderNotFoundError";
+  }
+}
+
