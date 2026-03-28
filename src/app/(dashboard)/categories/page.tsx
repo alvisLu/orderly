@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { GripVertical, Trash2 } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { GripVertical, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   apiGetCategories,
@@ -22,9 +22,13 @@ import { EditCategoryDialog } from "./components/edit-category-dialog";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, startLoading] = useTransition();
 
   useEffect(() => {
-    apiGetCategories().then(setCategories);
+    startLoading(async () => {
+      const data = await apiGetCategories();
+      setCategories(data);
+    });
   }, []);
 
   async function handleValueChange(next: Category[]) {
@@ -54,49 +58,52 @@ export default function CategoriesPage() {
           onCreated={(c) => setCategories((prev) => [...prev, c])}
         />
       </div>
-      {categories.length === 0 && (
+      {categories.length ? (
+        <Sortable
+          value={categories}
+          onValueChange={handleValueChange}
+          getItemValue={(c) => c.id}
+          orientation="vertical"
+        >
+          <SortableContent className="space-y-2">
+            {categories.map((category) => (
+              <SortableItem key={category.id} value={category.id}>
+                <div className="flex items-center gap-3 rounded-md border bg-card px-4 py-3">
+                  <SortableItemHandle>
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </SortableItemHandle>
+                  <span className="flex-1 text-sm font-medium">
+                    {category.name}
+                  </span>
+                  <EditCategoryDialog
+                    category={category}
+                    onUpdated={(updated) =>
+                      setCategories((prev) =>
+                        prev.map((c) => (c.id === updated.id ? updated : c))
+                      )
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(category.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </SortableItem>
+            ))}
+          </SortableContent>
+          <SortableOverlay>
+            <div className="h-full rounded-md bg-primary/10 border" />
+          </SortableOverlay>
+        </Sortable>
+      ) : isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      ) : (
         <p className="text-lg text-muted-foreground">未新增目錄</p>
       )}
-      <Sortable
-        value={categories}
-        onValueChange={handleValueChange}
-        getItemValue={(c) => c.id}
-        orientation="vertical"
-      >
-        <SortableContent className="space-y-2">
-          {categories.map((category) => (
-            <SortableItem key={category.id} value={category.id}>
-              <div className="flex items-center gap-3 rounded-md border bg-card px-4 py-3">
-                <SortableItemHandle>
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </SortableItemHandle>
-                <span className="flex-1 text-sm font-medium">
-                  {category.name}
-                </span>
-                <EditCategoryDialog
-                  category={category}
-                  onUpdated={(updated) =>
-                    setCategories((prev) =>
-                      prev.map((c) => (c.id === updated.id ? updated : c))
-                    )
-                  }
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-destructive hover:text-destructive"
-                  onClick={() => handleDelete(category.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </SortableItem>
-          ))}
-        </SortableContent>
-        <SortableOverlay>
-          <div className="h-full rounded-md bg-primary/10 border" />
-        </SortableOverlay>
-      </Sortable>
     </div>
   );
 }

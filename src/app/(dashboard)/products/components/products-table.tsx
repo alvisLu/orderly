@@ -113,10 +113,12 @@ export function ProductsTable({
   data,
   categories,
   productTypes,
+  isLoading,
 }: {
   data: Product[];
   categories: Category[];
   productTypes: ProductType[];
+  isLoading?: boolean;
 }) {
-  return <DataTable columns={getColumns(categories, productTypes)} data={data} pagination />;
+  return <DataTable columns={getColumns(categories, productTypes)} data={data} pagination isLoading={isLoading} />;
 }

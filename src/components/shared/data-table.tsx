@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
@@ -37,12 +38,14 @@ interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   pagination?: boolean;
+  isLoading?: boolean;
 }
 
 export function DataTable<TData>({
   columns,
   data,
   pagination = false,
+  isLoading = false,
 }: DataTableProps<TData>) {
   const [pageSize, setPageSize] = useState(10);
   const [pageIndex, setPageIndex] = useState(0);
@@ -166,9 +169,13 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center text-muted-foreground"
+                  className="text-center text-muted-foreground py-8"
                 >
-                  沒有資料
+                  {isLoading ? (
+                    <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+                  ) : (
+                    "沒有資料"
+                  )}
                 </TableCell>
               </TableRow>
             )}

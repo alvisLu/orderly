@@ -90,6 +90,7 @@ interface Props {
   products: Product[];
   onUpdated: (pt: ProductType) => void;
   onDeleted: (id: string) => void;
+  isLoading?: boolean;
 }
 
 export function ProductTypesTable({
@@ -97,12 +98,14 @@ export function ProductTypesTable({
   products,
   onUpdated,
   onDeleted,
+  isLoading,
 }: Props) {
   return (
     <DataTable
       columns={getColumns(products, onUpdated, onDeleted)}
       data={data}
       pagination
+      isLoading={isLoading}
     />
   );
 }

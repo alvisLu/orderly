@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Product, ProductQuery } from "@/modules/products/types";
 import type { Category } from "@/modules/categories/types";
@@ -15,6 +15,7 @@ import { SearchProduct } from "./components/searech-product";
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, startLoading] = useTransition();
   const [categories, setCategories] = useState<Category[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
 
@@ -35,7 +36,10 @@ export default function ProductsPage() {
         ? "desc"
         : "asc") as ProductQuery["sort_order"],
     };
-    apiGetProducts(query).then((res) => setProducts(res.data));
+    startLoading(async () => {
+      const res = await apiGetProducts(query);
+      setProducts(res.data);
+    });
   }, [searchParams]);
 
   return (
@@ -50,6 +54,7 @@ export default function ProductsPage() {
       </div>
       <ProductsTable
         data={products}
+        isLoading={isLoading}
         categories={categories}
         productTypes={productTypes}
       />

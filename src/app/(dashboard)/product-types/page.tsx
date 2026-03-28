@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { apiGetProductTypes } from "@/app/api/product-types/api";
 import { apiGetProducts } from "@/app/api/products/api";
@@ -12,14 +12,17 @@ import { CreateProductTypeDialog } from "./components/create-product-type-dialog
 export default function ProductTypesPage() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, startLoading] = useTransition();
 
   useEffect(() => {
-    apiGetProducts()
-      .then((res) => setProducts(res.data))
-      .catch(() => toast.error("載入商品失敗"));
-    apiGetProductTypes()
-      .then((res) => setProductTypes(res.data))
-      .catch(() => toast.error("載入商品選項失敗"));
+    startLoading(async () => {
+      const [productsRes, productTypesRes] = await Promise.all([
+        apiGetProducts().catch(() => { toast.error("載入商品失敗"); return null; }),
+        apiGetProductTypes().catch(() => { toast.error("載入商品選項失敗"); return null; }),
+      ]);
+      if (productsRes) setProducts(productsRes.data);
+      if (productTypesRes) setProductTypes(productTypesRes.data);
+    });
   }, []);
 
   return (
@@ -34,6 +37,7 @@ export default function ProductTypesPage() {
       </div>
       <ProductTypesTable
         data={productTypes}
+        isLoading={isLoading}
         products={products}
         onUpdated={(updated) =>
           setProductTypes((prev) =>
