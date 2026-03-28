@@ -54,6 +54,9 @@ export default function CategoriesPage() {
           onCreated={(c) => setCategories((prev) => [...prev, c])}
         />
       </div>
+      {categories.length === 0 && (
+        <p className="text-lg text-muted-foreground">未新增目錄</p>
+      )}
       <Sortable
         value={categories}
         onValueChange={handleValueChange}

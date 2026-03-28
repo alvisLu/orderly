@@ -14,13 +14,17 @@ export default function ProductTypesPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    apiGetProducts().then((res) => setProducts(res.data)).catch(() => toast.error("載入商品失敗"));
-    apiGetProductTypes().then((res) => setProductTypes(res.data)).catch(() => toast.error("載入規格失敗"));
+    apiGetProducts()
+      .then((res) => setProducts(res.data))
+      .catch(() => toast.error("載入商品失敗"));
+    apiGetProductTypes()
+      .then((res) => setProductTypes(res.data))
+      .catch(() => toast.error("載入規格失敗"));
   }, []);
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">規格管理</h1>
+      <h1 className="text-xl font-semibold mb-4">商品選項</h1>
       <div className="flex items-center justify-between mb-4">
         <div />
         <CreateProductTypeDialog

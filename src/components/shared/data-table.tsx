@@ -168,7 +168,7 @@ export function DataTable<TData>({
                   colSpan={columns.length}
                   className="text-center text-muted-foreground"
                 >
-                  沒有商品
+                  沒有資料
                 </TableCell>
               </TableRow>
             )}

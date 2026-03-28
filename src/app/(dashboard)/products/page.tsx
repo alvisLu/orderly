@@ -40,12 +40,19 @@ export default function ProductsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">商品管理</h1>
+      <h1 className="text-xl font-semibold mb-4">商品列表</h1>
       <div className="flex items-center justify-between mb-4">
         <SearchProduct />
-        <CreateProductDialog categories={categories} productTypes={productTypes} />
+        <CreateProductDialog
+          categories={categories}
+          productTypes={productTypes}
+        />
       </div>
-      <ProductsTable data={products} categories={categories} productTypes={productTypes} />
+      <ProductsTable
+        data={products}
+        categories={categories}
+        productTypes={productTypes}
+      />
     </div>
   );
 }
