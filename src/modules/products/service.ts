@@ -7,13 +7,14 @@ import {
 } from "./repository";
 import type {
   CreateProductInput,
+  PaginatedProducts,
   Product,
   ProductQuery,
   UpdateProductInput,
 } from "./types";
 import { ProductNotFoundError } from "@/lib/http-error";
 
-export async function getProducts(query: ProductQuery): Promise<Product[]> {
+export async function getProducts(query: ProductQuery): Promise<PaginatedProducts> {
   return findAllProducts(query);
 }
 

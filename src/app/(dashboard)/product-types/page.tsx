@@ -14,7 +14,7 @@ export default function ProductTypesPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    apiGetProducts().then(setProducts).catch(() => toast.error("載入商品失敗"));
+    apiGetProducts().then((res) => setProducts(res.data)).catch(() => toast.error("載入商品失敗"));
     apiGetProductTypes().then((res) => setProductTypes(res.data)).catch(() => toast.error("載入規格失敗"));
   }, []);
 

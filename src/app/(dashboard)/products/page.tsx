@@ -24,7 +24,7 @@ export default function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    const query: ProductQuery = {
+    const query: Partial<ProductQuery> = {
       search: searchParams.get("search") ?? undefined,
       is_favorite:
         searchParams.get("is_favorite") === "true" ? true : undefined,
@@ -35,7 +35,7 @@ export default function ProductsPage() {
         ? "desc"
         : "asc") as ProductQuery["sort_order"],
     };
-    apiGetProducts(query).then(setProducts);
+    apiGetProducts(query).then((res) => setProducts(res.data));
   }, [searchParams]);
 
   return (

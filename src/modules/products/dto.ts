@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationDto } from "@/lib/dto";
 
 export const createProductDto = z.object({
   name: z.string().min(1).max(100),
@@ -15,7 +16,7 @@ export const createProductDto = z.object({
 
 export const updateProductDto = createProductDto.partial();
 
-export const productQueryDto = z.object({
+export const productQueryDto = paginationDto.extend({
   search: z.string().optional(),
   is_favorite: z.coerce.boolean().optional(),
   sort_by: z.enum(["created_at", "name"]).default("created_at"),

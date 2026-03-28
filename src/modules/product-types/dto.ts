@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationDto } from "@/lib/dto";
 
 const productTypeItemDto = z.object({
   name: z.string().min(1).max(100),
@@ -16,10 +17,7 @@ export const createProductTypeDto = z.object({
   items: z.array(productTypeItemDto).default([]),
 });
 
-export const productTypeQueryDto = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
-});
+export const productTypeQueryDto = paginationDto;
 
 export const updateProductTypeDto = z.object({
   name: z.string().min(1).max(100).optional(),

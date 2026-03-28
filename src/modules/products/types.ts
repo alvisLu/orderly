@@ -24,4 +24,13 @@ export interface ProductQuery {
   is_favorite?: boolean;
   sort_by?: "created_at" | "name";
   sort_order?: "asc" | "desc";
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedProducts {
+  data: Product[];
+  total: number;
+  page: number;
+  limit: number;
 }
