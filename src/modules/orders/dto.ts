@@ -20,7 +20,7 @@ export const createOrderDto = z.object({
   items: z.array(createOrderItemDto).min(1),
   discount: z.number().nonnegative().default(0),
   note: z.string().optional(),
-  isDineIn: z.boolean().optional(),
+  isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
   userNote: z.string().optional(),
   source: z.string().optional(),
@@ -29,9 +29,9 @@ export const createOrderDto = z.object({
 export const updateOrderDto = z.object({
   status: z.enum(["pending", "processing", "done"]).optional(),
   financialStatus: z.enum(["pending", "payed", "refunded"]).optional(),
-  fulfillmentStatus: z.enum(["pending", "fulfilled", "unfulfilled"]).optional(),
+  fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
   note: z.string().optional(),
-  isDineIn: z.boolean().optional(),
+  isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
   userNote: z.string().optional(),
 });

@@ -136,7 +136,7 @@ export function DataTable<TData>({
       )}
 
       <div className="border rounded-lg overflow-hidden">
-        <Table className="w-full">
+        <Table className="w-full text-base">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

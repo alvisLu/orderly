@@ -1,7 +1,7 @@
 import type { Prisma, OrderStatus, OrderFinancialStatus, OrderFulfillmentStatus } from "@/generated/prisma/client";
 
 export type Order = Prisma.OrderGetPayload<{
-  include: { lineItems: true };
+  include: { lineItems: { include: { product: true } } };
 }>;
 
 export type LineItemOption = {
@@ -23,7 +23,7 @@ export type CreateOrderInput = {
   items: CreateOrderItemInput[];
   discount: number;
   note?: string;
-  isDineIn?: boolean;
+  isDining?: boolean;
   userPhone?: string;
   userNote?: string;
   source?: string;
@@ -34,7 +34,7 @@ export type UpdateOrderInput = {
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;
   note?: string;
-  isDineIn?: boolean;
+  isDining?: boolean;
   userPhone?: string;
   userNote?: string;
 };

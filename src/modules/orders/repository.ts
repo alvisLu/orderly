@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 const include = {
-  lineItems: true,
+  lineItems: { include: { product: true } },
 } as const;
 
 export async function findAllOrders(query: OrderQuery): Promise<PaginatedOrders> {

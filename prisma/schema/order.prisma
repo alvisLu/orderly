@@ -14,7 +14,7 @@ enum OrderFinancialStatus {
 enum OrderFulfillmentStatus {
   pending
   fulfilled
-  unfulfilled
+  returned
 }
 
 model Order {
@@ -25,7 +25,7 @@ model Order {
   status            OrderStatus            @default(pending)
   financialStatus   OrderFinancialStatus   @default(pending)
   fulfillmentStatus OrderFulfillmentStatus @default(pending)
-  isDineIn          Boolean                @default(true) @map("is_dine_in")
+  isDining          Boolean                @default(true) @map("is_dine_in")
   lineItems         LineItem[]
   discount          Decimal                @db.Decimal(10, 2)
   userPhone         String?                @map("user_phone") @db.VarChar(20)
