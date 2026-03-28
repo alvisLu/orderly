@@ -1,14 +1,14 @@
 model ProductType {
-  id       String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  products ProductToProductType[]
-  name       String
-  price      Decimal  @default(0) @db.Decimal(10, 2)
-  isDisable  Boolean  @default(false) @map("is_disable")
-  max        Int      @default(1)
-  min        Int      @default(0)
-  items      Json     @default("[]")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  products  ProductToProductType[]
+  name      String
+  price     Decimal                @default(0) @db.Decimal(10, 2)
+  isDisable Boolean                @default(false) @map("is_disable")
+  max       Int                    @default(1)
+  min       Int                    @default(0)
+  items     Json                   @default("[]")
+  createdAt DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("product_type")
 }
