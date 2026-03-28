@@ -115,5 +115,5 @@ export function ProductsTable({
   data: Product[];
   categories: Category[];
 }) {
-  return <DataTable columns={getColumns(categories)} data={data} />;
+  return <DataTable columns={getColumns(categories)} data={data} pagination />;
 }
