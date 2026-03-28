@@ -12,7 +12,10 @@ const sortByMap = {
   name: "name",
 } as const;
 
-const include = { category: true } as const;
+const include = {
+  category: true,
+  productTypes: { include: { productType: true } },
+} as const;
 
 export async function findAllProducts(
   query: ProductQuery = {}
@@ -49,8 +52,19 @@ export async function findProductById(id: string): Promise<Product | null> {
 export async function insertProduct(
   input: CreateProductInput
 ): Promise<Product> {
+  const { productTypeIds, ...data } = input;
   try {
-    return await prisma.product.create({ data: input, include });
+    return await prisma.product.create({
+      data: {
+        ...data,
+        ...(productTypeIds?.length && {
+          productTypes: {
+            create: productTypeIds.map((productTypeId) => ({ productTypeId })),
+          },
+        }),
+      },
+      include,
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }
@@ -60,8 +74,19 @@ export async function updateProduct(
   id: string,
   input: UpdateProductInput
 ): Promise<Product | null> {
+  const { productTypeIds, ...data } = input;
   try {
-    return await prisma.product.update({ where: { id }, data: input, include });
+    return await prisma.$transaction(async (tx) => {
+      if (productTypeIds !== undefined) {
+        await tx.productToProductType.deleteMany({ where: { productId: id } });
+        if (productTypeIds.length > 0) {
+          await tx.productToProductType.createMany({
+            data: productTypeIds.map((productTypeId) => ({ productId: id, productTypeId })),
+          });
+        }
+      }
+      return tx.product.update({ where: { id }, data, include });
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }

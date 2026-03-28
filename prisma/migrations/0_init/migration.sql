@@ -28,32 +28,26 @@ CREATE TABLE "products" (
 );
 
 -- CreateTable
-CREATE TABLE "product_options" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "product_type_id" UUID NOT NULL,
-    "name" TEXT NOT NULL,
-    "price" DECIMAL(10,2) NOT NULL DEFAULT 0,
-    "is_default" BOOLEAN NOT NULL DEFAULT false,
-    "is_disable" BOOLEAN NOT NULL DEFAULT false,
-    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "product_options_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "product_type" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "product_id" UUID,
     "name" TEXT NOT NULL,
     "price" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "is_disable" BOOLEAN NOT NULL DEFAULT false,
     "max" INTEGER NOT NULL DEFAULT 1,
     "min" INTEGER NOT NULL DEFAULT 0,
+    "items" JSONB NOT NULL DEFAULT '[]',
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "product_type_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "product_to_product_type" (
+    "product_id" UUID NOT NULL,
+    "product_type_id" UUID NOT NULL,
+
+    CONSTRAINT "product_to_product_type_pkey" PRIMARY KEY ("product_id","product_type_id")
 );
 
 -- CreateIndex
@@ -63,7 +57,7 @@ CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
 ALTER TABLE "products" ADD CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_options" ADD CONSTRAINT "product_options_product_type_id_fkey" FOREIGN KEY ("product_type_id") REFERENCES "product_type"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "product_to_product_type" ADD CONSTRAINT "product_to_product_type_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_type" ADD CONSTRAINT "product_type_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "product_to_product_type" ADD CONSTRAINT "product_to_product_type_product_type_id_fkey" FOREIGN KEY ("product_type_id") REFERENCES "product_type"("id") ON DELETE CASCADE ON UPDATE CASCADE;

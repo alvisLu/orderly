@@ -10,6 +10,7 @@ export const createProductDto = z.object({
   isPosAvailable: z.boolean().optional(),
   isMenuAvailable: z.boolean().optional(),
   categoryId: z.string().nullable().optional(),
+  productTypeIds: z.array(z.string()).optional(),
 });
 
 export const updateProductDto = createProductDto.partial();

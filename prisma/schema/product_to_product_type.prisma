@@ -1,0 +1,9 @@
+model ProductToProductType {
+  productId     String      @map("product_id") @db.Uuid
+  productTypeId String      @map("product_type_id") @db.Uuid
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, productTypeId])
+  @@map("product_to_product_type")
+}

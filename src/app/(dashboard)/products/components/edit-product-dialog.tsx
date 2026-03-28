@@ -9,6 +9,8 @@ import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiUpdateProduct, apiDeleteProduct } from "@/app/api/products/api";
 import type { Category } from "@/modules/categories/types";
+import type { ProductType } from "@/modules/product-types/types";
+import { X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -39,6 +41,7 @@ const schema = z.object({
   isPosAvailable: z.boolean(),
   isMenuAvailable: z.boolean(),
   isFavorite: z.boolean(),
+  productTypeIds: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -46,9 +49,11 @@ type FormValues = z.infer<typeof schema>;
 export function EditProductDialog({
   product,
   categories,
+  productTypes,
 }: {
   product: Product;
   categories: Category[];
+  productTypes: ProductType[];
 }) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,7 +79,7 @@ export function EditProductDialog({
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as never,
     defaultValues: {
       name: product.name,
       price: product.price,
@@ -84,16 +89,26 @@ export function EditProductDialog({
       isPosAvailable: product.isPosAvailable,
       isMenuAvailable: product.isMenuAvailable,
       isFavorite: product.isFavorite,
+      productTypeIds: product.productTypes.map((pt) => pt.productTypeId),
     },
   });
 
-  const [categoryId, booleanValues] = [
+  const [categoryId, booleanValues, productTypeIds] = [
     useWatch({ control, name: "categoryId" }),
     useWatch({
       control,
       name: ["isPosAvailable", "isMenuAvailable", "isFavorite"],
     }),
+    useWatch({ control, name: "productTypeIds" }),
   ];
+
+  function addProductType(id: string) {
+    if (!productTypeIds.includes(id)) setValue("productTypeIds", [...productTypeIds, id]);
+  }
+
+  function removeProductType(id: string) {
+    setValue("productTypeIds", productTypeIds.filter((v) => v !== id));
+  }
 
   async function onSubmit(values: FormValues) {
     await apiUpdateProduct(product.id, values);
@@ -181,6 +196,42 @@ export function EditProductDialog({
               className="h-40"
               {...register("description")}
             />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-base">規格</Label>
+            <Select value="" onValueChange={addProductType}>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="新增規格" />
+              </SelectTrigger>
+              <SelectContent>
+                {productTypes
+                  .filter((pt) => !productTypeIds.includes(pt.id))
+                  .map((pt) => (
+                    <SelectItem key={pt.id} value={pt.id}>
+                      {pt.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            {productTypeIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {productTypeIds.map((id) => {
+                  const pt = productTypes.find((p) => p.id === id);
+                  return pt ? (
+                    <span
+                      key={id}
+                      className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full"
+                    >
+                      {pt.name}
+                      <button type="button" onClick={() => removeProductType(id)}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -5,11 +5,12 @@ import Image from "next/image";
 import { DataTable } from "../../../../components/shared/data-table";
 import type { Product } from "@/modules/products/types";
 import type { Category } from "@/modules/categories/types";
+import type { ProductType } from "@/modules/product-types/types";
 import { EditProductDialog } from "./edit-product-dialog";
 import { ToggleProductField } from "./toggle-product-field";
 import { Badge } from "@/components/ui/badge";
 
-function getColumns(categories: Category[]): ColumnDef<Product>[] {
+function getColumns(categories: Category[], productTypes: ProductType[]): ColumnDef<Product>[] {
   return [
     {
       id: "index",
@@ -43,7 +44,7 @@ function getColumns(categories: Category[]): ColumnDef<Product>[] {
       header: "商品名稱",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <EditProductDialog product={row.original} categories={categories} />
+          <EditProductDialog product={row.original} categories={categories} productTypes={productTypes} />
           <span>{row.getValue<string>("name")}</span>
         </div>
       ),
@@ -111,9 +112,11 @@ function getColumns(categories: Category[]): ColumnDef<Product>[] {
 export function ProductsTable({
   data,
   categories,
+  productTypes,
 }: {
   data: Product[];
   categories: Category[];
+  productTypes: ProductType[];
 }) {
-  return <DataTable columns={getColumns(categories)} data={data} pagination />;
+  return <DataTable columns={getColumns(categories, productTypes)} data={data} pagination />;
 }

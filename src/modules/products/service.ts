@@ -24,9 +24,9 @@ export async function getProduct(id: string): Promise<Product> {
 }
 
 export async function createProduct(
-  input: CreateProductInput
+  newP: CreateProductInput
 ): Promise<Product> {
-  return insertProduct(input);
+  return insertProduct(newP);
 }
 
 export async function editProduct(

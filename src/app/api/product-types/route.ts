@@ -1,11 +1,11 @@
 import { getProductTypes, createProductType } from "@/modules/product-types/service";
 import { routeHandler } from "@/lib/route-handler";
-import { createProductTypeDto } from "@/modules/product-types/dto";
+import { createProductTypeDto, productTypeQueryDto } from "@/modules/product-types/dto";
 
 export const GET = routeHandler(async (request) => {
   const { searchParams } = new URL(request.url);
-  const productId = searchParams.get("productId") ?? undefined;
-  const productTypes = await getProductTypes(productId);
+  const query = productTypeQueryDto.parse(Object.fromEntries(searchParams));
+  const productTypes = await getProductTypes(query);
   return Response.json(productTypes);
 });
 

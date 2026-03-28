@@ -1,14 +1,16 @@
 import apiClient from "@/lib/api-client";
 import type {
   ProductType,
+  PaginatedProductTypes,
   CreateProductTypeInput,
   UpdateProductTypeInput,
 } from "@/modules/product-types/types";
 
-export async function apiGetProductTypes(productId?: string): Promise<ProductType[]> {
-  const { data } = await apiClient.get<ProductType[]>("/product-types", {
-    params: productId ? { productId } : undefined,
-  });
+export async function apiGetProductTypes(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedProductTypes> {
+  const { data } = await apiClient.get<PaginatedProductTypes>("/product-types", { params });
   return data;
 }
 

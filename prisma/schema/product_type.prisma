@@ -1,6 +1,6 @@
 model ProductType {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productIds String[] @default([]) @map("product_ids") @db.Uuid
+  id       String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  products ProductToProductType[]
   name       String
   price      Decimal  @default(0) @db.Decimal(10, 2)
   isDisable  Boolean  @default(false) @map("is_disable")

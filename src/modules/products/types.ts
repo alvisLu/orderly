@@ -1,7 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 export type Product = Prisma.ProductGetPayload<{
-  include: { category: true };
+  include: { category: true; productTypes: { include: { productType: true } } };
 }>;
 
 export type CreateProductInput = {
@@ -14,6 +14,7 @@ export type CreateProductInput = {
   isPosAvailable?: boolean;
   isMenuAvailable?: boolean;
   categoryId?: string | null;
+  productTypeIds?: string[];
 };
 
 export type UpdateProductInput = Partial<CreateProductInput>;

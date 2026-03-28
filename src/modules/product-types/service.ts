@@ -8,12 +8,14 @@ import {
 } from "./repository";
 import type {
   ProductType,
+  ProductTypeQuery,
+  PaginatedProductTypes,
   CreateProductTypeInput,
   UpdateProductTypeInput,
 } from "./types";
 
-export async function getProductTypes(productId?: string): Promise<ProductType[]> {
-  return findAllProductTypes(productId);
+export async function getProductTypes(query: ProductTypeQuery): Promise<PaginatedProductTypes> {
+  return findAllProductTypes(query);
 }
 
 export async function getProductType(id: string): Promise<ProductType> {

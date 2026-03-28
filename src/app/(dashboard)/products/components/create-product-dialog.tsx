@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { apiCreateProduct } from "@/app/api/products/api";
 import type { Category } from "@/modules/categories/types";
+import type { ProductType } from "@/modules/product-types/types";
+import { X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -37,14 +39,17 @@ const schema = z.object({
   isPosAvailable: z.boolean().default(true),
   isMenuAvailable: z.boolean().default(true),
   isFavorite: z.boolean().default(false),
+  productTypeIds: z.array(z.string()).default([]),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function CreateProductDialog({
   categories,
+  productTypes,
 }: {
   categories: Category[];
+  productTypes: ProductType[];
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -57,23 +62,33 @@ export function CreateProductDialog({
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as never,
     defaultValues: {
       cost: 0,
       categoryId: null,
       isPosAvailable: true,
       isMenuAvailable: true,
       isFavorite: false,
+      productTypeIds: [],
     },
   });
 
-  const [categoryId, booleanValues] = [
+  const [categoryId, booleanValues, productTypeIds] = [
     useWatch({ control, name: "categoryId" }),
     useWatch({
       control,
       name: ["isPosAvailable", "isMenuAvailable", "isFavorite"],
     }),
+    useWatch({ control, name: "productTypeIds" }),
   ];
+
+  function addProductType(id: string) {
+    if (!productTypeIds.includes(id)) setValue("productTypeIds", [...productTypeIds, id]);
+  }
+
+  function removeProductType(id: string) {
+    setValue("productTypeIds", productTypeIds.filter((v) => v !== id));
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -170,6 +185,42 @@ export function CreateProductDialog({
               className="h-40"
               {...register("description")}
             />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-base">規格</Label>
+            <Select value="" onValueChange={addProductType}>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue placeholder="新增規格" />
+              </SelectTrigger>
+              <SelectContent>
+                {productTypes
+                  .filter((pt) => !productTypeIds.includes(pt.id))
+                  .map((pt) => (
+                    <SelectItem key={pt.id} value={pt.id}>
+                      {pt.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            {productTypeIds.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {productTypeIds.map((id) => {
+                  const pt = productTypes.find((p) => p.id === id);
+                  return pt ? (
+                    <span
+                      key={id}
+                      className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full"
+                    >
+                      {pt.name}
+                      <button type="button" onClick={() => removeProductType(id)}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
