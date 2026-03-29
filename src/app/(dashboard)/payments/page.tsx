@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { GripVertical, Loader2, Trash2 } from "lucide-react";
+import { Check, GripVertical, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
-  apiGetCategories,
-  apiDeleteCategory,
-  apiReorderCategories,
-} from "@/app/api/categories/api";
+  apiGetPayments,
+  apiDeletePayment,
+  apiReorderPayments,
+} from "@/app/api/payments/api";
 import {
   Sortable,
   SortableContent,
@@ -16,6 +16,7 @@ import {
   SortableOverlay,
 } from "@/components/ui/sortable";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -25,26 +26,31 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import type { Category } from "@/modules/categories/types";
-import { CreateCategoryDialog } from "./components/create-category-dialog";
-import { EditCategoryDialog } from "./components/edit-category-dialog";
+import type { Payment } from "@/modules/payments/types";
+import { CreatePaymentDialog } from "./components/create-payment-dialog";
+import { EditPaymentDialog } from "./components/edit-payment-dialog";
 
-export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+const PAYMENT_TYPE_LABEL: Record<string, string> = {
+  cash: "現金",
+  custom: "自訂付款",
+};
+
+export default function PaymentsPage() {
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, startLoading] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     startLoading(async () => {
-      const data = await apiGetCategories();
-      setCategories(data);
+      const data = await apiGetPayments();
+      setPayments(data);
     });
   }, []);
 
-  async function handleValueChange(next: Category[]) {
-    setCategories(next);
+  async function handleValueChange(next: Payment[]) {
+    setPayments(next);
     try {
-      await apiReorderCategories(next.map((c, i) => ({ id: c.id, rank: i })));
+      await apiReorderPayments(next.map((p, i) => ({ id: p.id, rank: i })));
       toast.success("排序已更新");
     } catch {
       toast.error("排序儲存失敗");
@@ -54,10 +60,10 @@ export default function CategoriesPage() {
   async function handleDelete() {
     if (!deletingId) return;
     try {
-      await apiDeleteCategory(deletingId);
-      setCategories((prev) => prev.filter((c) => c.id !== deletingId));
+      await apiDeletePayment(deletingId);
+      setPayments((prev) => prev.filter((p) => p.id !== deletingId));
     } catch {
-      toast.error("刪除目錄失敗");
+      toast.error("刪除付款方式失敗");
     } finally {
       setDeletingId(null);
     }
@@ -65,36 +71,55 @@ export default function CategoriesPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">目錄管理</h1>
+      <h1 className="text-xl font-semibold mb-4">付款方式管理</h1>
       <div className="flex justify-end mb-4">
-        <CreateCategoryDialog
-          nextRank={categories.length}
-          onCreated={(c) => setCategories((prev) => [...prev, c])}
+        <CreatePaymentDialog
+          nextRank={payments.length}
+          onCreated={(p) => setPayments((prev) => [...prev, p])}
         />
       </div>
       <div className="flex flex-1 items-center justify-center">
-        {categories.length ? (
+        {payments.length ? (
           <Sortable
-            value={categories}
+            value={payments}
             onValueChange={handleValueChange}
-            getItemValue={(c) => c.id}
+            getItemValue={(p) => p.id}
             orientation="vertical"
           >
-            <SortableContent className="space-y-2 w-[50vh]">
-              {categories.map((category) => (
-                <SortableItem key={category.id} value={category.id}>
+            <SortableContent className="space-y-2 w-[70vh]">
+              {payments.map((payment) => (
+                <SortableItem key={payment.id} value={payment.id}>
                   <div className="flex items-center gap-3 rounded-md border bg-card px-4 py-3">
                     <SortableItemHandle>
                       <GripVertical className="h-4 w-4 text-muted-foreground" />
                     </SortableItemHandle>
                     <span className="flex-1 text-sm font-medium">
-                      {category.name}
+                      {payment.name}
                     </span>
-                    <EditCategoryDialog
-                      category={category}
+                    <Badge variant="outline">
+                      {PAYMENT_TYPE_LABEL[payment.type]}
+                    </Badge>
+                    <Badge
+                      variant={
+                        payment.isPosAvailable ? "secondary" : "destructive"
+                      }
+                    >
+                      {payment.isPosAvailable ? <Check /> : <X />}
+                      POS
+                    </Badge>
+                    <Badge
+                      variant={
+                        payment.isMenuAvailable ? "secondary" : "destructive"
+                      }
+                    >
+                      {payment.isMenuAvailable ? <Check /> : <X />}
+                      線上
+                    </Badge>
+                    <EditPaymentDialog
+                      payment={payment}
                       onUpdated={(updated) =>
-                        setCategories((prev) =>
-                          prev.map((c) => (c.id === updated.id ? updated : c))
+                        setPayments((prev) =>
+                          prev.map((p) => (p.id === updated.id ? updated : p))
                         )
                       }
                     />
@@ -102,7 +127,7 @@ export default function CategoriesPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => setDeletingId(category.id)}
+                      onClick={() => setDeletingId(payment.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -119,7 +144,7 @@ export default function CategoriesPage() {
             <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <p className="text-lg text-muted-foreground">未新增目錄</p>
+          <p className="text-lg text-muted-foreground">未新增付款方式</p>
         )}
       </div>
 
@@ -131,7 +156,7 @@ export default function CategoriesPage() {
           <DialogHeader>
             <DialogTitle>確認刪除</DialogTitle>
             <DialogDescription>
-              此操作無法還原，確定要刪除此目錄嗎？
+              此操作無法還原，確定要刪除此付款方式嗎？
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

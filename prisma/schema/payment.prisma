@@ -1,0 +1,17 @@
+enum PaymentType {
+  cash
+  custom
+}
+
+model Payment {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  type            PaymentType
+  isPosAvailable  Boolean     @default(true) @map("is_pos_available")
+  isMenuAvailable Boolean     @default(true) @map("is_menu_available")
+  rank            Int         @default(0)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("payments")
+}

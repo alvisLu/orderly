@@ -25,8 +25,9 @@ model Order {
   status            OrderStatus            @default(pending)
   financialStatus   OrderFinancialStatus   @default(pending)
   fulfillmentStatus OrderFulfillmentStatus @default(pending)
-  isDining          Boolean                @default(true) @map("is_dine_in")
+  isDining          Boolean                @default(false) @map("is_dining")
   lineItems         LineItem[]
+  transactions      Json?                  @default("[]")
   discount          Decimal                @db.Decimal(10, 2)
   userPhone         String?                @map("user_phone") @db.VarChar(20)
   userNote          String?

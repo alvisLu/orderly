@@ -68,3 +68,13 @@ export class OrderNotFoundError extends HttpError {
   }
 }
 
+export class PaymentNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "Payment not found";
+    const code = "5000";
+    super(status, message, code);
+    this.name = "PaymentNotFoundError";
+  }
+}
+

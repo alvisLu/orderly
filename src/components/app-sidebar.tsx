@@ -34,6 +34,7 @@ import {
   Store,
   Users,
   Wallet,
+  WalletCards,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -74,6 +75,7 @@ const navItems = [
   {
     label: "資料",
     items: [
+      { title: "付款管理", url: "/payments", icon: WalletCards },
       { title: "供應商", url: "/suppliers", icon: Store },
       { title: "原物料", url: "/materials", icon: ReceiptText },
       { title: "客戶", url: "/customers", icon: Users },
