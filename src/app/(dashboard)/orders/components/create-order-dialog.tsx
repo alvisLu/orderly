@@ -7,7 +7,7 @@ import {
   Plus,
   Trash2,
   ShoppingCart,
-  LayoutGrid,
+  Settings2,
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
 } from "lucide-react";
@@ -22,18 +22,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/modules/products/types";
 import type { Order } from "@/modules/orders/types";
@@ -58,6 +51,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cols, setCols] = useState(3);
   const [sortAsc, setSortAsc] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [note, setNote] = useState("");
   const [userNote, setUserNote] = useState("");
 
@@ -170,7 +164,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
         <div className="flex h-full overflow-hidden">
           {/* Cart */}
           <div className="w-80 min-h-0 flex flex-col overflow-hidden border-r">
-            <div className="flex items-center gap-2 px-4 py-4 border-b">
+            <div className="flex items-center gap-2 px-4 py-3 border-b">
               <ShoppingCart />
               <span className="font-semibold text-base">共</span>
               {cart.length > 0 && (
@@ -185,7 +179,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
               </Button>
             </div>
             {/* Cart items */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <Scroller className="flex-1 px-4 py-3 space-y-3">
               {cart.length === 0 ? (
                 <p className="text-base text-muted-foreground text-center py-8">
                   點擊商品加入購物車
@@ -227,7 +221,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   </div>
                 ))
               )}
-            </div>
+            </Scroller>
 
             {/* Summary */}
             <div className="border-t px-4 py-4 space-y-3">
@@ -252,37 +246,35 @@ export function CreateOrderDialog({ onCreated }: Props) {
               <Separator />
 
               <div className="flex justify-between font-semibold">
-                <span className="text-base">總額</span>
-                <span>${total}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label className="text-base">用餐中</Label>
-                <Switch checked={isDining} onCheckedChange={setIsDining} />
+                <span className="text-lg">總額</span>
+                <span className="text-lg">${total}</span>
               </div>
 
               <Tabs defaultValue="note">
                 <TabsList>
-                  <TabsTrigger value="note">內部備註</TabsTrigger>
+                  <TabsTrigger value="note">店內備註</TabsTrigger>
                   <TabsTrigger value="userNote">客戶備註</TabsTrigger>
                 </TabsList>
                 <TabsContent value="note">
-                  <Textarea
-                    placeholder="內部備註..."
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="resize-none text-base"
-                    rows={3}
-                  />
+                  <Scroller
+                    asChild
+                    className="h-24 resize-none text-base bg-amber-50 border-amber-200 placeholder:text-amber-400"
+                  >
+                    <Textarea
+                      placeholder="新增店內備註..."
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                    />
+                  </Scroller>
                 </TabsContent>
                 <TabsContent value="userNote">
-                  <Textarea
-                    placeholder="客戶備註..."
-                    value={userNote}
-                    onChange={(e) => setUserNote(e.target.value)}
-                    className="resize-none text-base"
-                    rows={3}
-                  />
+                  <Scroller asChild className="h-24 resize-none text-base">
+                    <Textarea
+                      placeholder="客戶備註..."
+                      value={userNote}
+                      onChange={(e) => setUserNote(e.target.value)}
+                    />
+                  </Scroller>
                 </TabsContent>
               </Tabs>
 
@@ -317,23 +309,35 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   <ArrowUpNarrowWide className="h-4 w-4" />
                 )}
               </Button>
-              <div className="ml-auto flex items-center gap-2">
-                <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8">
-                      {cols} 欄
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {[3, 4, 5, 6].map((n) => (
-                      <DropdownMenuItem key={n} onClick={() => setCols(n)}>
-                        {n} 欄
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+
+              {/* Settings */}
+              <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon-xl">
+                    <Settings2 />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogTitle>設定</DialogTitle>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium mb-2">欄位設定</p>
+                      <div className="flex gap-2">
+                        {[3, 4, 5, 6].map((n) => (
+                          <Button
+                            key={n}
+                            size="sm"
+                            variant={cols === n ? "default" : "outline"}
+                            onClick={() => setCols(n)}
+                          >
+                            {n} 欄
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {/* Category tabs */}
@@ -369,7 +373,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
             </div>
 
             {/* Product grid */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <Scroller className="flex-1 p-4">
               <div
                 className={`grid gap-3 ${{ 3: "grid-cols-3", 4: "grid-cols-4", 5: "grid-cols-5", 6: "grid-cols-6" }[cols]}`}
               >
@@ -410,7 +414,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   />
                 ))}
               </div>
-            </div>
+            </Scroller>
           </div>
         </div>
       </DialogContent>

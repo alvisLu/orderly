@@ -341,15 +341,15 @@ export function OrderDetailSheet({
               </div>
             </div>
 
-            {/* 備註 */}
+            {/* 客人備註 */}
             <div className="p-4 border-b">
-              <p className="text-sm font-medium mb-2">備註</p>
+              <p className="text-sm font-medium mb-2">客人備註</p>
               <Textarea
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
                 onBlur={handleSaveNote}
                 disabled={isSavingNote}
-                placeholder="新增備註..."
+                placeholder="新增客人備註..."
                 className="text-sm resize-none h-40"
                 rows={3}
               />
