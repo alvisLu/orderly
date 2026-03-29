@@ -29,11 +29,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/modules/products/types";
-import type { Order } from "@/modules/orders/types";
+import type { Order, LineItemOption } from "@/modules/orders/types";
+import {
+  ProductConfigSheet,
+  type ProductConfigResult,
+} from "./product-config-sheet";
 
 interface CartItem {
   product: Product;
   quantity: number;
+  price: number;
+  productOptions: LineItemOption[];
 }
 
 interface Props {
@@ -54,6 +60,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [note, setNote] = useState("");
   const [userNote, setUserNote] = useState("");
+  const [configProduct, setConfigProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -80,16 +87,47 @@ export function CreateOrderDialog({ onCreated }: Props) {
     }
   }
 
-  function addToCart(product: Product) {
+  function handleProductClick(product: Product) {
+    if (product.productTypes.length > 0) {
+      setConfigProduct(product);
+    } else {
+      addToCart(product, 1, Number(product.price), []);
+    }
+  }
+
+  function addToCart(
+    product: Product,
+    quantity: number,
+    price: number,
+    productOptions: LineItemOption[]
+  ) {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.product.id === product.id ? { ...i, quantity: i.quantity + quantity } : i
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity, price, productOptions }];
     });
+  }
+
+  function handleConfigConfirm(result: ProductConfigResult) {
+    if (!configProduct) return;
+    const typeNameMap = Object.fromEntries(
+      configProduct.productTypes.map(({ productType }) => [productType.id, productType.name])
+    );
+    const options: LineItemOption[] = Object.entries(result.selectedOptions).flatMap(
+      ([typeId, items]) =>
+        items.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          productTypeName: typeNameMap[typeId] ?? "",
+        }))
+    );
+    addToCart(configProduct, result.quantity, result.price, options);
+    setConfigProduct(null);
   }
 
   function updateQty(productId: string, delta: number) {
@@ -119,10 +157,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
       sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     );
 
-  const subtotal = cart.reduce(
-    (s, i) => s + Number(i.product.price) * i.quantity,
-    0
-  );
+  const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const total = Math.max(0, subtotal - discount);
 
   async function handleSubmit() {
@@ -137,8 +172,8 @@ export function CreateOrderDialog({ onCreated }: Props) {
           rank: idx,
           productId: item.product.id,
           quantity: item.quantity,
-          price: Number(item.product.price),
-          productOptions: [],
+          price: item.price,
+          productOptions: item.productOptions,
         })),
         discount,
         isDining,
@@ -195,8 +230,8 @@ export function CreateOrderDialog({ onCreated }: Props) {
                         {item.product.name}
                       </p>
                       <p className="text-base text-muted-foreground">
-                        ${Number(item.product.price)} × {item.quantity} = $
-                        {Number(item.product.price) * item.quantity}
+                        ${item.price} × {item.quantity} = $
+                        {item.price * item.quantity}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -381,7 +416,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   <button
                     key={product.id}
                     type="button"
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleProductClick(product)}
                     className="rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
                   >
                     <div className="relative w-full aspect-video bg-muted">
@@ -418,6 +453,11 @@ export function CreateOrderDialog({ onCreated }: Props) {
           </div>
         </div>
       </DialogContent>
+      <ProductConfigSheet
+        product={configProduct}
+        onConfirm={handleConfigConfirm}
+        onClose={() => setConfigProduct(null)}
+      />
     </Dialog>
   );
 }
