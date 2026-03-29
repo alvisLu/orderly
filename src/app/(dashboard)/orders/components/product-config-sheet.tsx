@@ -148,6 +148,7 @@ export function ProductConfigSheet({
         side="right"
         showCloseButton={false}
         className="data-[side=right]:w-[34rem] data-[side=right]:sm:max-w-[34rem] p-0 gap-0 flex flex-col"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="px-4 py-3 border-b shrink-0">
           <SheetTitle className="text-lg">{product.name}</SheetTitle>
