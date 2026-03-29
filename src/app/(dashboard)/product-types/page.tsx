@@ -26,28 +26,29 @@ export default function ProductTypesPage() {
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">商品選項</h1>
+    <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <div />
+        <h1 className="text-xl font-semibold">商品選項</h1>
         <CreateProductTypeDialog
           products={products}
           onCreated={(pt) => setProductTypes((prev) => [pt, ...prev])}
         />
       </div>
-      <ProductTypesTable
-        data={productTypes}
-        isLoading={isLoading}
-        products={products}
-        onUpdated={(updated) =>
-          setProductTypes((prev) =>
-            prev.map((pt) => (pt.id === updated.id ? updated : pt))
-          )
-        }
-        onDeleted={(id) =>
-          setProductTypes((prev) => prev.filter((pt) => pt.id !== id))
-        }
-      />
+      <div className="flex-1 min-h-0">
+        <ProductTypesTable
+          data={productTypes}
+          isLoading={isLoading}
+          products={products}
+          onUpdated={(updated) =>
+            setProductTypes((prev) =>
+              prev.map((pt) => (pt.id === updated.id ? updated : pt))
+            )
+          }
+          onDeleted={(id) =>
+            setProductTypes((prev) => prev.filter((pt) => pt.id !== id))
+          }
+        />
+      </div>
     </div>
   );
 }

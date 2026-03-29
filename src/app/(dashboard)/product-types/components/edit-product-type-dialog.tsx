@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,10 +39,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { ProductType } from "@/modules/product-types/types";
 import type { Product } from "@/modules/products/types";
+import { Scroller } from "@/components/ui/scroller";
 
 const itemSchema = z.object({
-  name: z.string(),
-  price: z.number().nonnegative().default(0),
+  name: z.string().min(1, "請輸入選項名稱"),
+  price: z.number().min(0, "價格不能為負數").default(0),
   isDefault: z.boolean().default(false),
   isDisable: z.boolean().default(false),
 });
@@ -50,7 +52,7 @@ const schema = z.object({
   name: z.string().min(1, "請輸入選項名稱"),
   max: z.string(),
   min: z.string(),
-  items: z.array(itemSchema).default([]),
+  items: z.array(itemSchema).max(5, "最多只能選擇5個加料選項").default([]),
   productIds: z.array(z.string()).default([]),
 });
 
@@ -161,11 +163,15 @@ export function EditProductTypeDialog({
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="!w-full !h-full flex flex-col ">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-lg font-semibold">修改選項</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onSubmit as never)}
+          id="edit-product-type-form"
+          className="flex-1 overflow-y-auto space-y-4"
+        >
           <div className="space-y-1">
             <Label htmlFor="name" className="text-base">
               名稱 *
@@ -253,124 +259,137 @@ export function EditProductTypeDialog({
           {/* 選項 */}
           <div className="space-y-2">
             <Label>選項</Label>
-            <Sortable
-              value={fields}
-              onMove={({ activeIndex, overIndex }) =>
-                move(activeIndex, overIndex)
-              }
-              getItemValue={(f) => f.id}
-              orientation="vertical"
-            >
-              <SortableContent className="space-y-2">
-                {fields.map((field, i) => (
-                  <SortableItem key={field.id} value={field.id}>
-                    <div className="flex items-center gap-2">
-                      <SortableItemHandle>
-                        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </SortableItemHandle>
-                      <Input
-                        className="h-9 flex-1"
-                        placeholder="option"
-                        {...register(`items.${i}.name`)}
-                      />
-                      <Input
-                        type="number"
-                        className="h-9 w-20"
-                        {...register(`items.${i}.price`)}
-                      />
-                      <Controller
-                        control={control}
-                        name={`items.${i}.isDefault`}
-                        render={({ field }) => (
-                          <label className="flex items-center gap-1 text-sm whitespace-nowrap cursor-pointer">
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={(v) => {
-                                field.onChange(!!v);
-                                if (v)
-                                  fields.forEach(
-                                    (_, j) =>
-                                      j !== i &&
-                                      setValue(`items.${j}.isDefault`, false)
-                                  );
-                              }}
-                            />
-                            預設
-                          </label>
-                        )}
-                      />
-                      <Controller
-                        control={control}
-                        name={`items.${i}.isDisable`}
-                        render={({ field }) => (
-                          <label className="flex items-center gap-1 text-sm whitespace-nowrap cursor-pointer">
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={(v) => field.onChange(!!v)}
-                            />
-                            停用
-                          </label>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0"
-                        onClick={() => remove(i)}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </SortableItem>
-                ))}
-              </SortableContent>
-              <SortableOverlay>
-                <div className="h-9 rounded-md bg-primary/10 border" />
-              </SortableOverlay>
-            </Sortable>
-
             <Button
               type="button"
               size="sm"
-              onClick={() =>
+              onClick={() => {
+                if (fields.length >= 5) {
+                  toast.error("最多只能有5個加料選項");
+                  return;
+                }
                 append({
                   name: "",
                   price: 0,
                   isDefault: false,
                   isDisable: false,
-                })
-              }
+                });
+              }}
             >
               <Plus />
               增加選項
             </Button>
-          </div>
 
-          <div className="flex justify-between pt-2">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
+            <Sortable
+              value={fields}
+              onMove={({ activeIndex, overIndex }) =>
+                move(activeIndex, overIndex)
+              }
+              getItemValue={(f: unknown) => (f as { id: string }).id}
+              orientation="vertical"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              {isDeleting ? "刪除中..." : "刪除選項"}
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "儲存中..." : "儲存"}
-              </Button>
-            </div>
+              <Scroller className="max-h-60" data-scrollbar>
+                <SortableContent className="space-y-2">
+                  {fields.map((field, i) => (
+                    <SortableItem key={field.id} value={field.id}>
+                      <div className="flex items-center gap-2">
+                        <SortableItemHandle>
+                          <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                        </SortableItemHandle>
+                        <Input
+                          className="h-9 flex-1"
+                          placeholder="option"
+                          {...register(`items.${i}.name`)}
+                        />
+                        <Input
+                          type="number"
+                          className="h-9 w-20"
+                          {...register(`items.${i}.price`, {
+                            valueAsNumber: true,
+                          })}
+                        />
+                        <Controller
+                          control={control}
+                          name={`items.${i}.isDefault`}
+                          render={({ field }) => (
+                            <label className="flex items-center gap-1 text-sm whitespace-nowrap cursor-pointer">
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={(v) => {
+                                  field.onChange(!!v);
+                                  if (v)
+                                    fields.forEach(
+                                      (_, j) =>
+                                        j !== i &&
+                                        setValue(`items.${j}.isDefault`, false)
+                                    );
+                                }}
+                              />
+                              預設
+                            </label>
+                          )}
+                        />
+                        <Controller
+                          control={control}
+                          name={`items.${i}.isDisable`}
+                          render={({ field }) => (
+                            <label className="flex items-center gap-1 text-sm whitespace-nowrap cursor-pointer">
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={(v) => field.onChange(!!v)}
+                              />
+                              停用
+                            </label>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={() => remove(i)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </SortableItem>
+                  ))}
+                </SortableContent>
+              </Scroller>
+              <SortableOverlay>
+                <div className="h-9 rounded-md bg-primary/10 border" />
+              </SortableOverlay>
+            </Sortable>
           </div>
         </form>
+        <DialogFooter className="flex-row justify-between shrink-0">
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="mr-auto"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            {isDeleting ? "刪除中..." : "刪除選項"}
+          </Button>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              type="submit"
+              form="edit-product-type-form"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "儲存中..." : "儲存"}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

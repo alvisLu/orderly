@@ -65,12 +65,14 @@ export default function CategoriesPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">目錄管理</h1>
-      <div className="flex justify-end mb-4">
-        <CreateCategoryDialog
-          nextRank={categories.length}
-          onCreated={(c) => setCategories((prev) => [...prev, c])}
-        />
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold mb-4">目錄管理</h1>
+        <div className="flex justify-end mb-4">
+          <CreateCategoryDialog
+            nextRank={categories.length}
+            onCreated={(c) => setCategories((prev) => [...prev, c])}
+          />
+        </div>
       </div>
       <div className="flex flex-1 items-center justify-center">
         {categories.length ? (

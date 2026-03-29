@@ -43,21 +43,25 @@ export default function ProductsPage() {
   }, [searchParams]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">商品列表</h1>
+    <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <SearchProduct />
+        <h1 className="text-xl font-semibold">商品列表</h1>
         <CreateProductDialog
           categories={categories}
           productTypes={productTypes}
         />
       </div>
-      <ProductsTable
-        data={products}
-        isLoading={isLoading}
-        categories={categories}
-        productTypes={productTypes}
-      />
+      <div className="mb-4">
+        <SearchProduct />
+      </div>
+      <div className="flex-1 min-h-0">
+        <ProductsTable
+          data={products}
+          isLoading={isLoading}
+          categories={categories}
+          productTypes={productTypes}
+        />
+      </div>
     </div>
   );
 }

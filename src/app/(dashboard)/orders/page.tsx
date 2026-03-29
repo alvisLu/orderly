@@ -47,7 +47,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">訂單列表</h1>
         <CreateOrderDialog onCreated={(o) => setOrders((prev) => [o, ...prev])} />
@@ -66,12 +66,14 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      <OrdersTable
-        data={orders}
-        isLoading={isLoading}
-        onView={handleView}
-        onUpdated={handleUpdated}
-      />
+      <div className="flex-1 min-h-0">
+        <OrdersTable
+          data={orders}
+          isLoading={isLoading}
+          onView={handleView}
+          onUpdated={handleUpdated}
+        />
+      </div>
 
       <OrderDetailSheet
         order={selectedOrder}

@@ -10,7 +10,10 @@ import { EditProductDialog } from "./edit-product-dialog";
 import { ToggleProductField } from "./toggle-product-field";
 import { Badge } from "@/components/ui/badge";
 
-function getColumns(categories: Category[], productTypes: ProductType[]): ColumnDef<Product>[] {
+function getColumns(
+  categories: Category[],
+  productTypes: ProductType[]
+): ColumnDef<Product>[] {
   return [
     {
       id: "index",
@@ -44,7 +47,11 @@ function getColumns(categories: Category[], productTypes: ProductType[]): Column
       header: "商品名稱",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <EditProductDialog product={row.original} categories={categories} productTypes={productTypes} />
+          <EditProductDialog
+            product={row.original}
+            categories={categories}
+            productTypes={productTypes}
+          />
           <span>{row.getValue<string>("name")}</span>
         </div>
       ),
@@ -120,5 +127,12 @@ export function ProductsTable({
   productTypes: ProductType[];
   isLoading?: boolean;
 }) {
-  return <DataTable columns={getColumns(categories, productTypes)} data={data} pagination isLoading={isLoading} />;
+  return (
+    <DataTable
+      columns={getColumns(categories, productTypes)}
+      data={data}
+      pagination
+      isLoading={isLoading}
+    />
+  );
 }

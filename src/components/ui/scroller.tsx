@@ -55,6 +55,8 @@ type ScrollVisibility = {
 interface ScrollerProps
   extends VariantProps<typeof scrollerVariants>,
     React.ComponentProps<"div"> {
+  orientation?: "vertical" | "horizontal";
+  hideScrollbar?: boolean;
   size?: number;
   offset?: number;
   asChild?: boolean;

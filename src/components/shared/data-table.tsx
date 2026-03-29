@@ -31,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Scroller } from "@/components/ui/scroller";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 
@@ -69,7 +71,7 @@ export function DataTable<TData>({
   });
 
   return (
-    <div className="space-y-2">
+    <div className="h-full flex flex-col gap-2">
       {pagination && (
         <div className="flex items-center gap-4 px-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -135,9 +137,9 @@ export function DataTable<TData>({
         </div>
       )}
 
-      <div className="border rounded-lg overflow-hidden">
+      <Scroller className="border rounded-lg flex-1 min-h-0">
         <Table className="w-full text-base table-fixed">
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -156,18 +158,32 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+              <>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="h-16">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+                {Array.from({
+                  length: pageSize - table.getRowModel().rows.length,
+                }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`} className="h-16">
+                    <TableCell colSpan={columns.length}>
+                      <Skeleton className="h-5 w-full" />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                  </TableRow>
+                ))}
+              </>
             ) : (
               <TableRow>
                 <TableCell
@@ -184,7 +200,7 @@ export function DataTable<TData>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </Scroller>
     </div>
   );
 }
