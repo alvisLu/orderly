@@ -6,6 +6,7 @@ import type { Order } from "@/modules/orders/types";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { OrdersTable } from "./components/orders-table";
 import { OrderDetailSheet } from "./components/order-detail-sheet";
+import { CreateOrderDialog } from "./components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 
 const STATUS_TABS: { label: string; value: OrderStatus | undefined }[] = [
@@ -47,7 +48,10 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">訂單列表</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold">訂單列表</h1>
+        <CreateOrderDialog onCreated={(o) => setOrders((prev) => [o, ...prev])} />
+      </div>
 
       <div className="flex gap-2 mb-4">
         {STATUS_TABS.map((tab) => (

@@ -65,7 +65,7 @@ export function OrderDetailSheet({
     }
   }
 
-  async function handleFinancial(status: "payed" | "refunded" | "pending") {
+  async function handleFinancial(status: "paid" | "refunded" | "pending") {
     if (!order) return;
     setIsUpdating(true);
     try {
@@ -181,7 +181,7 @@ export function OrderDetailSheet({
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => handleFinancial("payed")}>
+                    <DropdownMenuItem onClick={() => handleFinancial("paid")}>
                       付款
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -308,7 +308,7 @@ export function OrderDetailSheet({
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>${Number(order.total)}</span>
                   <span>
-                    {order.financialStatus === "payed" ? "現金" : "未付款"}{" "}
+                    {order.financialStatus === "paid" ? "現金" : "未付款"}{" "}
                     {dayjs(order.updatedAt).format("YYYY-MM-DD HH:mm")}
                   </span>
                 </div>

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { paginationDto } from "@/lib/dto";
 
 export const createProductDto = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(50),
   description: z.string().max(500).nullable().optional(),
   price: z.number().nonnegative(),
   cost: z.number().nonnegative().optional(),

@@ -27,7 +27,7 @@ import type { Order } from "@/modules/orders/types";
 
 const schema = z.object({
   status: z.enum(["pending", "processing", "cancelled", "done"]),
-  financialStatus: z.enum(["pending", "payed", "refunded"]),
+  financialStatus: z.enum(["pending", "paid", "refunded"]),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]),
 });
 
@@ -113,7 +113,7 @@ export function EditOrderDialog({ order, onUpdated }: Props) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">未付款</SelectItem>
-                <SelectItem value="payed">已付款</SelectItem>
+                <SelectItem value="paied">已付款</SelectItem>
                 <SelectItem value="refunded">已退款</SelectItem>
               </SelectContent>
             </Select>

@@ -136,12 +136,15 @@ export function DataTable<TData>({
       )}
 
       <div className="border rounded-lg overflow-hidden">
-        <Table className="w-full text-base">
+        <Table className="w-full text-base table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    style={{ width: header.column.getSize() }}
+                  >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
@@ -156,7 +159,7 @@ export function DataTable<TData>({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="max-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 
 const schema = z.object({
-  name: z.string().min(1, "請輸入商品名稱"),
+  name: z.string().min(1, "請輸入商品名稱").max(50, "商品名稱不能超過50個字符"),
   price: z.coerce.number().min(0, "價格不能為負數"),
   cost: z.coerce.number().min(0).default(0),
   description: z.string().optional(),

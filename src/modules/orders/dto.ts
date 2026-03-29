@@ -28,7 +28,7 @@ export const createOrderDto = z.object({
 
 export const updateOrderDto = z.object({
   status: z.enum(["pending", "processing", "done"]).optional(),
-  financialStatus: z.enum(["pending", "payed", "refunded"]).optional(),
+  financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
   note: z.string().optional(),
   isDining: z.boolean().optional(),

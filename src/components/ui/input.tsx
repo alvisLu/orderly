@@ -6,6 +6,7 @@ const inputSizeVariants = {
   sm: "h-7 text-xs",
   default: "h-8",
   lg: "h-10 text-base",
+  xl: "h-12 text-lg",
 } as const;
 
 function Input({

@@ -29,7 +29,7 @@ const financialMap: Record<
   }
 > = {
   pending: { label: "未付款", variant: "default" },
-  payed: { label: "已付款", variant: "secondary" },
+  paid: { label: "已付款", variant: "secondary" },
   refunded: { label: "已退款", variant: "destructive" },
 };
 
