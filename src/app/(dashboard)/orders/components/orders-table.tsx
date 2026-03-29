@@ -40,15 +40,10 @@ function getColumns(
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
-          <EditOrderDialog order={row.original} onUpdated={onUpdated} />
           <span>{dayjs(row.original.createdAt).format("YYYYMMDD-HHmmss")}</span>
         </div>
       ),
-    },
-    {
-      id: "items",
-      header: "品項數",
-      cell: ({ row }) => `${row.original.lineItems.length} 項`,
+      size: 190,
     },
     {
       id: "total",
