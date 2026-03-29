@@ -21,7 +21,7 @@ export class DatabaseError extends HttpError {
 export class ProductNotFoundError extends HttpError {
   constructor() {
     const status = 404;
-    const message = "Product not found";
+    const message = "找不到產品";
     const code = "1000";
     super(status, message, code);
     this.name = "ProductNotFoundError";
@@ -31,7 +31,7 @@ export class ProductNotFoundError extends HttpError {
 export class CategoryNotFoundError extends HttpError {
   constructor() {
     const status = 404;
-    const message = "Category not found";
+    const message = "找不到目錄";
     const code = "2000";
     super(status, message, code);
     this.name = "CategoryNotFoundError";
@@ -41,17 +41,26 @@ export class CategoryNotFoundError extends HttpError {
 export class CategoryAlreadyExistsError extends HttpError {
   constructor() {
     const status = 409;
-    const message = "Category already exists";
+    const message = "目錄已存在";
     const code = "2001";
     super(status, message, code);
     this.name = "CategoryAlreadyExistsError";
+  }
+}
+export class CategoryMaxCountReachedError extends HttpError {
+  constructor() {
+    const status = 400;
+    const message = "目錄數量已達上限，最多 50 個";
+    const code = "2002";
+    super(status, message, code);
+    this.name = "CategoryMaxCountReachedError";
   }
 }
 
 export class ProductTypeNotFoundError extends HttpError {
   constructor() {
     const status = 404;
-    const message = "Product type not found";
+    const message = "找不到產品選項";
     const code = "3000";
     super(status, message, code);
     this.name = "ProductTypeNotFoundError";
@@ -61,7 +70,7 @@ export class ProductTypeNotFoundError extends HttpError {
 export class OrderNotFoundError extends HttpError {
   constructor() {
     const status = 404;
-    const message = "Order not found";
+    const message = "找不到訂單";
     const code = "4000";
     super(status, message, code);
     this.name = "OrderNotFoundError";
@@ -71,10 +80,9 @@ export class OrderNotFoundError extends HttpError {
 export class PaymentNotFoundError extends HttpError {
   constructor() {
     const status = 404;
-    const message = "Payment not found";
+    const message = "找不到付款方式";
     const code = "5000";
     super(status, message, code);
     this.name = "PaymentNotFoundError";
   }
 }
-

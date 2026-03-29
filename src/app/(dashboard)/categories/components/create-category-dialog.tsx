@@ -44,14 +44,10 @@ export function CreateCategoryDialog({ nextRank, onCreated }: Props) {
   });
 
   async function onSubmit(values: FormValues) {
-    try {
-      const category = await apiCreateCategory(values);
-      reset({ rank: nextRank + 1 });
-      setOpen(false);
-      onCreated(category);
-    } catch {
-      toast.error("新增目錄失敗");
-    }
+    const category = await apiCreateCategory(values);
+    reset({ rank: nextRank + 1 });
+    setOpen(false);
+    onCreated(category);
   }
 
   return (

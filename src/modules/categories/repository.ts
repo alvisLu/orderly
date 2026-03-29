@@ -6,6 +6,14 @@ import type {
   UpdateCategoryInput,
 } from "./types";
 
+export async function getCategoriesCount(): Promise<number> {
+  try {
+    return await prisma.category.count();
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
 export async function findAllCategories(): Promise<Category[]> {
   try {
     return await prisma.category.findMany({ orderBy: { rank: "asc" } });

@@ -10,11 +10,22 @@ apiClient.interceptors.response.use(
   (error) => {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
+      if (status === 403) {
+        toast.error("權限不足，請使用管理員帳號登入");
+        window.location.href = "/login";
+      }
+      if (status === 400) {
+        const message = error.response?.data?.error ?? "請求錯誤";
+        const code = error.response?.data?.code ?? "";
+        toast.error(`Request error: [${code}] ${message}`);
+        return Promise.reject(error);
+      }
       if (status === 401) {
         window.location.href = "/login";
       }
       const message = error.response?.data?.error ?? error.message;
       const code = error.response?.data?.code ?? "";
+
       return Promise.reject(toast.error(`Server error: [${code}] ${message}`));
     }
     return Promise.reject(error);

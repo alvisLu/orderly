@@ -1,5 +1,6 @@
 import {
   CategoryAlreadyExistsError,
+  CategoryMaxCountReachedError,
   CategoryNotFoundError,
 } from "@/lib/http-error";
 import {
@@ -11,6 +12,7 @@ import {
   findCategoryByIds,
   updateCategoryRankBy,
   findCategoryByName,
+  getCategoriesCount,
 } from "./repository";
 import type {
   Category,
@@ -31,6 +33,10 @@ export async function getCategory(id: string): Promise<Category> {
 export async function createCategory(
   input: CreateCategoryInput
 ): Promise<Category> {
+  const count = await getCategoriesCount();
+  if (count >= 50) {
+    throw new CategoryMaxCountReachedError();
+  }
   const exist = await findCategoryByName(input.name);
   if (exist) {
     throw new CategoryAlreadyExistsError();
