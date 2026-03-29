@@ -1,8 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
+import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import type { ProductType } from "@/modules/product-types/types";
 import type { ProductTypeItem } from "@/modules/product-types/types";
 import { EditProductTypeDialog } from "./edit-product-type-dialog";
@@ -91,6 +90,7 @@ interface Props {
   onUpdated: (pt: ProductType) => void;
   onDeleted: (id: string) => void;
   isLoading?: boolean;
+  serverPagination?: ServerPagination;
 }
 
 export function ProductTypesTable({
@@ -99,6 +99,7 @@ export function ProductTypesTable({
   onUpdated,
   onDeleted,
   isLoading,
+  serverPagination,
 }: Props) {
   return (
     <DataTable
@@ -106,6 +107,7 @@ export function ProductTypesTable({
       data={data}
       pagination
       isLoading={isLoading}
+      serverPagination={serverPagination}
     />
   );
 }

@@ -15,6 +15,9 @@ import { SearchProduct } from "./components/searech-product";
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [isLoading, startLoading] = useTransition();
   const [categories, setCategories] = useState<Category[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -35,12 +38,15 @@ export default function ProductsPage() {
       sort_order: (searchParams.get("sort_order") === "desc"
         ? "desc"
         : "asc") as ProductQuery["sort_order"],
+      page: pageIndex + 1,
+      limit: pageSize,
     };
     startLoading(async () => {
       const res = await apiGetProducts(query);
       setProducts(res.data);
+      setTotal(res.total);
     });
-  }, [searchParams]);
+  }, [searchParams, pageIndex, pageSize]);
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -60,6 +66,16 @@ export default function ProductsPage() {
           isLoading={isLoading}
           categories={categories}
           productTypes={productTypes}
+          serverPagination={{
+            total,
+            pageIndex,
+            pageSize,
+            onPageChange: setPageIndex,
+            onPageSizeChange: (size: number) => {
+              setPageSize(size);
+              setPageIndex(0);
+            },
+          }}
         />
       </div>
     </div>

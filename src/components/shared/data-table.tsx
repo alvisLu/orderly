@@ -36,11 +36,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100];
 
+export interface ServerPagination {
+  total: number;
+  pageIndex: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
+
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   pagination?: boolean;
   isLoading?: boolean;
+  serverPagination?: ServerPagination;
 }
 
 export function DataTable<TData>({
@@ -48,27 +57,51 @@ export function DataTable<TData>({
   data,
   pagination = false,
   isLoading = false,
+  serverPagination,
 }: DataTableProps<TData>) {
-  const [pageSize, setPageSize] = useState(10);
-  const [pageIndex, setPageIndex] = useState(0);
+  const [localPageSize, setLocalPageSize] = useState(10);
+  const [localPageIndex, setLocalPageIndex] = useState(0);
+
+  const pageSize = serverPagination?.pageSize ?? localPageSize;
+  const pageIndex = serverPagination?.pageIndex ?? localPageIndex;
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     ...(pagination && {
-      getPaginationRowModel: getPaginationRowModel(),
+      ...(serverPagination
+        ? {
+            manualPagination: true,
+            pageCount: Math.ceil(serverPagination.total / pageSize),
+          }
+        : { getPaginationRowModel: getPaginationRowModel() }),
       state: { pagination: { pageIndex, pageSize } },
       onPaginationChange: (updater) => {
         const next =
           typeof updater === "function"
             ? updater({ pageIndex, pageSize })
             : updater;
-        setPageIndex(next.pageIndex);
-        setPageSize(next.pageSize);
+        if (serverPagination) {
+          serverPagination.onPageChange(next.pageIndex);
+        } else {
+          setLocalPageIndex(next.pageIndex);
+          setLocalPageSize(next.pageSize);
+        }
       },
     }),
   });
+
+  function handlePageSizeChange(value: string) {
+    const next = Number(value);
+    if (serverPagination) {
+      serverPagination.onPageSizeChange(next);
+      serverPagination.onPageChange(0);
+    } else {
+      setLocalPageSize(next);
+      setLocalPageIndex(0);
+    }
+  }
 
   return (
     <div className="h-full flex flex-col gap-2">
@@ -77,10 +110,7 @@ export function DataTable<TData>({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Select
               value={String(pageSize)}
-              onValueChange={(v) => {
-                setPageSize(Number(v));
-                setPageIndex(0);
-              }}
+              onValueChange={handlePageSizeChange}
             >
               <SelectTrigger className="h-8 w-20">
                 <SelectValue />
@@ -103,7 +133,11 @@ export function DataTable<TData>({
                     text="上一頁"
                     onClick={(e) => {
                       e.preventDefault();
-                      setPageIndex((p) => p - 1);
+                      if (serverPagination) {
+                        serverPagination.onPageChange(pageIndex - 1);
+                      } else {
+                        setLocalPageIndex((p) => p - 1);
+                      }
                     }}
                     aria-disabled={!table.getCanPreviousPage()}
                     className={
@@ -121,7 +155,11 @@ export function DataTable<TData>({
                     text="下一頁"
                     onClick={(e) => {
                       e.preventDefault();
-                      setPageIndex((p) => p + 1);
+                      if (serverPagination) {
+                        serverPagination.onPageChange(pageIndex + 1);
+                      } else {
+                        setLocalPageIndex((p) => p + 1);
+                      }
                     }}
                     aria-disabled={!table.getCanNextPage()}
                     className={

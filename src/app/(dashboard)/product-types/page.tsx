@@ -13,15 +13,27 @@ export default function ProductTypesPage() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, startLoading] = useTransition();
+  const [total, setTotal] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     startLoading(async () => {
       const [productsRes, productTypesRes] = await Promise.all([
-        apiGetProducts().catch(() => { toast.error("載入商品失敗"); return null; }),
-        apiGetProductTypes().catch(() => { toast.error("載入商品選項失敗"); return null; }),
+        apiGetProducts().catch(() => {
+          toast.error("載入商品失敗");
+          return null;
+        }),
+        apiGetProductTypes({ page: pageIndex + 1, limit: pageSize }).catch(
+          () => {
+            toast.error("載入商品選項失敗");
+            return null;
+          }
+        ),
       ]);
       if (productsRes) setProducts(productsRes.data);
       if (productTypesRes) setProductTypes(productTypesRes.data);
+      if (productTypesRes) setTotal(productTypesRes.total);
     });
   }, []);
 
@@ -47,6 +59,16 @@ export default function ProductTypesPage() {
           onDeleted={(id) =>
             setProductTypes((prev) => prev.filter((pt) => pt.id !== id))
           }
+          serverPagination={{
+            total,
+            pageIndex,
+            pageSize,
+            onPageChange: setPageIndex,
+            onPageSizeChange: (size: number) => {
+              setPageSize(size);
+              setPageIndex(0);
+            },
+          }}
         />
       </div>
     </div>

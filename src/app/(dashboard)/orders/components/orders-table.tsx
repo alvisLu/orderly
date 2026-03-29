@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { Eye } from "lucide-react";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Order } from "@/modules/orders/types";
@@ -30,7 +30,6 @@ function getColumns(
     {
       id: "createdAt",
       header: "訂單編號",
-      size: 240,
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
           <Button
@@ -49,25 +48,21 @@ function getColumns(
     {
       id: "items",
       header: "品項數",
-      size: 80,
       cell: ({ row }) => `${row.original.lineItems.length} 項`,
     },
     {
       id: "total",
       header: "金額",
-      size: 90,
       cell: ({ row }) => `$${Number(row.original.total)}`,
     },
     {
       id: "status",
       header: "訂單狀態",
-      size: 110,
       cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
     },
     {
       id: "financialStatus",
       header: "付款",
-      size: 90,
       cell: ({ row }) => (
         <FinancialStatusBadge status={row.original.financialStatus} />
       ),
@@ -75,7 +70,6 @@ function getColumns(
     {
       id: "fulfillmentStatus",
       header: "出餐",
-      size: 90,
       cell: ({ row }) => (
         <FulfillmentStatusBadge status={row.original.fulfillmentStatus} />
       ),
@@ -83,7 +77,6 @@ function getColumns(
     {
       id: "type",
       header: "類型",
-      size: 90,
       cell: ({ row }) => (
         <Badge variant="outline">
           {row.original.isDining ? "用餐中" : "已離場"}
@@ -98,11 +91,13 @@ export function OrdersTable({
   isLoading,
   onView,
   onUpdated,
+  serverPagination,
 }: {
   data: Order[];
   isLoading?: boolean;
   onView: (order: Order) => void;
   onUpdated: (order: Order) => void;
+  serverPagination?: ServerPagination;
 }) {
   return (
     <DataTable
@@ -110,6 +105,7 @@ export function OrdersTable({
       data={data}
       pagination
       isLoading={isLoading}
+      serverPagination={serverPagination}
     />
   );
 }

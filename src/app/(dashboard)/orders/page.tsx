@@ -20,16 +20,24 @@ const STATUS_TABS: { label: string; value: OrderStatus | undefined }[] = [
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, startLoading] = useTransition();
+  const [total, setTotal] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     startLoading(async () => {
-      const res = await apiGetOrders({ status, page: 1, limit: 100 });
+      const res = await apiGetOrders({
+        status,
+        page: pageIndex + 1,
+        limit: pageSize,
+      });
       setOrders(res.data);
+      setTotal(res.total);
     });
-  }, [status]);
+  }, [status, pageIndex, pageSize]);
 
   function handleView(order: Order) {
     setSelectedOrder(order);
@@ -50,7 +58,9 @@ export default function OrdersPage() {
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">訂單列表</h1>
-        <CreateOrderDialog onCreated={(o) => setOrders((prev) => [o, ...prev])} />
+        <CreateOrderDialog
+          onCreated={(o) => setOrders((prev) => [o, ...prev])}
+        />
       </div>
 
       <div className="flex gap-2 mb-4">
@@ -72,6 +82,16 @@ export default function OrdersPage() {
           isLoading={isLoading}
           onView={handleView}
           onUpdated={handleUpdated}
+          serverPagination={{
+            total,
+            pageIndex,
+            pageSize,
+            onPageChange: setPageIndex,
+            onPageSizeChange: (size: number) => {
+              setPageSize(size);
+              setPageIndex(0);
+            },
+          }}
         />
       </div>
 

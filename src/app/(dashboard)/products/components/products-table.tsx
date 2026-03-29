@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { DataTable } from "../../../../components/shared/data-table";
+import type { ServerPagination } from "@/components/shared/data-table";
 import type { Product } from "@/modules/products/types";
 import type { Category } from "@/modules/categories/types";
 import type { ProductType } from "@/modules/product-types/types";
@@ -116,23 +117,28 @@ function getColumns(
   ];
 }
 
+interface Props {
+  data: Product[];
+  categories: Category[];
+  productTypes: ProductType[];
+  isLoading?: boolean;
+  serverPagination?: ServerPagination;
+}
+
 export function ProductsTable({
   data,
   categories,
   productTypes,
   isLoading,
-}: {
-  data: Product[];
-  categories: Category[];
-  productTypes: ProductType[];
-  isLoading?: boolean;
-}) {
+  serverPagination,
+}: Props) {
   return (
     <DataTable
       columns={getColumns(categories, productTypes)}
       data={data}
       pagination
       isLoading={isLoading}
+      serverPagination={serverPagination}
     />
   );
 }
