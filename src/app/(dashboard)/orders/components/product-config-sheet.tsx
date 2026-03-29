@@ -28,6 +28,12 @@ interface Props {
   product: Product | null;
   onConfirm: (result: ProductConfigResult) => void;
   onClose: () => void;
+  initialValues?: {
+    quantity: number;
+    price: number;
+    selectedOptions: SelectedOptions;
+  };
+  resetKey?: string | number;
 }
 
 type DiscountMode = "5折" | "6折" | "7折" | "8折" | "9折" | "自訂" | "免費";
@@ -62,25 +68,36 @@ const PRICE_LABELS: Record<PriceKey, string> = {
   price5: "價5",
 };
 
-export function ProductConfigSheet({ product, onConfirm, onClose }: Props) {
+export function ProductConfigSheet({
+  product,
+  onConfirm,
+  onClose,
+  initialValues,
+  resetKey,
+}: Props) {
   const [priceKey, setPriceKey] = useState<PriceKey>("price");
   const [discountMode, setDiscountMode] = useState<DiscountMode | null>(null);
   const [customPrice, setCustomPrice] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({});
 
-  // Reset state when product changes (including when same product is re-opened)
-  const [lastProductId, setLastProductId] = useState<string | null>(null);
-  if (!product && lastProductId !== null) {
-    setLastProductId(null);
+  // Reset state when product or resetKey changes
+  const [lastResetSignal, setLastResetSignal] = useState<string | null>(null);
+  const resetSignal = product ? `${product.id}::${resetKey ?? ""}` : null;
+  if (!product && lastResetSignal !== null) {
+    setLastResetSignal(null);
   }
-  if (product && product.id !== lastProductId) {
-    setLastProductId(product.id);
+  if (product && resetSignal !== lastResetSignal) {
+    setLastResetSignal(resetSignal);
     setPriceKey("price");
-    setDiscountMode(null);
-    setCustomPrice(Number(product.price));
-    setQuantity(1);
-    setSelectedOptions(buildDefaultOptions(product));
+    setDiscountMode(initialValues ? "自訂" : null);
+    setCustomPrice(initialValues ? initialValues.price : Number(product.price));
+    setQuantity(initialValues ? initialValues.quantity : 1);
+    setSelectedOptions(
+      initialValues
+        ? initialValues.selectedOptions
+        : buildDefaultOptions(product)
+    );
   }
 
   if (!product) return null;
@@ -287,7 +304,7 @@ export function ProductConfigSheet({ product, onConfirm, onClose }: Props) {
             關閉
           </Button>
           <Button size="xl" className="flex-1" onClick={handleConfirm}>
-            加入購物車
+            確認
           </Button>
         </SheetFooter>
       </SheetContent>

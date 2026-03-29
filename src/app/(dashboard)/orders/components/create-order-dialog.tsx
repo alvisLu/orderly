@@ -61,6 +61,11 @@ export function CreateOrderDialog({ onCreated }: Props) {
   const [note, setNote] = useState("");
   const [userNote, setUserNote] = useState("");
   const [configProduct, setConfigProduct] = useState<Product | null>(null);
+  const [editingCartIndex, setEditingCartIndex] = useState<number | null>(null);
+  const [configResetKey, setConfigResetKey] = useState(0);
+  const [configInitialValues, setConfigInitialValues] = useState<
+    import("./product-config-sheet").ProductConfigResult | null
+  >(null);
 
   useEffect(() => {
     if (!open) return;
@@ -102,32 +107,71 @@ export function CreateOrderDialog({ onCreated }: Props) {
     productOptions: LineItemOption[]
   ) {
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + quantity } : i
-        );
-      }
       return [...prev, { product, quantity, price, productOptions }];
+    });
+  }
+
+  function handleCartItemEdit(index: number) {
+    const item = cart[index];
+    const selectedOptions: import("./product-config-sheet").SelectedOptions =
+      {};
+    for (const { productType } of item.product.productTypes) {
+      const items =
+        productType.items as unknown as import("@/modules/product-types/types").ProductTypeItem[];
+      const chosen = item.productOptions
+        .filter((o) => o.productTypeName === productType.name)
+        .map((o) => items.find((i) => i.name === o.name))
+        .filter((i): i is NonNullable<typeof i> => i !== undefined);
+      if (chosen.length) selectedOptions[productType.id] = chosen;
+    }
+    setEditingCartIndex(index);
+    setConfigProduct(item.product);
+    setConfigResetKey((k) => k + 1);
+    // store initialValues via a ref-like pattern using state
+    setConfigInitialValues({
+      quantity: item.quantity,
+      price: item.price,
+      selectedOptions,
     });
   }
 
   function handleConfigConfirm(result: ProductConfigResult) {
     if (!configProduct) return;
     const typeNameMap = Object.fromEntries(
-      configProduct.productTypes.map(({ productType }) => [productType.id, productType.name])
+      configProduct.productTypes.map(({ productType }) => [
+        productType.id,
+        productType.name,
+      ])
     );
-    const options: LineItemOption[] = Object.entries(result.selectedOptions).flatMap(
-      ([typeId, items]) =>
-        items.map((item) => ({
-          name: item.name,
-          price: item.price,
-          quantity: 1,
-          productTypeName: typeNameMap[typeId] ?? "",
-        }))
+    const options: LineItemOption[] = Object.entries(
+      result.selectedOptions
+    ).flatMap(([typeId, items]) =>
+      items.map((item) => ({
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        productTypeName: typeNameMap[typeId] ?? "",
+      }))
     );
-    addToCart(configProduct, result.quantity, result.price, options);
+    if (editingCartIndex !== null) {
+      setCart((prev) =>
+        prev.map((item, i) =>
+          i === editingCartIndex
+            ? {
+                ...item,
+                quantity: result.quantity,
+                price: result.price,
+                productOptions: options,
+              }
+            : item
+        )
+      );
+    } else {
+      addToCart(configProduct, result.quantity, result.price, options);
+    }
     setConfigProduct(null);
+    setEditingCartIndex(null);
+    setConfigInitialValues(null);
   }
 
   function updateQty(productId: string, delta: number) {
@@ -221,38 +265,50 @@ export function CreateOrderDialog({ onCreated }: Props) {
                 </p>
               ) : (
                 cart.map((item) => (
-                  <div
-                    key={item.product.id}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xl font-medium line-clamp-1">
-                        {item.product.name}
-                      </p>
-                      <p className="text-base text-muted-foreground">
-                        ${item.price} × {item.quantity} = $
-                        {item.price * item.quantity}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQty(item.product.id, -1)}
+                  <div key={item.product.id} className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex-1 min-w-0 text-left hover:bg-accent rounded transition-colors px-1"
+                        onClick={() => handleCartItemEdit(cart.indexOf(item))}
                       >
-                        {item.quantity === 1 ? <Trash2 /> : <Minus />}
-                      </Button>
-                      <span className="w-6 text-center text-base">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQty(item.product.id, 1)}
-                      >
-                        <Plus />
-                      </Button>
+                        <p className="text-xl font-medium line-clamp-1">
+                          {item.product.name}
+                        </p>
+                        <p className="text-base text-muted-foreground">
+                          ${item.price} × {item.quantity} = $
+                          {item.price * item.quantity}
+                        </p>
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQty(item.product.id, -1)}
+                        >
+                          {item.quantity === 1 ? <Trash2 /> : <Minus />}
+                        </Button>
+                        <span className="w-6 text-center text-base">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQty(item.product.id, 1)}
+                        >
+                          <Plus />
+                        </Button>
+                      </div>
                     </div>
+                    {item.productOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.productOptions.map((option, i) => (
+                          <Badge key={i} variant="secondary">
+                            {option.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -456,7 +512,13 @@ export function CreateOrderDialog({ onCreated }: Props) {
       <ProductConfigSheet
         product={configProduct}
         onConfirm={handleConfigConfirm}
-        onClose={() => setConfigProduct(null)}
+        onClose={() => {
+          setConfigProduct(null);
+          setEditingCartIndex(null);
+          setConfigInitialValues(null);
+        }}
+        initialValues={configInitialValues ?? undefined}
+        resetKey={configResetKey}
       />
     </Dialog>
   );
