@@ -33,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
   orderId: string | null;
@@ -63,6 +64,7 @@ export function OrderDetailSheet({
       setOrder(null);
       return;
     }
+    setOrder(null);
     setIsLoadingOrder(true);
     apiGetOrder(orderId)
       .then((o) => {
@@ -164,7 +166,7 @@ export function OrderDetailSheet({
         <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
           <div className="flex h-full items-center justify-center">
             {isLoadingOrder ? (
-              <span className="text-muted-foreground text-sm">載入中...</span>
+              <Spinner className="size-18 text-muted-foreground" />
             ) : null}
           </div>
         </DialogContent>
