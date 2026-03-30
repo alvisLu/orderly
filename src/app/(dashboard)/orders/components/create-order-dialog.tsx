@@ -35,6 +35,8 @@ import {
 } from "./product-config-sheet";
 import { Calculator } from "@/components/shared/calculator";
 import Big from "big.js";
+import { Payment } from "@/generated/prisma/client";
+import { apiGetPayments } from "@/app/api/payments/api";
 interface CalcDiscountProps {
   subtotal: number;
   setDiscount: (discount: number) => void;
@@ -71,7 +73,7 @@ function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Button size="lg">折扣</Button>
       </DialogTrigger>
       <DialogContent>
@@ -99,6 +101,198 @@ function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
             />
           </DialogDescription>
         </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}
+interface CheckoutProps {
+  className?: string;
+  cart: CartItem[];
+  total: number;
+  discount: number;
+  note: string;
+  isDining: boolean;
+  onCreated: (order: Order) => void;
+  onClose: () => void;
+}
+
+function Checkout({
+  className,
+  cart,
+  total,
+  discount,
+  note,
+  isDining,
+  onCreated,
+  onClose,
+}: CheckoutProps) {
+  const [open, setOpen] = useState(false);
+  const [calcValue, setCalcValue] = useState(total.toString());
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    apiGetPayments().then((r) => {
+      setPayments(r);
+      setSelectedPayment(r.length > 0 ? r[0] : null);
+    });
+  }, [open, total]);
+
+  const change = Big(calcValue).minus(total).toNumber();
+
+  function buildOrderPayload(fulfillmentStatus?: "fulfilled") {
+    const items = cart.map((item, idx) => ({
+      rank: idx,
+      productId: item.product.id,
+      quantity: item.quantity,
+      price: item.price,
+      originalPrice: Number(item.product.price),
+      name: item.product.name,
+      cost: Number(item.product.cost),
+      productOptions: item.productOptions,
+    }));
+    const transaction = selectedPayment
+      ? {
+          type: "payment" as const,
+          amount: total,
+          gateway: { id: selectedPayment.id, name: selectedPayment.name },
+        }
+      : undefined;
+    return {
+      items,
+      discount,
+      isDining,
+      note: note || undefined,
+      transaction,
+      financialStatus: "paid" as const,
+      fulfillmentStatus,
+    };
+  }
+
+  async function handlePay() {
+    if (!selectedPayment) return;
+    setIsSubmitting(true);
+    const order = await apiCreateOrder(buildOrderPayload());
+    toast.success("訂單已建立");
+    setOpen(false);
+    onCreated(order);
+    onClose();
+    setIsSubmitting(false);
+  }
+
+  async function handlePayAndFulfill() {
+    if (!selectedPayment) return;
+    setIsSubmitting(true);
+    const order = await apiCreateOrder(buildOrderPayload("fulfilled"));
+    toast.success("訂單已建立並出餐");
+    setOpen(false);
+    onCreated(order);
+    onClose();
+    setIsSubmitting(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="xl" className={className} disabled={cart.length === 0}>
+          立即結帳
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>付款方式</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <div className="flex space-y-1 justify-between font-semibold text-2xl">
+            <div className="flex ">
+              <span>總額: </span>
+              <span>${Number(total) || 0}</span>
+            </div>
+            <div className="flex justify-end gap-2 text-2xl text-muted-foreground font-semibold">
+              <span>找零:</span>
+              <span>${change > 0 ? change : 0}</span>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            {/* Payment selection */}
+            <div className="flex flex-col flex-wrap w-[50%] gap-2">
+              {payments.map((p) => (
+                <Button
+                  key={p.id}
+                  size="xl"
+                  variant={selectedPayment?.id === p.id ? "default" : "outline"}
+                  onClick={() => setSelectedPayment(p)}
+                >
+                  {p.name}
+                </Button>
+              ))}
+            </div>
+
+            {/* Calculator */}
+            <div className="flex-1 flex flex-col gap-4">
+              {/* Short keys */}
+              <div className="flex flex-col justify-between gap-2">
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue(`100`)}
+                  >
+                    $100
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue(`200`)}
+                  >
+                    $200
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue(`500`)}
+                  >
+                    $500
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue(`1000`)}
+                  >
+                    $1000
+                  </Button>
+                </div>
+              </div>
+              <Calculator
+                value={calcValue}
+                onChange={setCalcValue}
+                disableMonitor={false}
+                disableAction={true}
+              />
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              size="xl"
+              variant="destructive"
+              onClick={handlePay}
+              disabled={isSubmitting || !selectedPayment}
+            >
+              付款
+            </Button>
+            <Button
+              size="xl"
+              onClick={handlePayAndFulfill}
+              disabled={isSubmitting || !selectedPayment}
+            >
+              結清出貨
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -409,22 +603,32 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   onChange={(e) => setNote(e.target.value)}
                 />
               </Scroller>
-              <div className="flex grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 <Button
                   size="xl"
-                  className="col-span-2"
+                  className="col-span-1"
                   variant="outline"
                   onClick={handleClose}
                 >
                   取消
                 </Button>
+                <Checkout
+                  className="col-span-2"
+                  cart={cart}
+                  total={total}
+                  discount={discount}
+                  note={note}
+                  isDining={isDining}
+                  onCreated={onCreated}
+                  onClose={handleClose}
+                />
                 <Button
                   size="xl"
-                  className="col-span-3"
+                  className="col-span-2"
                   onClick={handleSubmit}
                   disabled={isSubmitting || cart.length === 0}
                 >
-                  {isSubmitting ? "建立中..." : "建立訂單"}
+                  {isSubmitting ? "建立中..." : "稍後結帳"}
                 </Button>
               </div>
             </div>

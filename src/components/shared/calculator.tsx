@@ -6,20 +6,28 @@ import { Button } from "@/components/ui/button";
 
 interface CalculatorProps {
   defaultValue?: string;
+  value?: string;
   onChange?: (value: string) => void;
   onConfirm?: (value: string) => void;
   disableDot?: boolean;
   disableMonitor?: boolean;
+  disableAction?: boolean;
 }
 
 export function Calculator({
   defaultValue = "0",
+  value,
   onChange,
   onConfirm,
   disableDot,
   disableMonitor,
+  disableAction,
 }: CalculatorProps) {
-  const [display, setDisplay] = useState(defaultValue);
+  const [display, setDisplay] = useState(value ?? defaultValue);
+
+  if (value !== undefined && value !== display) {
+    setDisplay(value);
+  }
 
   function press(key: string) {
     let next: string;
@@ -67,7 +75,12 @@ export function Calculator({
             {k}
           </Button>
         ))}
-        <Button size="xl" variant="secondary" onClick={toggleSign}>
+        <Button
+          size="xl"
+          variant="secondary"
+          disabled={disableAction}
+          onClick={toggleSign}
+        >
           +/-
         </Button>
 
@@ -80,6 +93,7 @@ export function Calculator({
           size="xl"
           variant="secondary"
           className="row-span-2 h-full"
+          disabled={disableAction}
           onClick={() => onConfirm?.(display)}
         >
           <CornerDownLeft />
