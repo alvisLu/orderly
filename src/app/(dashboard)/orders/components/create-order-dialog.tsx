@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -128,7 +127,6 @@ export function CreateOrderDialog({ onCreated }: Props) {
   const [sortAsc, setSortAsc] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [note, setNote] = useState("");
-  const [userNote, setUserNote] = useState("");
   const [configProduct, setConfigProduct] = useState<Product | null>(null);
   const [editingCartIndex, setEditingCartIndex] = useState<number | null>(null);
   const [configResetKey, setConfigResetKey] = useState(0);
@@ -262,8 +260,21 @@ export function CreateOrderDialog({ onCreated }: Props) {
       sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     );
 
-  const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const total = subtotal - discount;
+  const subtotal = cart
+    .reduce((sum, item) => {
+      const optionsTotal = item.productOptions.reduce(
+        (s, o) => s.plus(Big(o.price).times(o.quantity)),
+        Big(0)
+      );
+      return sum.plus(Big(item.price).times(item.quantity)).plus(optionsTotal);
+    }, Big(0))
+    .toNumber();
+
+  const total = Big(subtotal).minus(discount).toNumber();
+
+  async function handleClose() {
+    handleOpen(false);
+  }
 
   async function handleSubmit() {
     if (cart.length === 0) {
@@ -283,7 +294,6 @@ export function CreateOrderDialog({ onCreated }: Props) {
         discount,
         isDining,
         note: note || undefined,
-        userNote: userNote || undefined,
       });
       toast.success("訂單已建立");
       handleOpen(false);
@@ -342,7 +352,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
                               <div className="flex flex-wrap gap-1">
                                 {item.productOptions.map((option, i) => (
                                   <Badge key={i} variant="secondary">
-                                    {option.name}
+                                    {`${option.name} ${option.price > 0 ? `+${option.price}` : ""}`}
                                   </Badge>
                                 ))}
                               </div>
@@ -391,42 +401,34 @@ export function CreateOrderDialog({ onCreated }: Props) {
                 <span className="text-lg">${total}</span>
               </div>
 
-              <Tabs defaultValue="note">
-                <TabsList>
-                  <TabsTrigger value="note">店內備註</TabsTrigger>
-                  <TabsTrigger value="userNote">客戶備註</TabsTrigger>
-                </TabsList>
-                <TabsContent value="note">
-                  <Scroller
-                    asChild
-                    className="h-24 resize-none text-base bg-amber-50 border-amber-200 placeholder:text-amber-400"
-                  >
-                    <Textarea
-                      placeholder="新增店內備註..."
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                    />
-                  </Scroller>
-                </TabsContent>
-                <TabsContent value="userNote">
-                  <Scroller asChild className="h-24 resize-none text-base">
-                    <Textarea
-                      placeholder="客戶備註..."
-                      value={userNote}
-                      onChange={(e) => setUserNote(e.target.value)}
-                    />
-                  </Scroller>
-                </TabsContent>
-              </Tabs>
-
-              <Button
-                size="xl"
-                className="w-full"
-                onClick={handleSubmit}
-                disabled={isSubmitting || cart.length === 0}
+              <Scroller
+                asChild
+                className="h-24 resize-none text-base bg-muted placeholder:text-muted-foreground"
               >
-                {isSubmitting ? "建立中..." : "建立訂單"}
-              </Button>
+                <Textarea
+                  placeholder="店內備註..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </Scroller>
+              <div className="flex grid grid-cols-5 gap-2">
+                <Button
+                  size="xl"
+                  className="col-span-2"
+                  variant="outline"
+                  onClick={handleClose}
+                >
+                  取消
+                </Button>
+                <Button
+                  size="xl"
+                  className="col-span-3"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || cart.length === 0}
+                >
+                  {isSubmitting ? "建立中..." : "建立訂單"}
+                </Button>
+              </div>
             </div>
           </div>
 

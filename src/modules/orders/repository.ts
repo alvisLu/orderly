@@ -13,9 +13,13 @@ const include = {
   lineItems: { include: { product: true } },
 } as const;
 
-export async function findAllOrders(query: OrderQuery): Promise<PaginatedOrders> {
+export async function findAllOrders(
+  query: OrderQuery
+): Promise<PaginatedOrders> {
   const { status, page, limit } = query;
-  const skip = Big(page - 1).times(limit).toNumber();
+  const skip = Big(page - 1)
+    .times(limit)
+    .toNumber();
   const where = {
     deletedAt: null,
     ...(status && { status }),
@@ -39,7 +43,10 @@ export async function findAllOrders(query: OrderQuery): Promise<PaginatedOrders>
 
 export async function findOrderById(id: string): Promise<Order | null> {
   try {
-    return await prisma.order.findFirst({ where: { id, deletedAt: null }, include });
+    return await prisma.order.findFirst({
+      where: { id, deletedAt: null },
+      include,
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }
@@ -58,6 +65,7 @@ export async function insertOrder(input: CreateOrderInput): Promise<Order> {
     }, Big(0))
     .minus(discount)
     .toNumber();
+
 
   try {
     return await prisma.order.create({
@@ -92,7 +100,10 @@ export async function updateOrder(
 
 export async function softDeleteOrder(id: string): Promise<void> {
   try {
-    await prisma.order.update({ where: { id }, data: { deletedAt: new Date() } });
+    await prisma.order.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }
