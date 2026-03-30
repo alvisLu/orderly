@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Calculator } from "@/components/shared/calculator";
 import {
   Sheet,
   SheetContent,
@@ -80,7 +81,9 @@ export function ProductConfigSheet({
   const [customPrice, setCustomPrice] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({});
-
+  const [calcTarget, setCalcTarget] = useState<"price" | "quantity" | null>(
+    null
+  );
   // Reset state when product or resetKey changes
   const [lastResetSignal, setLastResetSignal] = useState<string | null>(null);
   const resetSignal = product ? `${product.id}::${resetKey ?? ""}` : null;
@@ -133,6 +136,25 @@ export function ProductConfigSheet({
     });
   }
 
+  function openCalc(target: "price" | "quantity") {
+    setCalcTarget(target);
+  }
+
+  function calcDefaultValue() {
+    return calcTarget === "price"
+      ? String(discountMode === "自訂" ? customPrice : computedPrice)
+      : String(quantity);
+  }
+
+  function handleCalcChange(val: string) {
+    if (calcTarget === "price") {
+      setDiscountMode("自訂");
+      setCustomPrice(parseFloat(val) || 0);
+    } else if (calcTarget === "quantity") {
+      setQuantity(parseInt(val) || 0);
+    }
+  }
+
   function handleConfirm() {
     onConfirm({ quantity, price: computedPrice, selectedOptions });
   }
@@ -149,6 +171,15 @@ export function ProductConfigSheet({
         showCloseButton={false}
         className="data-[side=right]:w-[34rem] data-[side=right]:sm:max-w-[34rem] p-0 gap-0 flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onMouseDown={(e) => {
+          if (
+            !(e.target as HTMLElement).closest(
+              "[data-calculator], input, textarea"
+            )
+          ) {
+            setCalcTarget(null);
+          }
+        }}
       >
         <SheetHeader className="px-4 py-3 border-b shrink-0">
           <SheetTitle className="text-lg">{product.name}</SheetTitle>
@@ -163,11 +194,13 @@ export function ProductConfigSheet({
               </span>
               <Input
                 type="number"
+                inputMode="none"
                 value={discountMode === "自訂" ? customPrice : computedPrice}
                 onChange={(e) => {
                   setDiscountMode("自訂");
                   setCustomPrice(Number(e.target.value));
                 }}
+                onFocus={() => openCalc("price")}
                 size="xl"
                 className="flex-1 text-right"
               />
@@ -224,10 +257,12 @@ export function ProductConfigSheet({
               </span>
               <Input
                 type="number"
+                inputMode="none"
                 value={quantity}
                 onChange={(e) =>
                   setQuantity(Math.max(1, Number(e.target.value)))
                 }
+                onFocus={() => openCalc("quantity")}
                 size="xl"
                 className="flex-1 text-right"
               />
@@ -252,6 +287,21 @@ export function ProductConfigSheet({
               })}
             </div>
           </div>
+
+          {/* Calculator */}
+          {calcTarget && (
+            <div data-calculator>
+              <Separator className="mb-1.5" />
+              <Calculator
+                key={calcTarget}
+                defaultValue={calcDefaultValue()}
+                onChange={handleCalcChange}
+                onConfirm={() => setCalcTarget(null)}
+                disableDot={calcTarget === "quantity"}
+                disableMonitor={true}
+              />
+            </div>
+          )}
 
           {/* Product Types */}
           {product.productTypes.map(({ productType }) => {
