@@ -1,4 +1,9 @@
-import type { Prisma, OrderStatus, OrderFinancialStatus, OrderFulfillmentStatus } from "@/generated/prisma/client";
+import type {
+  Prisma,
+  OrderStatus,
+  OrderFinancialStatus,
+  OrderFulfillmentStatus,
+} from "@/generated/prisma/client";
 
 export type Order = Prisma.OrderGetPayload<{
   include: { lineItems: { include: { product: true } } };
@@ -16,6 +21,7 @@ export type CreateOrderItemInput = {
   productId: string;
   quantity: number;
   price: number;
+  originalPrice: number;
   productOptions: LineItemOption[];
 };
 

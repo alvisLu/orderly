@@ -1,13 +1,13 @@
-import Big from "big.js";
 import { prisma } from "@/lib/prisma";
 import { DatabaseError } from "@/lib/http-error";
+import type { Prisma } from "@/generated/prisma/client";
 import type {
-  CreateOrderInput,
   Order,
   OrderQuery,
   PaginatedOrders,
   UpdateOrderInput,
 } from "./types";
+import Big from "big.js";
 
 const include = {
   lineItems: { include: { product: true } },
@@ -52,34 +52,12 @@ export async function findOrderById(id: string): Promise<Order | null> {
   }
 }
 
-export async function insertOrder(input: CreateOrderInput): Promise<Order> {
-  const { items, discount, ...rest } = input;
-
-  const total = items
-    .reduce((sum, item) => {
-      const optionsTotal = item.productOptions.reduce(
-        (s, o) => s.plus(Big(o.price).times(o.quantity)),
-        Big(0)
-      );
-      return sum.plus(Big(item.price).times(item.quantity)).plus(optionsTotal);
-    }, Big(0))
-    .minus(discount)
-    .toNumber();
-
-
+export async function insertOrder(
+  data: Prisma.OrderCreateInput
+): Promise<Order> {
   try {
     return await prisma.order.create({
-      data: {
-        ...rest,
-        discount,
-        total,
-        lineItems: {
-          create: items.map(({ productOptions, ...item }) => ({
-            ...item,
-            itemOptions: productOptions,
-          })),
-        },
-      },
+      data,
       include,
     });
   } catch (e) {

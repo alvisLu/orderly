@@ -282,27 +282,23 @@ export function CreateOrderDialog({ onCreated }: Props) {
       return;
     }
     setIsSubmitting(true);
-    try {
-      const order = await apiCreateOrder({
-        items: cart.map((item, idx) => ({
-          rank: idx,
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.price,
-          productOptions: item.productOptions,
-        })),
-        discount,
-        isDining,
-        note: note || undefined,
-      });
-      toast.success("訂單已建立");
-      handleOpen(false);
-      onCreated(order);
-    } catch {
-      toast.error("建立訂單失敗");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const order = await apiCreateOrder({
+      items: cart.map((item, idx) => ({
+        rank: idx,
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.price,
+        originalPrice: Number(item.product.price),
+        productOptions: item.productOptions,
+      })),
+      discount,
+      isDining,
+      note: note || undefined,
+    });
+    toast.success("訂單已建立");
+    handleOpen(false);
+    onCreated(order);
+    setIsSubmitting(false);
   }
 
   return (

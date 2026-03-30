@@ -96,7 +96,10 @@ export async function updateProduct(
         await tx.productToProductType.deleteMany({ where: { productId: id } });
         if (productTypeIds.length > 0) {
           await tx.productToProductType.createMany({
-            data: productTypeIds.map((productTypeId) => ({ productId: id, productTypeId })),
+            data: productTypeIds.map((productTypeId) => ({
+              productId: id,
+              productTypeId,
+            })),
           });
         }
       }

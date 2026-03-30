@@ -13,6 +13,7 @@ const createOrderItemDto = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().positive(),
   price: z.number().nonnegative(),
+  originalPrice: z.number().nonnegative(),
   productOptions: z.array(lineItemOptionDto).default([]),
 });
 
