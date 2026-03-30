@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
-  Minus,
-  Plus,
   Trash2,
   ShoppingCart,
   Settings2,
@@ -174,16 +172,8 @@ export function CreateOrderDialog({ onCreated }: Props) {
     setConfigInitialValues(null);
   }
 
-  function updateQty(productId: string, delta: number) {
-    setCart((prev) =>
-      prev
-        .map((i) =>
-          i.product.id === productId
-            ? { ...i, quantity: i.quantity + delta }
-            : i
-        )
-        .filter((i) => i.quantity > 0)
-    );
+  function removeCartItem(idx: number) {
+    setCart((prev) => [...prev.slice(0, idx), ...prev.slice(idx + 1)]);
   }
 
   const filtered = products
@@ -242,7 +232,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
       <DialogContent className="!w-full !h-full !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
         <div className="flex h-full overflow-hidden">
           {/* Cart */}
-          <div className="w-80 min-h-0 flex flex-col overflow-hidden border-r">
+          <div className="w-95 min-h-0 flex flex-col overflow-hidden border-r">
             <div className="flex items-center gap-2 px-4 py-3 border-b">
               <ShoppingCart />
               <span className="font-semibold text-base">共</span>
@@ -264,51 +254,47 @@ export function CreateOrderDialog({ onCreated }: Props) {
                   點擊商品加入購物車
                 </p>
               ) : (
-                cart.map((item) => (
+                cart.map((item, idx) => (
                   <div key={item.product.id} className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="flex-1 min-w-0 text-left hover:bg-accent rounded transition-colors px-1"
+                        className="flex-1 min-w-0  text-left bg-accent rounded transition-colors px-2"
                         onClick={() => handleCartItemEdit(cart.indexOf(item))}
                       >
-                        <p className="text-xl font-medium line-clamp-1">
-                          {item.product.name}
-                        </p>
-                        <p className="text-base text-muted-foreground">
-                          ${item.price} × {item.quantity} = $
-                          {item.price * item.quantity}
-                        </p>
+                        <div className="flex items-center justify-between px-1 py-2">
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <p className="text-xl font-medium line-clamp-1">
+                              {item.product.name}
+                            </p>
+                            {item.productOptions.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {item.productOptions.map((option, i) => (
+                                  <Badge key={i} variant="secondary">
+                                    {option.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-center justify-between shrink-0 text-base">
+                            <span className="text-muted-foreground">
+                              {`×${item.quantity}`}
+                            </span>
+                            <span className="font-semibold">
+                              ${item.price * item.quantity}
+                            </span>
+                          </div>
+                        </div>
                       </button>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQty(item.product.id, -1)}
-                        >
-                          {item.quantity === 1 ? <Trash2 /> : <Minus />}
-                        </Button>
-                        <span className="w-6 text-center text-base">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQty(item.product.id, 1)}
-                        >
-                          <Plus />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeCartItem(idx)}
+                      >
+                        <Trash2 />
+                      </Button>
                     </div>
-                    {item.productOptions.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {item.productOptions.map((option, i) => (
-                          <Badge key={i} variant="secondary">
-                            {option.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))
               )}
