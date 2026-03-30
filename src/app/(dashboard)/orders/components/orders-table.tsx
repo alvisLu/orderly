@@ -14,6 +14,7 @@ import {
   FulfillmentStatusBadge,
 } from "./order-status-badge";
 import { OrderDetailSheet } from "./order-detail-sheet";
+import Big from "big.js";
 
 function getColumns(
   onView: (order: Order) => void,
@@ -50,6 +51,28 @@ function getColumns(
       id: "total",
       header: "金額",
       cell: ({ row }) => `$${Number(row.original.total)}`,
+    },
+    {
+      id: "discount",
+      header: "折扣",
+      cell: ({ row }) => {
+        const lineItemDiscount = row.original.lineItems.reduce(
+          (sum, item) =>
+            sum.plus(
+              item.originalPrice
+                ? Big(Number(item.originalPrice))
+                    .minus(Number(item.price))
+                    .times(item.quantity)
+                : 0
+            ),
+          Big(0)
+        );
+        const discount = Big(Number(row.original.discount)).plus(
+          lineItemDiscount
+        );
+
+        return discount.gt(0) ? `-$${discount.toNumber()}` : "$0";
+      },
     },
     {
       id: "status",

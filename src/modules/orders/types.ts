@@ -22,6 +22,8 @@ export type CreateOrderItemInput = {
   quantity: number;
   price: number;
   originalPrice: number;
+  name: string;
+  cost: number;
   productOptions: LineItemOption[];
 };
 

@@ -14,6 +14,8 @@ const createOrderItemDto = z.object({
   quantity: z.number().int().positive(),
   price: z.number().nonnegative(),
   originalPrice: z.number().nonnegative(),
+  name: z.string().min(1),
+  cost: z.number().nonnegative(),
   productOptions: z.array(lineItemOptionDto).default([]),
 });
 

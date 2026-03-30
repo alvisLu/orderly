@@ -2,6 +2,8 @@ model LineItem {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   originalPrice Decimal  @db.Decimal(10, 2)
   price         Decimal  @db.Decimal(10, 2)
+  cost          Decimal  @db.Decimal(10, 2)
+  name          String   @db.VarChar(255)
   quantity      Int      @default(1)
   rank          Int      @default(0)
   orderId       String?  @map("order_id") @db.Uuid

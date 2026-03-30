@@ -289,6 +289,8 @@ export function CreateOrderDialog({ onCreated }: Props) {
         quantity: item.quantity,
         price: item.price,
         originalPrice: Number(item.product.price),
+        name: item.product.name,
+        cost: Number(item.product.cost),
         productOptions: item.productOptions,
       })),
       discount,

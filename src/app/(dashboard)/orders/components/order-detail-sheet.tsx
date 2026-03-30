@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import dayjs from "dayjs";
-import { ChevronDown, Lock, User, Store } from "lucide-react";
+import { ChevronDown, Lock, User, Store, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,12 @@ import {
   apiUpdateOrder,
   apiDeleteOrder,
 } from "@/app/api/orders/api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   orderId: string | null;
@@ -291,7 +297,7 @@ export function OrderDetailSheet({
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-blue-600">
-                              {item.product?.name ?? "已刪除商品"}
+                              {item.name}
                             </p>
                             {options.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
@@ -309,10 +315,28 @@ export function OrderDetailSheet({
                             )}
                           </div>
                           <div className="text-right text-sm space-y-1 flex-shrink-0">
-                            <p className="text-muted-foreground">
-                              {Number(item.price)} TWD × {item.quantity}
-                            </p>
-                            <p className="font-medium">{itemTotal} TWD</p>
+                            <div className="flex flex-row items-center justify-end gap-1">
+                              <p className="text-muted-foreground">
+                                {item.quantity} ×
+                              </p>
+                              {item.originalPrice !== item.price ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="text-muted-foreground underline">
+                                      ${Number(item.price)}{" "}
+                                    </p>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>原價 ${Number(item.originalPrice)}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <p className="text-muted-foreground">
+                                  ${Number(item.price)}
+                                </p>
+                              )}
+                            </div>
+                            <p className="font-medium">$ {itemTotal}</p>
                           </div>
                         </div>
                       );
@@ -324,17 +348,17 @@ export function OrderDetailSheet({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">小計</span>
-                    <span>{subtotal} TWD</span>
+                    <span>$ {subtotal}</span>
                   </div>
                   {Number(order.discount) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">折扣</span>
-                      <span>-{Number(order.discount)} TWD</span>
+                      <span>-${Number(order.discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-semibold">
                     <span>總額</span>
-                    <span>{Number(order.total)} TWD</span>
+                    <span>$ {Number(order.total)}</span>
                   </div>
                 </div>
               </div>
