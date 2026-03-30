@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { Eye } from "lucide-react";
@@ -12,7 +13,7 @@ import {
   FinancialStatusBadge,
   FulfillmentStatusBadge,
 } from "./order-status-badge";
-import { EditOrderDialog } from "./edit-order-dialog";
+import { OrderDetailSheet } from "./order-detail-sheet";
 
 function getColumns(
   onView: (order: Order) => void,
@@ -84,23 +85,41 @@ function getColumns(
 export function OrdersTable({
   data,
   isLoading,
-  onView,
   onUpdated,
+  onDeleted,
   serverPagination,
 }: {
   data: Order[];
   isLoading?: boolean;
-  onView: (order: Order) => void;
   onUpdated: (order: Order) => void;
+  onDeleted: (id: string) => void;
   serverPagination?: ServerPagination;
 }) {
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  function handleView(order: Order) {
+    setSelectedOrderId(order.id);
+    setSheetOpen(true);
+  }
+
   return (
-    <DataTable
-      columns={getColumns(onView, onUpdated)}
-      data={data}
-      pagination
-      isLoading={isLoading}
-      serverPagination={serverPagination}
-    />
+    <>
+      <DataTable
+        columns={getColumns(handleView, onUpdated)}
+        data={data}
+        pagination
+        isLoading={isLoading}
+        serverPagination={serverPagination}
+      />
+
+      <OrderDetailSheet
+        orderId={selectedOrderId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onUpdated={onUpdated}
+        onDeleted={onDeleted}
+      />
+    </>
   );
 }

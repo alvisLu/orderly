@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import dayjs from "dayjs";
 import { ChevronDown, Lock, User, Store } from "lucide-react";
@@ -22,11 +22,14 @@ import {
   FulfillmentStatusBadge,
   FinancialStatusBadge,
 } from "./order-status-badge";
-import { apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
-import { Fi } from "zod/v4/locales";
+import {
+  apiGetOrder,
+  apiUpdateOrder,
+  apiDeleteOrder,
+} from "@/app/api/orders/api";
 
 interface Props {
-  order: Order | null;
+  orderId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated?: (order: Order) => void;
@@ -34,35 +37,58 @@ interface Props {
 }
 
 export function OrderDetailSheet({
-  order,
+  orderId,
   open,
   onOpenChange,
   onUpdated,
   onDeleted,
 }: Props) {
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [userNote, setUserNote] = useState(order?.userNote ?? "");
+  const [userNote, setUserNote] = useState("");
   const [isSavingNote, setIsSavingNote] = useState(false);
-  const [internalNote, setInternalNote] = useState(order?.note ?? "");
+  const [internalNote, setInternalNote] = useState("");
   const [isSavingInternalNote, setIsSavingInternalNote] = useState(false);
+
+  useEffect(() => {
+    if (!orderId) {
+      setOrder(null);
+      return;
+    }
+    setIsLoadingOrder(true);
+    apiGetOrder(orderId)
+      .then((o) => {
+        setOrder(o);
+        setUserNote(o.userNote ?? "");
+        setInternalNote(o.note ?? "");
+      })
+      .finally(() => setIsLoadingOrder(false));
+  }, [orderId]);
+
+  async function refreshOrder() {
+    if (!order) return;
+    setIsLoadingOrder(true);
+    const o = await apiGetOrder(order.id);
+    setOrder(o);
+    setUserNote(o.userNote ?? "");
+    setInternalNote(o.note ?? "");
+    setIsLoadingOrder(false);
+  }
 
   async function handleFulfillment(
     status: "pending" | "fulfilled" | "returned"
   ) {
     if (!order) return;
     setIsUpdating(true);
-    try {
-      const updated = await apiUpdateOrder(order.id, {
-        fulfillmentStatus: status,
-      });
-      onUpdated?.(updated);
-      toast.success("出餐狀態已更新");
-    } catch {
-      toast.error("更新失敗");
-    } finally {
-      setIsUpdating(false);
-    }
+    const updated = await apiUpdateOrder(order.id, {
+      fulfillmentStatus: status,
+    });
+    onUpdated?.(updated);
+    toast.success("出餐狀態已更新");
+    setIsUpdating(false);
+    await refreshOrder();
   }
 
   async function handleFinancial(status: "paid" | "refunded" | "pending") {
@@ -78,6 +104,7 @@ export function OrderDetailSheet({
       toast.error("更新失敗");
     } finally {
       setIsUpdating(false);
+      await refreshOrder();
     }
   }
 
@@ -125,7 +152,19 @@ export function OrderDetailSheet({
     }
   }
 
-  if (!order) return null;
+  if (!order) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
+          <div className="flex h-full items-center justify-center">
+            {isLoadingOrder ? (
+              <span className="text-muted-foreground text-sm">載入中...</span>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const subtotal = order.lineItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
@@ -263,9 +302,7 @@ export function OrderDetailSheet({
                                     className="text-xs font-normal"
                                   >
                                     {opt.name}
-                                    {opt.price >= 0
-                                      ? `$${opt.price}`
-                                      : `-$${Math.abs(opt.price)}`}
+                                    {opt.price > 0 ? ` $${opt.price}` : ""}
                                   </Badge>
                                 ))}
                               </div>

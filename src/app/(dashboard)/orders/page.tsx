@@ -5,7 +5,6 @@ import { apiGetOrders } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { OrdersTable } from "./components/orders-table";
-import { OrderDetailSheet } from "./components/order-detail-sheet";
 import { CreateOrderDialog } from "./components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 
@@ -24,9 +23,6 @@ export default function OrdersPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-
   useEffect(() => {
     startLoading(async () => {
       const res = await apiGetOrders({
@@ -39,19 +35,12 @@ export default function OrdersPage() {
     });
   }, [status, pageIndex, pageSize]);
 
-  function handleView(order: Order) {
-    setSelectedOrder(order);
-    setSheetOpen(true);
-  }
-
   function handleUpdated(updated: Order) {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
-    setSelectedOrder(updated);
   }
 
   function handleDeleted(id: string) {
     setOrders((prev) => prev.filter((o) => o.id !== id));
-    setSelectedOrder(null);
   }
 
   return (
@@ -80,8 +69,8 @@ export default function OrdersPage() {
         <OrdersTable
           data={orders}
           isLoading={isLoading}
-          onView={handleView}
           onUpdated={handleUpdated}
+          onDeleted={handleDeleted}
           serverPagination={{
             total,
             pageIndex,
@@ -94,14 +83,6 @@ export default function OrdersPage() {
           }}
         />
       </div>
-
-      <OrderDetailSheet
-        order={selectedOrder}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onUpdated={handleUpdated}
-        onDeleted={handleDeleted}
-      />
     </div>
   );
 }
