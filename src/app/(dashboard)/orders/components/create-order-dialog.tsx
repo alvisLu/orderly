@@ -15,6 +15,8 @@ import { apiCreateOrder } from "@/app/api/orders/api";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -32,6 +34,76 @@ import {
   ProductConfigSheet,
   type ProductConfigResult,
 } from "./product-config-sheet";
+import { Calculator } from "@/components/shared/calculator";
+import Big from "big.js";
+interface CalcDiscountProps {
+  subtotal: number;
+  setDiscount: (discount: number) => void;
+}
+
+type DiscountType = "fixedAmount" | "percentage";
+
+const DISCOUNT_TYPE: Record<DiscountType, string> = {
+  fixedAmount: "固定折扣",
+  percentage: "百分比折扣",
+};
+
+function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
+  const [discountPrice, setDiscountPrice] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [calcType, setCalcType] = useState<"fixedAmount" | "percentage">(
+    "fixedAmount"
+  );
+
+  function handleCalcChange(val: string) {
+    setDiscountPrice(Number(val));
+  }
+
+  function handleConfirm() {
+    setDiscount(
+      calcType === "fixedAmount"
+        ? discountPrice
+        : Big(discountPrice).div(100).times(subtotal).toNumber()
+    );
+
+    setDiscountPrice(0);
+    setCalcType("fixedAmount");
+    setOpen(false);
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger>
+        <Button size="lg">折扣</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>折扣設定</DialogTitle>
+          <DialogDescription>
+            <div className="flex gap-2 mb-2">
+              {(Object.keys(DISCOUNT_TYPE) as DiscountType[]).map((type) => (
+                <Button
+                  key={type}
+                  size="xl"
+                  variant={calcType === type ? "default" : "outline"}
+                  onClick={() => {
+                    setCalcType(type);
+                  }}
+                >
+                  {DISCOUNT_TYPE[type]}
+                </Button>
+              ))}
+            </div>
+            <Calculator
+              defaultValue={discountPrice.toString()}
+              onChange={handleCalcChange}
+              onConfirm={handleConfirm}
+            />
+          </DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface CartItem {
   product: Product;
@@ -39,7 +111,6 @@ interface CartItem {
   price: number;
   productOptions: LineItemOption[];
 }
-
 interface Props {
   onCreated: (order: Order) => void;
 }
@@ -192,7 +263,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
     );
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const total = Math.max(0, subtotal - discount);
+  const total = subtotal - discount;
 
   async function handleSubmit() {
     if (cart.length === 0) {
@@ -303,23 +374,16 @@ export function CreateOrderDialog({ onCreated }: Props) {
             {/* Summary */}
             <div className="border-t px-4 py-4 space-y-3">
               <div className="flex justify-between text-base">
-                <span className="text-muted-foreground">小計</span>
+                <Button size="lg" variant="outline">
+                  小計
+                </Button>
                 <span>${subtotal}</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-base text-muted-foreground flex-1">
-                  折扣
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
-                  className="h-7 w-24 text-right"
-                />
+              <div className="flex justify-between text-base">
+                <CalcDiscount subtotal={subtotal} setDiscount={setDiscount} />
+                <span>${discount}</span>
               </div>
-
               <Separator />
 
               <div className="flex justify-between font-semibold">
@@ -495,6 +559,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
           </div>
         </div>
       </DialogContent>
+
       <ProductConfigSheet
         product={configProduct}
         onConfirm={handleConfigConfirm}
