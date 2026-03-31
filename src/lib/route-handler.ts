@@ -1,27 +1,36 @@
 import { ZodError } from "zod";
 import { HttpError, UnauthorizedError } from "./http-error";
-import { createAuthClient } from "./supabase/server";
+import { createAuthClient, createClient } from "./supabase/server";
 
 type RouteHandler = (
   request: Request,
   context: { params: Promise<Record<string, string>> }
 ) => Promise<Response>;
 
-async function authenticate() {
+async function authenticate(request: Request) {
+  const authHeader = request.headers.get("Authorization");
+
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const { data: { user } } = await createClient().auth.getUser(token);
+    if (!user) throw new UnauthorizedError();
+    return user;
+  }
+
   const supabase = await createAuthClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new UnauthorizedError();
   return user;
 }
 
-export function protectedRouteHandler(
+export function authRouteHandler(
   handler: (
     request: Request,
     context: { params: Promise<Record<string, string>>; user: { id: string } }
   ) => Promise<Response>
 ): RouteHandler {
   return routeHandler(async (request, context) => {
-    const user = await authenticate();
+    const user = await authenticate(request);
     return handler(request, { ...context, user });
   });
 }
