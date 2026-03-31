@@ -25,7 +25,7 @@ export async function findAllOrders(
     ...(status && { status }),
   };
   try {
-    const [rows, total] = await prisma.$transaction([
+    const [rows, total] = await Promise.all([
       prisma.order.findMany({
         where,
         orderBy: { createdAt: "desc" },

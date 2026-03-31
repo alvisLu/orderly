@@ -19,16 +19,14 @@ apiClient.interceptors.response.use(
         const code = error.response?.data?.code ?? "";
 
         if (message === "Validation failed") {
-          return Promise.reject(
-            toast.error(
-              `Validation error: [${message}] ${error.response?.data?.fields.map((f: any) => `${f.path}: ${f.message}`).join(", ")}`
-            )
-          );
+          const ValidationErrorMsg = `Validation error: [${message}] ${error.response?.data?.fields.map((f: any) => `${f.path}: ${f.message}`).join(", ")}`;
+          console.error(ValidationErrorMsg);
+          return Promise.reject(toast.error(ValidationErrorMsg));
         }
 
-        return Promise.reject(
-          toast.error(`Request error: [${code}] ${message}`)
-        );
+        const RequestErrorMsg = `Request error: [${code}] ${message}`;
+        console.error(RequestErrorMsg);
+        return Promise.reject(toast.error(RequestErrorMsg));
       }
       if (status === 401) {
         window.location.href = "/login";
@@ -36,7 +34,9 @@ apiClient.interceptors.response.use(
       const message = error.response?.data?.error ?? error.message;
       const code = error.response?.data?.code ?? "";
 
-      return Promise.reject(toast.error(`Server error: [${code}] ${message}`));
+      const ServerErrorMsg = `Server error: [${code}] ${message}`;
+      console.error(ServerErrorMsg);
+      return Promise.reject(toast.error(ServerErrorMsg));
     }
     return Promise.reject(error);
   }
