@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "fmt": "prettier --write .",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev --create-only",
+    "db:resolve": "prisma migrate resolve",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "NODE_OPTIONS=--experimental-require-module prisma generate",
     "db:studio": "prisma studio"
