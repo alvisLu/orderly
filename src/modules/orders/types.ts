@@ -5,6 +5,8 @@ import type {
   OrderFulfillmentStatus,
 } from "@/generated/prisma/client";
 
+export type OrderSource = "store" | "qrcode" | "online";
+
 export type Order = Prisma.OrderGetPayload<{
   include: { lineItems: { include: { product: true } } };
 }>;
@@ -32,8 +34,10 @@ export type Gateway = {
   name: string;
 };
 
+export type TransactionType = "checkout" | "refund";
+
 export type OrderTransactionInput = {
-  type: string;
+  type: TransactionType;
   amount: number;
   gateway: Gateway;
   note?: string;
@@ -46,7 +50,7 @@ export type CreateOrderInput = {
   isDining?: boolean;
   userPhone?: string;
   userNote?: string;
-  source?: string;
+  source: OrderSource;
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;
   transaction?: OrderTransactionInput;

@@ -26,7 +26,7 @@ export const createOrderDto = z.object({
   isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
   userNote: z.string().optional(),
-  source: z.string().optional(),
+  source: z.enum(["store", "qrcode", "online"]),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
 });

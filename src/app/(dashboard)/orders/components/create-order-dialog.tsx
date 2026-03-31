@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/modules/products/types";
-import type { Order, LineItemOption } from "@/modules/orders/types";
+import type { Order, LineItemOption, CreateOrderInput } from "@/modules/orders/types";
 import {
   ProductConfigSheet,
   type ProductConfigResult,
@@ -107,22 +107,18 @@ function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
 }
 interface CheckoutProps {
   className?: string;
-  cart: CartItem[];
+  disabled?: boolean;
+  buildPayload: (opts?: { selectedPayment?: Payment | null; total?: number; fulfillmentStatus?: "fulfilled" }) => CreateOrderInput;
   total: number;
-  discount: number;
-  note: string;
-  isDining: boolean;
   onCreated: (order: Order) => void;
   onClose: () => void;
 }
 
 function Checkout({
   className,
-  cart,
+  disabled,
+  buildPayload,
   total,
-  discount,
-  note,
-  isDining,
   onCreated,
   onClose,
 }: CheckoutProps) {
@@ -142,61 +138,38 @@ function Checkout({
 
   const change = Big(calcValue).minus(total).toNumber();
 
-  function buildOrderPayload(fulfillmentStatus?: "fulfilled") {
-    const items = cart.map((item, idx) => ({
-      rank: idx,
-      productId: item.product.id,
-      quantity: item.quantity,
-      price: item.price,
-      originalPrice: Number(item.product.price),
-      name: item.product.name,
-      cost: Number(item.product.cost),
-      productOptions: item.productOptions,
-    }));
-    const transaction = selectedPayment
-      ? {
-          type: "payment" as const,
-          amount: total,
-          gateway: { id: selectedPayment.id, name: selectedPayment.name },
-        }
-      : undefined;
-    return {
-      items,
-      discount,
-      isDining,
-      note: note || undefined,
-      transaction,
-      financialStatus: "paid" as const,
-      fulfillmentStatus,
-    };
-  }
-
   async function handlePay() {
     if (!selectedPayment) return;
     setIsSubmitting(true);
-    const order = await apiCreateOrder(buildOrderPayload());
-    toast.success("訂單已建立");
-    setOpen(false);
-    onCreated(order);
-    onClose();
-    setIsSubmitting(false);
+    try {
+      const order = await apiCreateOrder(buildPayload({ selectedPayment, total }));
+      toast.success("訂單已建立");
+      setOpen(false);
+      onCreated(order);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handlePayAndFulfill() {
     if (!selectedPayment) return;
     setIsSubmitting(true);
-    const order = await apiCreateOrder(buildOrderPayload("fulfilled"));
-    toast.success("訂單已建立並出餐");
-    setOpen(false);
-    onCreated(order);
-    onClose();
-    setIsSubmitting(false);
+    try {
+      const order = await apiCreateOrder(buildPayload({ selectedPayment, total, fulfillmentStatus: "fulfilled" }));
+      toast.success("訂單已建立並出餐");
+      setOpen(false);
+      onCreated(order);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="xl" className={className} disabled={cart.length === 0}>
+        <Button size="xl" className={className} disabled={disabled}>
           立即結帳
         </Button>
       </DialogTrigger>
@@ -466,6 +439,36 @@ export function CreateOrderDialog({ onCreated }: Props) {
 
   const total = Big(subtotal).minus(discount).toNumber();
 
+  function buildOrderPayload(opts?: { selectedPayment?: Payment | null; total?: number; fulfillmentStatus?: "fulfilled" }): CreateOrderInput {
+    const items = cart.map((item, idx) => ({
+      rank: idx,
+      productId: item.product.id,
+      quantity: item.quantity,
+      price: item.price,
+      originalPrice: Number(item.product.price),
+      name: item.product.name,
+      cost: Number(item.product.cost),
+      productOptions: item.productOptions,
+    }));
+    const transaction = opts?.selectedPayment
+      ? {
+          type: "checkout" as const,
+          amount: opts.total ?? 0,
+          gateway: { id: opts.selectedPayment.id, name: opts.selectedPayment.name },
+        }
+      : undefined;
+    return {
+      items,
+      discount,
+      isDining,
+      note: note || undefined,
+      source: "store",
+      transaction,
+      financialStatus: opts?.selectedPayment ? "paid" : undefined,
+      fulfillmentStatus: opts?.fulfillmentStatus,
+    };
+  }
+
   async function handleClose() {
     handleOpen(false);
   }
@@ -476,21 +479,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
       return;
     }
     setIsSubmitting(true);
-    const order = await apiCreateOrder({
-      items: cart.map((item, idx) => ({
-        rank: idx,
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: item.price,
-        originalPrice: Number(item.product.price),
-        name: item.product.name,
-        cost: Number(item.product.cost),
-        productOptions: item.productOptions,
-      })),
-      discount,
-      isDining,
-      note: note || undefined,
-    });
+    const order = await apiCreateOrder(buildOrderPayload());
     toast.success("訂單已建立");
     handleOpen(false);
     onCreated(order);
@@ -614,11 +603,9 @@ export function CreateOrderDialog({ onCreated }: Props) {
                 </Button>
                 <Checkout
                   className="col-span-2"
-                  cart={cart}
+                  disabled={cart.length === 0}
+                  buildPayload={buildOrderPayload}
                   total={total}
-                  discount={discount}
-                  note={note}
-                  isDining={isDining}
                   onCreated={onCreated}
                   onClose={handleClose}
                 />
