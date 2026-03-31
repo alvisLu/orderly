@@ -1,3 +1,5 @@
+import { HttpStatusCode } from "axios";
+
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -18,6 +20,12 @@ export class DatabaseError extends HttpError {
   }
 }
 
+export class UnauthorizedError extends HttpError {
+  constructor() {
+    super(HttpStatusCode.Forbidden, "未登入或 session 已過期", "0001");
+    this.name = "UnauthorizedError";
+  }
+}
 export class ProductNotFoundError extends HttpError {
   constructor() {
     const status = 404;
