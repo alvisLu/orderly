@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  useRealtimeStatus,
+  type RealtimeStatus,
+} from "@/store/realtime-status";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -37,6 +41,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
+import { Status, StatusIndicator, StatusLabel } from "./ui/status";
 
 const navItems = [
   {
@@ -130,6 +135,45 @@ function NavMenuItem({ item }: { item: NavItem }) {
   );
 }
 
+const STATUS_CONFIG: Record<
+  RealtimeStatus,
+  {
+    label: string;
+    variant: "warning" | "success" | "error" | "info";
+  }
+> = {
+  connecting: {
+    label: "連線中",
+    variant: "info",
+  },
+  connected: {
+    label: "已連線",
+    variant: "success",
+  },
+  error: {
+    label: "連線錯誤",
+    variant: "warning",
+  },
+  closed: {
+    label: "已斷線",
+    variant: "error",
+  },
+};
+
+function RealtimeStatusItem() {
+  const { status } = useRealtimeStatus();
+  const config = STATUS_CONFIG[status];
+  return (
+    <>
+      <p> 通知器狀態: </p>
+      <Status variant={config.variant}>
+        <StatusIndicator />
+        <StatusLabel>{config.label}</StatusLabel>
+      </Status>
+    </>
+  );
+}
+
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
@@ -154,6 +198,11 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        <SidebarMenuItem>
+          <SidebarMenuButton className="pointer-events-none">
+            <RealtimeStatusItem />
+          </SidebarMenuButton>
+        </SidebarMenuItem>
         {navItems.map((group, i) => (
           <SidebarGroup key={group.label}>
             {i > 0 && <SidebarSeparator />}

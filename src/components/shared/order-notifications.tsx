@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { useRealtimeStatus } from "@/store/realtime-status";
 
 const SOURCE_LABEL: Record<string, string> = {
   online: "線上訂單",
@@ -14,6 +15,8 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export function OrderNotifications() {
+  const { setStatus } = useRealtimeStatus();
+
   useEffect(() => {
     const authClient = createClient();
 
@@ -51,13 +54,16 @@ export function OrderNotifications() {
         )
         .subscribe((status, err) => {
           console.log("[OrderNotifications] status:", status, err);
+          if (status === "SUBSCRIBED") setStatus("connected");
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setStatus("error");
+          else if (status === "CLOSED") setStatus("closed");
         });
 
       cleanup = () => realtimeClient!.removeChannel(channel);
     });
 
     return () => cleanup();
-  }, []);
+  }, [setStatus]);
 
   return null;
 }
