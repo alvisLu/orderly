@@ -17,8 +17,18 @@ apiClient.interceptors.response.use(
       if (status === 400) {
         const message = error.response?.data?.error ?? "請求錯誤";
         const code = error.response?.data?.code ?? "";
-        toast.error(`Request error: [${code}] ${message}`);
-        return Promise.reject(error);
+
+        if (message === "Validation failed") {
+          return Promise.reject(
+            toast.error(
+              `Validation error: [${message}] ${error.response?.data?.fields.map((f: any) => `${f.path}: ${f.message}`).join(", ")}`
+            )
+          );
+        }
+
+        return Promise.reject(
+          toast.error(`Request error: [${code}] ${message}`)
+        );
       }
       if (status === 401) {
         window.location.href = "/login";
