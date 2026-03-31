@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { OrderNotifications } from "@/components/shared/order-notifications";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +11,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <main className="flex-1 h-dvh overflow-hidden">{children}</main>
+      <OrderNotifications />
     </SidebarProvider>
   );
 }
