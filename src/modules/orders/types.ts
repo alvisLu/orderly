@@ -50,6 +50,7 @@ export type CreateOrderInput = {
   isDining?: boolean;
   userPhone?: string;
   userNote?: string;
+  tableName?: string;
   source: OrderSource;
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;

@@ -31,9 +31,18 @@ model Order {
   discount          Decimal                @db.Decimal(10, 2)
   userPhone         String?                @map("user_phone") @db.VarChar(20)
   userNote          String?
+  tableName         String?
+  takeNumber        Int?                   @map("take_number")
   createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
 
   @@map("orders")
+}
+
+model OrderCounter {
+  date       DateTime @id @db.Date
+  lastNumber Int      @default(0) @map("last_number")
+
+  @@map("order_counters")
 }

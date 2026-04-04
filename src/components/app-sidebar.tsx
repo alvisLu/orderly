@@ -161,15 +161,16 @@ const STATUS_CONFIG: Record<
 };
 
 function RealtimeStatusItem() {
-  const { status } = useRealtimeStatus();
+  const { status, retryCount } = useRealtimeStatus();
   const config = STATUS_CONFIG[status];
   return (
     <>
-      <p> 通知器狀態: </p>
+      <p>通知器狀態: </p>
       <Status variant={config.variant}>
         <StatusIndicator />
         <StatusLabel>{config.label}</StatusLabel>
       </Status>
+      <p>{retryCount > 0 && ` (重試 ${retryCount} 次)`}</p>
     </>
   );
 }
