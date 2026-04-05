@@ -30,6 +30,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const query: Partial<ProductQuery> = {
       search: searchParams.get("search") ?? undefined,
+      category_id: searchParams.get("category_id") ?? undefined,
       is_favorite:
         searchParams.get("is_favorite") === "true" ? true : undefined,
       sort_by: (searchParams.get("sort_by") === "name"
@@ -57,9 +58,7 @@ export default function ProductsPage() {
           productTypes={productTypes}
         />
       </div>
-      <div className="mb-4">
-        <SearchProduct />
-      </div>
+      <SearchProduct categories={categories} />
       <div className="flex-1 min-h-0">
         <ProductsTable
           data={products}

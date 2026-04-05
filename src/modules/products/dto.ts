@@ -18,6 +18,7 @@ export const updateProductDto = createProductDto.partial();
 
 export const productQueryDto = paginationDto.extend({
   search: z.string().optional(),
+  category_id: z.string().optional(),
   is_favorite: z.coerce.boolean().optional(),
   sort_by: z.enum(["created_at", "name"]).default("created_at"),
   sort_order: z.enum(["asc", "desc"]).default("asc"),

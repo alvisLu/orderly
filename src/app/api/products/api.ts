@@ -10,6 +10,7 @@ import type {
 export async function apiGetProducts(query?: Partial<ProductQuery>): Promise<PaginatedProducts> {
   const params = new URLSearchParams();
   if (query?.search) params.set("search", query.search);
+  if (query?.category_id) params.set("category_id", query.category_id);
   if (query?.is_favorite) params.set("is_favorite", "true");
   if (query?.sort_by) params.set("sort_by", query.sort_by);
   if (query?.sort_order) params.set("sort_order", query.sort_order);

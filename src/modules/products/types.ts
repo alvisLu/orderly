@@ -21,6 +21,7 @@ export type UpdateProductInput = Partial<CreateProductInput>;
 
 export interface ProductQuery {
   search?: string;
+  category_id?: string;
   is_favorite?: boolean;
   sort_by?: "created_at" | "name";
   sort_order?: "asc" | "desc";

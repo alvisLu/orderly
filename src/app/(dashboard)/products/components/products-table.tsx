@@ -35,7 +35,7 @@ function getColumns(
             alt={row.original.name}
             width={48}
             height={48}
-            className="rounded object-cover"
+            className="w-12 h-12 rounded object-cover"
           />
         ) : (
           <div className="w-12 h-12 rounded bg-muted" />

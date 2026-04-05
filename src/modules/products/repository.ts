@@ -23,31 +23,32 @@ export async function findAllProducts(
 ): Promise<PaginatedProducts> {
   const {
     search,
+    category_id,
     is_favorite,
     sort_by = "created_at",
-    sort_order = "asc",
+    sort_order = "desc",
     page,
     limit,
   } = query;
   const skip = (page - 1) * limit;
 
+  const where = {
+    ...(search && { name: { contains: search, mode: "insensitive" as const } }),
+    ...(category_id && { categoryId: category_id }),
+    ...(is_favorite !== undefined && { isFavorite: is_favorite }),
+  };
+
   try {
     const [rows, total] = await prisma.$transaction([
       prisma.product.findMany({
-        where: {
-          ...(search && { name: { contains: search, mode: "insensitive" } }),
-          ...(is_favorite !== undefined && { isFavorite: is_favorite }),
-        },
+        where,
         orderBy: { [sortByMap[sort_by]]: sort_order },
         skip,
         take: limit,
         include,
       }),
       prisma.product.count({
-        where: {
-          ...(search && { name: { contains: search, mode: "insensitive" } }),
-          ...(is_favorite !== undefined && { isFavorite: is_favorite }),
-        },
+        where,
       }),
     ]);
     return { data: rows, total, page, limit };

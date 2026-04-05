@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import type { Category } from "@/modules/categories/types";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ const SORT_BY_OPTIONS = [
   { value: "name", label: "名稱排序" },
 ];
 
-export function SearchProduct() {
+export function SearchProduct({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,12 +42,31 @@ export function SearchProduct() {
   );
 
   const search = searchParams.get("search") ?? "";
+  const categoryId = searchParams.get("category_id") ?? "";
   const isFavorite = searchParams.get("is_favorite") === "true";
   const sortBy = searchParams.get("sort_by") ?? "created_at";
   const sortOrder = searchParams.get("sort_order") ?? "asc";
 
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-4">
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <Select
+        value={categoryId || "all"}
+        onValueChange={(value) =>
+          updateParam({ category_id: value === "all" ? undefined : value })
+        }
+      >
+        <SelectTrigger size="lg" className="w-36 truncate">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">全部目錄</SelectItem>
+          {categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Input
         placeholder="搜尋商品名稱..."
         defaultValue={search}
@@ -60,6 +80,7 @@ export function SearchProduct() {
           return () => clearTimeout(timeoutId);
         }}
       />
+
       <div className="flex items-center gap-2">
         <Select
           value={sortBy}
