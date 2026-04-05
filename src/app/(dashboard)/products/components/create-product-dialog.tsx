@@ -80,7 +80,7 @@ export function CreateProductDialog({
       control,
       name: ["isPosAvailable", "isMenuAvailable", "isFavorite"],
     }),
-    useWatch({ control, name: "productTypeIds" }),
+    useWatch({ control, name: "productTypeIds" }) ?? [],
   ];
 
   function addProductType(id: string) {

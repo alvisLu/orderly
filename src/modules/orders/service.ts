@@ -76,7 +76,9 @@ export async function editOrder(
 
   const order = await updateOrder(id, {
     ...rest,
-    ...(transactionsUpdate !== undefined && { transactions: transactionsUpdate }),
+    ...(transactionsUpdate !== undefined && {
+      transactions: transactionsUpdate as Parameters<typeof updateOrder>[1]["transactions"],
+    }),
   });
   if (!order) throw new OrderNotFoundError();
   return order;

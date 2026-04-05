@@ -93,7 +93,7 @@ export function EditProductTypeDialog({
     },
   });
 
-  const productIds = useWatch({ control, name: "productIds" });
+  const productIds = useWatch({ control, name: "productIds" }) ?? [];
 
   async function handleOpenChange(next: boolean) {
     setOpen(next);

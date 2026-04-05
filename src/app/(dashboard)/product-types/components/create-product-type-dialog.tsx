@@ -85,7 +85,7 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
   });
   const max = useWatch({ control, name: "max" });
   const min = useWatch({ control, name: "min" });
-  const productIds = useWatch({ control, name: "productIds" });
+  const productIds = useWatch({ control, name: "productIds" }) ?? [];
 
   const maxOptions = Array.from({ length: fields.length + 1 }, (_, i) => i);
 
