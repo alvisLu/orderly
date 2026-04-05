@@ -31,6 +31,7 @@ const schema = z.object({
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -46,7 +47,7 @@ export function EditOrderDialog({ order, onUpdated }: Props) {
     setValue,
     watch,
     formState: { isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       status: order.status,

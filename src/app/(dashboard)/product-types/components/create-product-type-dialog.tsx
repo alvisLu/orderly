@@ -51,6 +51,7 @@ const schema = z.object({
   options: z.array(optionSchema).default([]),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 let tempId = 0;
@@ -73,8 +74,8 @@ export function CreateProductTypeDialog({ products, onCreated }: Props) {
     setValue,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema as never),
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: { options: [], productIds: [], max: "", min: "" },
   });
 

@@ -42,6 +42,7 @@ const schema = z.object({
   productTypeIds: z.array(z.string()).default([]),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 export function CreateProductDialog({
@@ -61,8 +62,8 @@ export function CreateProductDialog({
     setValue,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema) as never,
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       cost: 0,
       categoryId: null,

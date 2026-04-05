@@ -25,6 +25,7 @@ const schema = z.object({
   isActive: z.boolean(),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -40,7 +41,7 @@ export function EditTableDialog({ table, onUpdated }: Props) {
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: table.name,

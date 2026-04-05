@@ -56,6 +56,7 @@ const schema = z.object({
   productIds: z.array(z.string()).default([]),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -81,8 +82,8 @@ export function EditProductTypeDialog({
     setValue,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema as never),
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       name: productType.name,
       max: String(productType.max),

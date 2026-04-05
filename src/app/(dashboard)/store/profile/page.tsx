@@ -20,6 +20,7 @@ const storeFormSchema = z.object({
   bannerURL: z.string().url("請輸入有效網址").optional().or(z.literal("")),
 });
 
+type StoreFormInput = z.input<typeof storeFormSchema>;
 type StoreFormValues = z.infer<typeof storeFormSchema>;
 
 export default function StoreProfilePage() {
@@ -37,7 +38,7 @@ export default function StoreProfilePage() {
     reset,
     formState: { errors, isDirty },
     setValue,
-  } = useForm<StoreFormValues>({
+  } = useForm<StoreFormInput, unknown, StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
   });
 

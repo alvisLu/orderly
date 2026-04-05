@@ -22,6 +22,7 @@ const schema = z.object({
   isActive: z.boolean().default(true),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -37,7 +38,7 @@ export function CreateTableDialog({ onCreated }: Props) {
     control,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       isActive: true,

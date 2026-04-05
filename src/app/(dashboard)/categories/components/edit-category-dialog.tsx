@@ -23,6 +23,7 @@ const schema = z.object({
   name: z.string().min(1, "請輸入目錄名稱"),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -37,7 +38,7 @@ export function EditCategoryDialog({ category, onUpdated }: Props) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: category.name },
   });
