@@ -26,91 +26,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  ChevronRight,
-  ClipboardList,
-  ConciergeBell,
-  LayoutGrid,
-  Package,
-  ShoppingBag,
-  Store,
-  TableProperties,
-  WalletCards,
-} from "lucide-react";
+import { ChevronRight, LayoutGrid, ShoppingBag, Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Status, StatusIndicator, StatusLabel } from "./ui/status";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
-
-const navItems = [
-  {
-    label: "訂單",
-    items: [
-      { title: "處理中訂單", url: "/restaurant/orders", icon: ConciergeBell },
-      { title: "訂單管理", url: "/orders", icon: ClipboardList },
-    ],
-  },
-  {
-    label: "商品",
-    items: [{ title: "商品列表", url: "/products", icon: Package }],
-  },
-
-  // {
-  //   label: "商品",
-  //   items: [
-  //     {
-  //       title: "商品管理",
-  //       icon: Package,
-  //       sub: [
-  //         { title: "目錄管理", url: "/categories" },
-  //         { title: "商品列表", url: "/products" },
-  //         { title: "商品選項", url: "/product-types" },
-  //       ],
-  //     },
-  //     // { title: "菜單管理", url: "/menus", icon: ShoppingBag },
-  //   ],
-  // },
-  // {
-  //   label: "財務",
-  //   items: [
-  //     {
-  //       title: "支出管理",
-  //       icon: Wallet,
-  //       sub: [
-  //         { title: "支出列表", url: "/expenses" },
-  //         { title: "支出報表", url: "/expenses/reports" },
-  //       ],
-  //     },
-  //     { title: "銷售報表", url: "/reports", icon: ChartBar },
-  //   ],
-  // },
-  {
-    label: "餐廳",
-    items: [
-      { title: "付款管理", url: "/payments", icon: WalletCards },
-      { title: "桌位管理", url: "/tables", icon: TableProperties },
-    ],
-  },
-  // {
-  //   label: "資料",
-  //   items: [
-  //     { title: "供應商", url: "/suppliers", icon: Store },
-  //     { title: "原物料", url: "/materials", icon: ReceiptText },
-  //     { title: "客戶", url: "/customers", icon: Users },
-  //   ],
-  // },
-  {
-    label: "設定",
-    items: [{ title: "店家資料", url: "/store/profile", icon: Store }],
-  },
-];
-
-type NavItem = {
-  title: string;
-  icon: React.ElementType;
-  url?: string;
-  sub?: { title: string; url: string }[];
-};
+import { sidebarNav, type NavItem } from "@/config/nav";
 
 function NavMenuItem({ item }: { item: NavItem }) {
   if (item.sub) {
@@ -236,7 +157,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        {navItems.map((group, i) => (
+        {sidebarNav.map((group, i) => (
           <SidebarGroup key={group.label}>
             {i > 0 && <SidebarSeparator />}
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
