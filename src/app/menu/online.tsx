@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Minus, Plus, X } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -81,8 +82,26 @@ function ProductOptionDialog({
 }: ProductOptionDialogProps) {
   const [selected, setSelected] = useState<SelectedOptions>({});
   const [quantity, setQuantity] = useState(1);
+  const [initialized, setInitialized] = useState<string | null>(null);
 
   if (!product) return null;
+
+  // Set default selection (first item of each productType)
+  if (initialized !== product.id) {
+    const defaults: SelectedOptions = {};
+    for (const { productType } of product.productTypes) {
+      const items = productType.items as unknown as ProductTypeItem[];
+      const defaultItem = items.find((i) => i.isDefault);
+      if (defaultItem) {
+        defaults[productType.id] = [defaultItem];
+      } else if (items.length > 0) {
+        defaults[productType.id] = [items[0]];
+      }
+    }
+    setSelected(defaults);
+    setQuantity(1);
+    setInitialized(product.id);
+  }
 
   function selectOption(typeId: string, item: ProductTypeItem) {
     setSelected((prev) => {
@@ -105,18 +124,19 @@ function ProductOptionDialog({
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden">
+      <DialogContent className="w-full h-full max-w-none max-h-none rounded-none p-0 gap-0 flex flex-col overflow-hidden">
+        <DialogTitle className="sr-only">{product.name}</DialogTitle>
         {/* Product image */}
-        {product.imageUrls?.[0] && (
-          <div className="relative w-full aspect-video shrink-0">
+        <div className="relative w-full h-56 shrink-0 bg-muted">
+          {product.imageUrls?.[0] ? (
             <Image
               src={product.imageUrls[0]}
               alt={product.name}
               fill
               className="object-cover"
             />
-          </div>
-        )}
+          ) : null}
+        </div>
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
@@ -127,7 +147,7 @@ function ProductOptionDialog({
               ${Number(product.price)}
             </p>
             {product.description && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-base text-muted-foreground mt-1 whitespace-pre-line">
                 {product.description}
               </p>
             )}
@@ -144,7 +164,7 @@ function ProductOptionDialog({
               <div key={productType.id}>
                 {/* Group header */}
                 <div className="flex items-center gap-2 px-5 py-3 bg-muted/40">
-                  <span className="rounded bg-foreground text-background text-sm font-bold px-2 py-0.5">
+                  <span className="rounded bg-foreground text-background text-base font-bold px-2 py-0.5">
                     {productType.name}
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -162,7 +182,7 @@ function ProductOptionDialog({
                       key={item.name}
                       type="button"
                       onClick={() => selectOption(productType.id, item)}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 border-b last:border-b-0"
+                      className="w-full flex items-center gap-3 px-5 py-3.5 border-b last:border-b-0 focus:outline-none"
                     >
                       {/* Radio dot */}
                       <span
@@ -177,7 +197,7 @@ function ProductOptionDialog({
                         )}
                       </span>
                       <span
-                        className={`flex-1 text-left text-sm ${
+                        className={`flex-1 text-left text-base ${
                           isSelected ? "font-medium" : "text-muted-foreground"
                         }`}
                       >
@@ -185,7 +205,7 @@ function ProductOptionDialog({
                       </span>
                       {item.price > 0 && (
                         <span
-                          className={`text-sm shrink-0 ${
+                          className={`text-base shrink-0 ${
                             isSelected
                               ? "text-primary font-medium"
                               : "text-muted-foreground"
@@ -203,35 +223,39 @@ function ProductOptionDialog({
 
           {/* Quantity */}
           <div className="flex items-center justify-center gap-6 py-5">
-            <button
-              type="button"
+            <Button
+              size="icon"
+              variant="outline"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-muted-foreground"
             >
               <Minus className="w-4 h-4" />
-            </button>
+            </Button>
             <span className="text-lg font-bold w-6 text-center">
               {quantity}
             </span>
-            <button
-              type="button"
+            <Button
+              size="icon"
+              variant="outline"
               onClick={() => setQuantity((q) => q + 1)}
-              className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-muted-foreground"
             >
               <Plus className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Sticky confirm button */}
-        <div className="shrink-0 px-5 py-4 border-t bg-background">
-          <button
-            type="button"
+        <div className="shrink-0 px-3 py-3 border-t bg-background flex flex-row gap-2">
+          <Button
+            size="xl"
+            variant="outline"
+            className="flex-1"
             onClick={handleConfirm}
-            className="w-full rounded-xl bg-primary text-primary-foreground py-3.5 font-semibold text-base"
           >
+            取消
+          </Button>
+          <Button size="xl" className="flex-1" onClick={handleConfirm}>
             新增 {quantity} 到購物車 ${unitPrice * quantity}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -278,8 +302,14 @@ export function MenuClient({
     return Array.from(map.values());
   })();
 
-  function removeCartItem(idx: number) {
-    setCart((prev) => prev.filter((_, i) => i !== idx));
+  function updateCartQuantity(idx: number, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((item, i) =>
+          i === idx ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
   }
 
   const subtotal = cart.reduce(
@@ -330,6 +360,10 @@ export function MenuClient({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleCancel() {
+    setCartOpen(false);
   }
 
   if (ordered) {
@@ -420,11 +454,11 @@ export function MenuClient({
                         {/* Text info (RIGHT) */}
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-xl">{product.name}</p>
-                          <p className="text-sm mt-1 text-primary font-semibold">
+                          <p className="text-lg mt-1 text-primary font-semibold">
                             ${Number(product.price)}
                           </p>
                           {product.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            <p className="text-lg text-muted-foreground mt-1 line-clamp-2 whitespace-pre-line">
                               {product.description}
                             </p>
                           )}
@@ -436,45 +470,6 @@ export function MenuClient({
               </ScrollSpySection>
             ))}
           </ScrollSpyViewport>
-
-          {/* Store info (at bottom of scroll area) */}
-          {/* {store && (
-            <Card className="m-4 px-4 ring-0">
-              <CardTitle className="text-6xl">{store.name}</CardTitle>
-              <div className="flex flex-col gap-2">
-                {store.phone && (
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <span>📞</span>
-                    <span>{store.phone}</span>
-                  </div>
-                )}
-                {store.address && (
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <span>📍</span>
-                    <span>{store.address}</span>
-                  </div>
-                )}
-                {store.businessHours && store.businessHours.length > 0 && (
-                  <div className="flex items-start gap-3 text-sm">
-                    <span className="text-muted-foreground">🕐</span>
-                    <div className="space-y-1">
-                      {store.businessHours.map((h) => (
-                        <div
-                          key={h.day}
-                          className="flex gap-6 text-sm text-muted-foreground"
-                        >
-                          <span className="w-8 shrink-0 font-semibold">
-                            {h.day}
-                          </span>
-                          <span>{h.hours}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )} */}
         </div>
       </ScrollSpy>
 
@@ -491,13 +486,13 @@ export function MenuClient({
 
       {/* Cart dialog */}
       <Dialog open={cartOpen} onOpenChange={setCartOpen}>
-        <DialogContent className="max-w-sm max-h-[85vh] flex flex-col">
+        <DialogContent className="w-full h-full max-w-none max-h-none rounded-none flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-left">購物車</DialogTitle>
+            <DialogTitle className="text-2xl ">購物車</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto min-h-0 space-y-1">
             {cart.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10 text-sm">
+              <p className="text-center text-muted-foreground py-10 text-lg">
                 尚無商品
               </p>
             ) : (
@@ -507,24 +502,51 @@ export function MenuClient({
                   className="flex items-start gap-3 py-3 border-b last:border-0"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{item.product.name}</p>
+                    <p className="font-medium text-xl">{item.product.name}</p>
                     {item.productOptions.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {item.productOptions.map((o) => o.name).join("、")}
-                      </p>
+                      <div className="text-base text-muted-foreground mt-0.5">
+                        {item.productOptions.map((o) => (
+                          <p key={o.name}>
+                            {o.productTypeName}：{o.name}
+                            {o.price > 0 && ` +$${o.price}`}
+                          </p>
+                        ))}
+                      </div>
                     )}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      ×{item.quantity}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => updateCartQuantity(idx, -1)}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-base font-medium w-6 text-center">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => updateCartQuantity(idx, 1)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold shrink-0">
+                  <span className="text-lg font-semibold shrink-0">
                     $
                     {itemUnitPrice(item.product, item.productOptions) *
                       item.quantity}
                   </span>
-                  <button type="button" onClick={() => removeCartItem(idx)}>
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() =>
+                      setCart((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))
             )}
@@ -537,20 +559,31 @@ export function MenuClient({
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
                 rows={2}
-                className="text-sm resize-none"
+                className="text-base resize-none"
               />
-              <div className="flex justify-between font-bold">
+              <div className="flex justify-between font-bold text-2xl">
                 <span>合計</span>
                 <span>${subtotal}</span>
               </div>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full rounded-xl bg-primary text-primary-foreground py-3.5 font-semibold text-base"
-              >
-                {isSubmitting ? "送出中..." : "送出訂單"}
-              </button>
+
+              <div className="flex flex-row gap-2">
+                <Button
+                  size="xl"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancel}
+                >
+                  繼續選購
+                </Button>
+                <Button
+                  size="xl"
+                  className="flex-1"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "送出中..." : "送出訂單"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
