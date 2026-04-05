@@ -61,6 +61,7 @@ const schema = z.object({
   imageUrls: z.array(z.string()).max(MAX_IMAGES),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 export function EditProductDialog({
@@ -99,8 +100,8 @@ export function EditProductDialog({
     control,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema) as never,
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       name: product.name,
       price: product.price,
