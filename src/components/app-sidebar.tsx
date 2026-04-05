@@ -31,9 +31,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Status, StatusIndicator, StatusLabel } from "./ui/status";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
-import { sidebarNav, type NavItem } from "@/config/nav";
+import { sidebarNav, type SidebarNavItem } from "@/config/nav";
 
-function NavMenuItem({ item }: { item: NavItem }) {
+function NavMenuItem({ item }: { item: SidebarNavItem }) {
   if (item.sub) {
     return (
       <SidebarMenuItem>
