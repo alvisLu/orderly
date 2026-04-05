@@ -4,12 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,

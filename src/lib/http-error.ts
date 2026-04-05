@@ -94,3 +94,13 @@ export class PaymentNotFoundError extends HttpError {
     this.name = "PaymentNotFoundError";
   }
 }
+
+export class TableNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "找不到桌位";
+    const code = "6000";
+    super(status, message, code);
+    this.name = "TableNotFoundError";
+  }
+}
