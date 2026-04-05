@@ -27,43 +27,49 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  ChartBar,
   ChevronRight,
   ClipboardList,
-  Cog,
+  ConciergeBell,
   LayoutGrid,
   Package,
-  ReceiptText,
   ShoppingBag,
   Store,
   TableProperties,
-  Users,
-  Wallet,
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Status, StatusIndicator, StatusLabel } from "./ui/status";
+import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 
 const navItems = [
   {
     label: "訂單",
-    items: [{ title: "訂單管理", url: "/orders", icon: ClipboardList }],
+    items: [
+      { title: "處理中訂單", url: "/restaurant/orders", icon: ConciergeBell },
+      { title: "訂單管理", url: "/orders", icon: ClipboardList },
+    ],
   },
   {
     label: "商品",
-    items: [
-      {
-        title: "商品管理",
-        icon: Package,
-        sub: [
-          { title: "目錄管理", url: "/categories" },
-          { title: "商品列表", url: "/products" },
-          { title: "商品選項", url: "/product-types" },
-        ],
-      },
-      // { title: "菜單管理", url: "/menus", icon: ShoppingBag },
-    ],
+    items: [{ title: "商品列表", url: "/products", icon: Package }],
   },
+
+  // {
+  //   label: "商品",
+  //   items: [
+  //     {
+  //       title: "商品管理",
+  //       icon: Package,
+  //       sub: [
+  //         { title: "目錄管理", url: "/categories" },
+  //         { title: "商品列表", url: "/products" },
+  //         { title: "商品選項", url: "/product-types" },
+  //       ],
+  //     },
+  //     // { title: "菜單管理", url: "/menus", icon: ShoppingBag },
+  //   ],
+  // },
   // {
   //   label: "財務",
   //   items: [
@@ -81,7 +87,6 @@ const navItems = [
   {
     label: "餐廳",
     items: [
-      { title: "餐廳訂單", url: "/restaurant/orders", icon: ReceiptText },
       { title: "付款管理", url: "/payments", icon: WalletCards },
       { title: "桌位管理", url: "/tables", icon: TableProperties },
     ],
@@ -177,17 +182,22 @@ function RealtimeStatusItem() {
   const config = STATUS_CONFIG[status];
   return (
     <>
-      <p>通知器狀態: </p>
+      <SidebarGroupLabel>通知器</SidebarGroupLabel>
       <Status variant={config.variant}>
         <StatusIndicator />
-        <StatusLabel>{config.label}</StatusLabel>
+        <StatusLabel className="group-data-[collapsible=icon]:hidden">
+          {config.label}
+        </StatusLabel>
       </Status>
-      <p>{retryCount > 0 && ` (重試 ${retryCount} 次)`}</p>
+      <span className="group-data-[collapsible=icon]:hidden">
+        {retryCount > 0 && ` (重試 ${retryCount} 次)`}
+      </span>
     </>
   );
 }
 
 export function AppSidebar() {
+  const router = useRouter();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -211,11 +221,21 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarMenuItem>
-          <SidebarMenuButton className="pointer-events-none">
-            <RealtimeStatusItem />
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <CreateOrderDialog
+                onCreated={() => router.push("/orders")}
+                trigger={
+                  <SidebarMenuButton>
+                    <ShoppingBag />
+                    <span>新增訂單</span>
+                  </SidebarMenuButton>
+                }
+              />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         {navItems.map((group, i) => (
           <SidebarGroup key={group.label}>
             {i > 0 && <SidebarSeparator />}
@@ -234,10 +254,13 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            <SidebarMenuButton className="pointer-events-none">
+              <RealtimeStatusItem />
+            </SidebarMenuButton>
             <SidebarMenuButton asChild>
-              <Link href="/settings">
-                <Cog />
-                <span>設定</span>
+              <Link href="/">
+                <LayoutGrid />
+                <span>主選單</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

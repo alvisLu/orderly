@@ -279,9 +279,10 @@ interface CartItem {
 }
 interface Props {
   onCreated: (order: Order) => void;
+  trigger?: React.ReactNode;
 }
 
-export function CreateOrderDialog({ onCreated }: Props) {
+export function CreateOrderDialog({ onCreated, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -489,7 +490,7 @@ export function CreateOrderDialog({ onCreated }: Props) {
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
-        <Button>新增訂單</Button>
+        {trigger ?? <Button>新增訂單</Button>}
       </DialogTrigger>
       <DialogContent className="!w-full !h-full !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
         <div className="flex h-full overflow-hidden">

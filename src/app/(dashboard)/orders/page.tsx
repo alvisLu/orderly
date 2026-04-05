@@ -74,6 +74,7 @@ export default function OrdersPage() {
             onCheckedChange={(checked) => {
               setShowDeleted(!!checked);
               setPageIndex(0);
+              setOrders([]);
             }}
           />
           <Label htmlFor="showDeleted" className="text-sm cursor-pointer">
