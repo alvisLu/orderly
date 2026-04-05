@@ -54,5 +54,6 @@ export const updateOrderDto = z.object({
 });
 
 export const orderQueryDto = paginationDto.extend({
-  status: z.enum(["pending", "processing", "done"]).optional(),
+  status: z.enum(["pending", "processing", "done", "cancelled"]).optional(),
+  showDeleted: z.coerce.boolean().optional(),
 });

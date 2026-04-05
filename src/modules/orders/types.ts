@@ -72,6 +72,7 @@ export interface OrderQuery {
   status?: OrderStatus;
   page: number;
   limit: number;
+  showDeleted?: boolean;
 }
 
 export interface PaginatedOrders {

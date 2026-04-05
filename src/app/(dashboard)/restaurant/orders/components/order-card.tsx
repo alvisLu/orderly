@@ -269,7 +269,6 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
                     <BookmarkX className="h-4 w-4" />
                     作廢
                   </DropdownMenuItem>
-
                   <DropdownMenuItem
                     onClick={() => setDeleteOpen(true)}
                     className="text-destructive"

@@ -15,12 +15,12 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, page, limit } = query;
+  const { status, page, limit, showDeleted } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
   const where = {
-    deletedAt: null,
+    ...(!showDeleted && { deletedAt: null }),
     ...(status && { status }),
   };
   try {
