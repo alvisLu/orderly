@@ -52,47 +52,51 @@ const navItems = [
   {
     label: "商品",
     items: [
-      { title: "目錄管理", url: "/categories", icon: LayoutGrid },
       {
         title: "商品管理",
         icon: Package,
         sub: [
+          { title: "目錄管理", url: "/categories" },
           { title: "商品列表", url: "/products" },
           { title: "商品選項", url: "/product-types" },
         ],
       },
-      { title: "菜單管理", url: "/menus", icon: ShoppingBag },
+      // { title: "菜單管理", url: "/menus", icon: ShoppingBag },
     ],
   },
+  // {
+  //   label: "財務",
+  //   items: [
+  //     {
+  //       title: "支出管理",
+  //       icon: Wallet,
+  //       sub: [
+  //         { title: "支出列表", url: "/expenses" },
+  //         { title: "支出報表", url: "/expenses/reports" },
+  //       ],
+  //     },
+  //     { title: "銷售報表", url: "/reports", icon: ChartBar },
+  //   ],
+  // },
   {
-    label: "財務",
+    label: "餐廳",
     items: [
-      {
-        title: "支出管理",
-        icon: Wallet,
-        sub: [
-          { title: "支出列表", url: "/expenses" },
-          { title: "支出報表", url: "/expenses/reports" },
-        ],
-      },
-      { title: "銷售報表", url: "/reports", icon: ChartBar },
-    ],
-  },
-  {
-    label: "資料",
-    items: [
+      { title: "餐廳訂單", url: "/restaurant/orders", icon: ReceiptText },
       { title: "付款管理", url: "/payments", icon: WalletCards },
-      { title: "供應商", url: "/suppliers", icon: Store },
-      { title: "原物料", url: "/materials", icon: ReceiptText },
       { title: "桌位管理", url: "/tables", icon: TableProperties },
-      { title: "客戶", url: "/customers", icon: Users },
     ],
   },
+  // {
+  //   label: "資料",
+  //   items: [
+  //     { title: "供應商", url: "/suppliers", icon: Store },
+  //     { title: "原物料", url: "/materials", icon: ReceiptText },
+  //     { title: "客戶", url: "/customers", icon: Users },
+  //   ],
+  // },
   {
     label: "設定",
-    items: [
-      { title: "店家資料", url: "/store/profile", icon: Store },
-    ],
+    items: [{ title: "店家資料", url: "/store/profile", icon: Store }],
   },
 ];
 
