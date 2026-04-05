@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { apiGetOrders, apiGetOrder } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
-import { OrderCard } from "./components/order-card";
+import { OrderColumns } from "./components/order-columns";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -169,16 +169,11 @@ export default function RestaurantOrdersPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {orders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  onUpdated={handleUpdated}
-                  onDeleted={handleDeleted}
-                />
-              ))}
-            </div>
+            <OrderColumns
+              orders={orders}
+              onUpdated={handleUpdated}
+              onDeleted={handleDeleted}
+            />
             {/* Sentinel for infinite scroll */}
             {hasMore && (
               <div

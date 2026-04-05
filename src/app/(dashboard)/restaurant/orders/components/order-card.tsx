@@ -11,11 +11,13 @@ import type {
   OrderFinancialStatus,
   OrderFulfillmentStatus,
 } from "@/generated/prisma/client";
-import { OrderDetailSheet } from "./order-detail-sheet";
 
 const STATUS_CONFIG: Record<
   OrderStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
 > = {
   pending: { label: "待處理", variant: "outline" },
   processing: { label: "處理中", variant: "default" },
@@ -133,8 +135,7 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
               .slice()
               .sort((a, b) => a.rank - b.rank)
               .map((item) => {
-                const options =
-                  item.itemOptions as unknown as LineItemOption[];
+                const options = item.itemOptions as unknown as LineItemOption[];
                 const isFulfilled = order.fulfillmentStatus === "fulfilled";
                 return (
                   <div key={item.id} className="space-y-1">
@@ -196,14 +197,6 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
           </div>
         </div>
       </div>
-
-      <OrderDetailSheet
-        orderId={detailOpen ? order.id : null}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onUpdated={onUpdated}
-        onDeleted={onDeleted}
-      />
     </>
   );
 }
