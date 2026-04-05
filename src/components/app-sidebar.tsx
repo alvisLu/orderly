@@ -88,6 +88,12 @@ const navItems = [
       { title: "客戶", url: "/customers", icon: Users },
     ],
   },
+  {
+    label: "設定",
+    items: [
+      { title: "店家資料", url: "/store/profile", icon: Store },
+    ],
+  },
 ];
 
 type NavItem = {

@@ -1,0 +1,12 @@
+model Store {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  phone     String?  @map("phone") @db.VarChar(20)
+  address   String?
+  bannerURL String?  @map("banner_url")
+  opening   Json?    @default("[]")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("store")
+}

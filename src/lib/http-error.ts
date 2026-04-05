@@ -104,3 +104,13 @@ export class TableNotFoundError extends HttpError {
     this.name = "TableNotFoundError";
   }
 }
+
+export class StoreNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "找不到店家資料";
+    const code = "7000";
+    super(status, message, code);
+    this.name = "StoreNotFoundError";
+  }
+}
