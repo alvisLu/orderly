@@ -53,7 +53,31 @@ export async function editOrder(
   id: string,
   input: UpdateOrderInput
 ): Promise<Order> {
-  const order = await updateOrder(id, input);
+  const existing = await findOrderById(id);
+  if (!existing) throw new OrderNotFoundError();
+
+  const { transaction, ...rest } = input;
+
+  // Resolve final statuses (input overrides existing)
+  const finalFinancial = rest.financialStatus ?? existing.financialStatus;
+  const finalFulfillment = rest.fulfillmentStatus ?? existing.fulfillmentStatus;
+
+  // Auto-complete order when both paid and fulfilled
+  if (finalFinancial === "paid" && finalFulfillment === "fulfilled") {
+    rest.status = "done";
+  }
+
+  // Append transaction to existing transactions array
+  let transactionsUpdate: unknown[] | undefined;
+  if (transaction) {
+    const existing_txns = (existing.transactions as unknown[] | null) ?? [];
+    transactionsUpdate = [...existing_txns, transaction];
+  }
+
+  const order = await updateOrder(id, {
+    ...rest,
+    ...(transactionsUpdate !== undefined && { transactions: transactionsUpdate }),
+  });
   if (!order) throw new OrderNotFoundError();
   return order;
 }

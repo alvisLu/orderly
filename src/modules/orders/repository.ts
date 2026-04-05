@@ -5,7 +5,6 @@ import type {
   Order,
   OrderQuery,
   PaginatedOrders,
-  UpdateOrderInput,
 } from "./types";
 import Big from "big.js";
 
@@ -67,7 +66,7 @@ export async function insertOrder(
 
 export async function updateOrder(
   id: string,
-  input: UpdateOrderInput
+  input: Prisma.OrderUpdateInput
 ): Promise<Order | null> {
   try {
     return await prisma.order.update({ where: { id }, data: input, include });

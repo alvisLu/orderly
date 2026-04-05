@@ -32,6 +32,16 @@ export const createOrderDto = z.object({
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
 });
 
+const transactionDto = z.object({
+  type: z.enum(["checkout", "refund"]),
+  amount: z.number().nonnegative(),
+  gateway: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  note: z.string().optional(),
+});
+
 export const updateOrderDto = z.object({
   status: z.enum(["pending", "processing", "done"]).optional(),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
@@ -40,6 +50,7 @@ export const updateOrderDto = z.object({
   isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
   userNote: z.string().optional(),
+  transaction: transactionDto.optional(),
 });
 
 export const orderQueryDto = paginationDto.extend({

@@ -65,6 +65,7 @@ export type UpdateOrderInput = {
   isDining?: boolean;
   userPhone?: string;
   userNote?: string;
+  transaction?: OrderTransactionInput;
 };
 
 export interface OrderQuery {
