@@ -6,7 +6,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { apiGetOrders, apiGetOrder } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import { OrderCard } from "./components/order-card";
-import { CreateOrderDialog } from "./components/create-order-dialog";
+import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Scroller } from "@/components/ui/scroller";
