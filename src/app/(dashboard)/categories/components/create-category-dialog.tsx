@@ -23,6 +23,7 @@ const schema = z.object({
   rank: z.coerce.number().int().nonnegative().default(0),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
@@ -38,7 +39,7 @@ export function CreateCategoryDialog({ nextRank, onCreated }: Props) {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { rank: nextRank },
   });
