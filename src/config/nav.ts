@@ -96,7 +96,7 @@ export const navGroups: Record<string, NavGroup> = {
 
 export const pathLabels: Record<string, string> = {
   "/orders": "訂單管理",
-  "/orders/restaurant": "處理中",
+  "/orders/restaurant": "餐廳訂單",
   "/orders/list": "訂單列表",
   "/products": "商品管理",
   "/products/list": "商品列表",
