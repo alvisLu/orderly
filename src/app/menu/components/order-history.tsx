@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { DiningBadge } from "@/components/shared/dining-badge";
 import { OrderStatusBadge } from "@/components/shared/order-status-badge";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 export function OrderHistory({ onBack }: { onBack: () => void }) {
   const [orders, setOrders] = useState<Order[] | null>(null);

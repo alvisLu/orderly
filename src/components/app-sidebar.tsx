@@ -146,7 +146,6 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <CreateOrderDialog
-                onCreated={() => router.push("/orders")}
                 trigger={
                   <SidebarMenuButton>
                     <ShoppingBag />
