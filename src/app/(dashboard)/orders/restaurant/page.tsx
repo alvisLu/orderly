@@ -4,7 +4,11 @@ import { useEffect, useState, useTransition, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { apiGetOrders, apiGetOrder, apiLeaveAllDining } from "@/app/api/orders/api";
+import {
+  apiGetOrders,
+  apiGetOrder,
+  apiLeaveAllDining,
+} from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import { OrderColumns } from "./components/order-columns";
 import { Button } from "@/components/ui/button";
@@ -41,7 +45,13 @@ export default function RestaurantOrdersPage() {
   useEffect(() => {
     pageRef.current = 1;
     startLoading(async () => {
-      const res = await apiGetOrders({ status, isDining: true, sort: "asc", page: 1, limit: PAGE_SIZE });
+      const res = await apiGetOrders({
+        status,
+        isDining: true,
+        sort: "asc",
+        page: 1,
+        limit: PAGE_SIZE,
+      });
       setOrders(res.data);
       setHasMore(res.data.length >= PAGE_SIZE);
     });
@@ -143,13 +153,13 @@ export default function RestaurantOrdersPage() {
   }
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="px-2 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-4 px-2">
         {STATUS_TABS.map((tab) => (
           <Button
             key={String(tab.value)}
             variant={status === tab.value ? "default" : "outline"}
-            size="sm"
+            size="lg"
             onClick={() => setStatus(tab.value)}
           >
             {tab.label}
@@ -158,7 +168,7 @@ export default function RestaurantOrdersPage() {
         <div className="flex-1" />
         <Button
           variant="destructive"
-          size="sm"
+          size="lg"
           disabled={orders.length === 0}
           onClick={async () => {
             try {
@@ -174,7 +184,7 @@ export default function RestaurantOrdersPage() {
         </Button>
       </div>
 
-      <Scroller className="flex-1 min-h-0">
+      <Scroller className="flex-1 min-h-0 px-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Spinner className="size-10 text-muted-foreground" />
