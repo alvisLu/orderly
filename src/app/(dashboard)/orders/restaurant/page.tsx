@@ -40,7 +40,7 @@ export default function RestaurantOrdersPage() {
   useEffect(() => {
     pageRef.current = 1;
     startLoading(async () => {
-      const res = await apiGetOrders({ status, page: 1, limit: PAGE_SIZE });
+      const res = await apiGetOrders({ status, isDining: true, page: 1, limit: PAGE_SIZE });
       setOrders(res.data);
       setHasMore(res.data.length >= PAGE_SIZE);
     });
@@ -53,6 +53,7 @@ export default function RestaurantOrdersPage() {
     startLoadingMore(async () => {
       const res = await apiGetOrders({
         status,
+        isDining: true,
         page: nextPage,
         limit: PAGE_SIZE,
       });

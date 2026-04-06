@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { LineItemOption, Order } from "@/modules/orders/types";
 import { getMyOrderIds } from "../storage";
+import { Badge } from "@/components/ui/badge";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "訂單已送出",
@@ -66,6 +67,9 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                 {/* Order header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    {order.takeNumber && (
+                      <Badge>取餐號 #{order.takeNumber}</Badge>
+                    )}
                     <Clock className="w-4 h-4" />
                     <span>
                       {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm")}

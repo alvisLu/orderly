@@ -15,13 +15,14 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, page, limit, showDeleted } = query;
+  const { status, isDining, page, limit, showDeleted } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
   const where = {
     ...(!showDeleted && { deletedAt: null }),
     ...(status && { status }),
+    ...(isDining !== undefined && { isDining }),
   };
   try {
     const [rows, total] = await Promise.all([

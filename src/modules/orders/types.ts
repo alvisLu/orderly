@@ -70,6 +70,7 @@ export type UpdateOrderInput = {
 
 export interface OrderQuery {
   status?: OrderStatus;
+  isDining?: boolean;
   page: number;
   limit: number;
   showDeleted?: boolean;

@@ -10,6 +10,7 @@ import {
   Trash2,
   Truck,
   BookmarkX,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ import {
   OrderFinancialStatus,
   OrderFulfillmentStatus,
 } from "@/generated/prisma/client";
+import { Label } from "@/components/ui/label";
 
 const STATUS_CONFIG: Record<
   OrderStatus,
@@ -127,7 +129,7 @@ function TransactionList({ transactions }: { transactions: unknown }) {
           className="flex items-center justify-between text-sm text-muted-foreground"
         >
           <span>
-            {tx.type === "checkout" ? "付款" : "退款"} - {tx.gateway.name}
+            {tx.type === "checkout" ? "付款" : "退款"}: {tx.gateway.name}
           </span>
           <span>${tx.amount}</span>
         </div>
@@ -149,6 +151,16 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
   const [isVoiding, setIsVoiding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+
+  async function handleLeave() {
+    try {
+      const updated = await apiUpdateOrder(order.id, { isDining: false });
+      onUpdated(updated);
+      toast.success("已離場");
+    } catch {
+      toast.error("更新失敗");
+    }
+  }
 
   async function handleAccept() {
     setIsAccepting(true);
@@ -190,7 +202,7 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
           transaction: {
             type: "refund",
             amount: -checkoutTotal,
-            gateway: { id: "", name: "作廢退款" },
+            gateway: { id: "refund", name: "作廢" },
           },
         }),
       });
@@ -235,6 +247,7 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
         >
           <span className="font-semibold text-sm">
             {order.source === "qrcode" ? "QR" : "店面"}
+            {order.takeNumber && ` #${order.takeNumber}`}
           </span>
           <div>
             {order.status === "pending" ? (
@@ -366,11 +379,24 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
           {/* Transactions */}
           <TransactionList transactions={order.transactions} />
 
+          {/* Client note */}
+          {order.userNote && (
+            <>
+              <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
+                <Label>備註:</Label>
+                {order.userNote}
+              </p>
+            </>
+          )}
+
           {/* Footer: total & edit */}
           <div className="flex items-center justify-between border-border pt-3">
             <span className="text-xl font-bold border border-border rounded-lg px-3 py-1">
               ${Number(order.total)}
             </span>
+            <Button variant="destructive" onClick={handleLeave}>
+              <LogOut />
+            </Button>
           </div>
         </div>
       </div>
