@@ -37,3 +37,8 @@ export async function apiUpdateOrder(id: string, input: UpdateOrderInput): Promi
 export async function apiDeleteOrder(id: string): Promise<void> {
   await apiClient.delete(`/orders/${id}`);
 }
+
+export async function apiLeaveAllDining(): Promise<{ count: number }> {
+  const { data } = await apiClient.post<{ count: number }>("/orders/leave-all");
+  return data;
+}

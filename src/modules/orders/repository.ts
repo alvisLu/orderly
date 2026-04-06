@@ -100,6 +100,18 @@ export async function findOrdersByIds(ids: string[]): Promise<Order[]> {
   }
 }
 
+export async function clearAllDining(): Promise<number> {
+  try {
+    const result = await prisma.order.updateMany({
+      where: { isDining: true, deletedAt: null },
+      data: { isDining: false },
+    });
+    return result.count;
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
 export async function softDeleteOrder(id: string): Promise<void> {
   try {
     await prisma.order.update({

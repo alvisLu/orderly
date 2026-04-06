@@ -5,6 +5,7 @@ import {
   findOrdersByIds,
   insertOrder,
   updateOrder,
+  clearAllDining,
   softDeleteOrder,
 } from "./repository";
 import type {
@@ -98,6 +99,10 @@ export async function editOrder(
   });
   if (!order) throw new OrderNotFoundError();
   return order;
+}
+
+export async function leaveAllDining(): Promise<number> {
+  return clearAllDining();
 }
 
 export async function removeOrder(id: string): Promise<void> {
