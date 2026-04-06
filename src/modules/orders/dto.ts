@@ -56,5 +56,6 @@ export const updateOrderDto = z.object({
 export const orderQueryDto = paginationDto.extend({
   status: z.enum(["pending", "processing", "done", "cancelled"]).optional(),
   isDining: z.coerce.boolean().optional(),
+  sort: z.enum(["asc", "desc"]).optional(),
   showDeleted: z.coerce.boolean().optional(),
 });

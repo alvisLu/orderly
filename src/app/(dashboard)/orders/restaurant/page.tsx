@@ -40,7 +40,7 @@ export default function RestaurantOrdersPage() {
   useEffect(() => {
     pageRef.current = 1;
     startLoading(async () => {
-      const res = await apiGetOrders({ status, isDining: true, page: 1, limit: PAGE_SIZE });
+      const res = await apiGetOrders({ status, isDining: true, sort: "asc", page: 1, limit: PAGE_SIZE });
       setOrders(res.data);
       setHasMore(res.data.length >= PAGE_SIZE);
     });
@@ -54,6 +54,7 @@ export default function RestaurantOrdersPage() {
       const res = await apiGetOrders({
         status,
         isDining: true,
+        sort: "asc",
         page: nextPage,
         limit: PAGE_SIZE,
       });
@@ -111,7 +112,7 @@ export default function RestaurantOrdersPage() {
               const fullOrder = await apiGetOrder(payload.new.id as string);
               setOrders((prev) => {
                 if (prev.some((o) => o.id === fullOrder.id)) return prev;
-                return [fullOrder, ...prev];
+                return [...prev, fullOrder];
               });
             } catch {
               // order may have been deleted before we could fetch
@@ -129,7 +130,11 @@ export default function RestaurantOrdersPage() {
   }, [statusRef]);
 
   function handleUpdated(updated: Order) {
-    setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+    setOrders((prev) =>
+      updated.isDining
+        ? prev.map((o) => (o.id === updated.id ? updated : o))
+        : prev.filter((o) => o.id !== updated.id)
+    );
   }
 
   function handleDeleted(id: string) {

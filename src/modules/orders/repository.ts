@@ -15,7 +15,7 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, isDining, page, limit, showDeleted } = query;
+  const { status, isDining, sort = "desc", page, limit, showDeleted } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
@@ -28,7 +28,7 @@ export async function findAllOrders(
     const [rows, total] = await Promise.all([
       prisma.order.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: sort },
         skip,
         take: limit,
         include,

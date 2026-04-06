@@ -11,6 +11,7 @@ export async function apiGetOrders(query?: Partial<OrderQuery>): Promise<Paginat
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
   if (query?.isDining !== undefined) params.set("isDining", String(query.isDining));
+  if (query?.sort) params.set("sort", query.sort);
   if (query?.page) params.set("page", String(query.page));
   if (query?.limit) params.set("limit", String(query.limit));
   if (query?.showDeleted) params.set("showDeleted", "true");
