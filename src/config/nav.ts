@@ -75,7 +75,7 @@ export const navGroups: NavGroup[] = [
         sub: [
           { title: "商品列表", url: "/products/list" },
           { title: "目錄管理", url: "/products/categories" },
-          { title: "商品選項", url: "/products/types" },
+          { title: "商品選項", url: "/products/productTypes" },
         ],
       },
     ],

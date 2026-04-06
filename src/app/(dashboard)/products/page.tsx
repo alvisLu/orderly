@@ -25,7 +25,7 @@ const cards = [
   {
     title: "商品選項",
     label: "選項",
-    href: "/products/types",
+    href: "/products/productTypes",
     icon: Settings2,
     color: "bg-muted-foreground text-white",
   },

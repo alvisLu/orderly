@@ -19,7 +19,7 @@ const FULL_PATH_LABELS: Record<string, string> = {
   "/products": "商品管理",
   "/products/list": "商品列表",
   "/products/categories": "目錄管理",
-  "/products/types": "商品選項",
+  "/products/productTypes": "商品選項",
   "/settings": "設定",
   "/settings/stores": "商店",
   "/settings/stores/profile": "店家資料",
