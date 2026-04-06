@@ -30,7 +30,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Spinner } from "@/components/ui/spinner";
@@ -55,9 +54,13 @@ export function OrderDetailSheet({
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [userNote, setUserNote] = useState("");
-  const [isSavingNote, setIsSavingNote] = useState(false);
   const [internalNote, setInternalNote] = useState("");
-  const [isSavingInternalNote, setIsSavingInternalNote] = useState(false);
+  const [fulfillmentStatus, setFulfillmentStatus] =
+    useState<Order["fulfillmentStatus"]>("pending");
+  const [financialStatus, setFinancialStatus] =
+    useState<Order["financialStatus"]>("pending");
+  const [orderStatus, setOrderStatus] =
+    useState<Order["status"]>("pending");
 
   useEffect(() => {
     if (!orderId) {
@@ -71,6 +74,9 @@ export function OrderDetailSheet({
         setOrder(o);
         setUserNote(o.userNote ?? "");
         setInternalNote(o.note ?? "");
+        setFulfillmentStatus(o.fulfillmentStatus);
+        setFinancialStatus(o.financialStatus);
+        setOrderStatus(o.status);
       })
       .finally(() => setIsLoadingOrder(false));
   }, [orderId]);
@@ -82,38 +88,9 @@ export function OrderDetailSheet({
     setOrder(o);
     setUserNote(o.userNote ?? "");
     setInternalNote(o.note ?? "");
+    setFulfillmentStatus(o.fulfillmentStatus);
+    setFinancialStatus(o.financialStatus);
     setIsLoadingOrder(false);
-  }
-
-  async function handleFulfillment(
-    status: "pending" | "fulfilled" | "returned"
-  ) {
-    if (!order) return;
-    setIsUpdating(true);
-    const updated = await apiUpdateOrder(order.id, {
-      fulfillmentStatus: status,
-    });
-    onUpdated?.(updated);
-    toast.success("出餐狀態已更新");
-    setIsUpdating(false);
-    await refreshOrder();
-  }
-
-  async function handleFinancial(status: "paid" | "refunded" | "pending") {
-    if (!order) return;
-    setIsUpdating(true);
-    try {
-      const updated = await apiUpdateOrder(order.id, {
-        financialStatus: status,
-      });
-      onUpdated?.(updated);
-      toast.success("付款狀態已更新");
-    } catch {
-      toast.error("更新失敗");
-    } finally {
-      setIsUpdating(false);
-      await refreshOrder();
-    }
   }
 
   async function handleDelete() {
@@ -132,31 +109,24 @@ export function OrderDetailSheet({
     }
   }
 
-  async function handleSaveInternalNote() {
+  async function handleUpdate() {
     if (!order) return;
-    setIsSavingInternalNote(true);
+    setIsUpdating(true);
     try {
-      const updated = await apiUpdateOrder(order.id, { note: internalNote });
+      const updated = await apiUpdateOrder(order.id, {
+        userNote,
+        note: internalNote,
+        fulfillmentStatus,
+        financialStatus,
+        status: orderStatus,
+      });
       onUpdated?.(updated);
-      toast.success("店內備註已儲存");
+      toast.success("訂單已更新");
+      await refreshOrder();
     } catch {
-      toast.error("儲存失敗");
+      toast.error("更新失敗");
     } finally {
-      setIsSavingInternalNote(false);
-    }
-  }
-
-  async function handleSaveNote() {
-    if (!order) return;
-    setIsSavingNote(true);
-    try {
-      const updated = await apiUpdateOrder(order.id, { userNote });
-      onUpdated?.(updated);
-      toast.success("備註已儲存");
-    } catch {
-      toast.error("儲存失敗");
-    } finally {
-      setIsSavingNote(false);
+      setIsUpdating(false);
     }
   }
 
@@ -203,17 +173,17 @@ export function OrderDetailSheet({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem
-                      onClick={() => handleFulfillment("fulfilled")}
+                      onClick={() => setFulfillmentStatus("fulfilled")}
                     >
                       已出餐
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFulfillment("returned")}
+                      onClick={() => setFulfillmentStatus("returned")}
                     >
                       已退貨
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFulfillment("pending")}
+                      onClick={() => setFulfillmentStatus("pending")}
                     >
                       待出餐
                     </DropdownMenuItem>
@@ -228,26 +198,58 @@ export function OrderDetailSheet({
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => handleFinancial("paid")}>
+                    <DropdownMenuItem
+                      onClick={() => setFinancialStatus("paid")}
+                    >
                       付款
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFinancial("refunded")}
+                      onClick={() => setFinancialStatus("refunded")}
                     >
                       退款
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFinancial("pending")}
+                      onClick={() => setFinancialStatus("pending")}
                     >
                       未付款
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={isUpdating}>
+                      訂單狀態 <ChevronDown className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => setOrderStatus("pending")}
+                    >
+                      未處理
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setOrderStatus("processing")}
+                    >
+                      處理中
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setOrderStatus("done")}
+                    >
+                      完成
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setOrderStatus("cancelled")}
+                    >
+                      取消
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex gap-2">
-                <FinancialStatusBadge status={order.financialStatus} />
-                <FulfillmentStatusBadge status={order.fulfillmentStatus} />
-                <OrderStatusBadge status={order.status} />
+                <FinancialStatusBadge status={financialStatus} />
+                <FulfillmentStatusBadge status={fulfillmentStatus} />
+                <OrderStatusBadge status={orderStatus} />
               </div>
             </div>
 
@@ -262,9 +264,6 @@ export function OrderDetailSheet({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                  {order.source && (
-                    <Badge variant="outline">{order.source}</Badge>
-                  )}
                   <Badge variant="outline">
                     {order.isDining ? "用餐中" : "已離場"}
                   </Badge>
@@ -274,7 +273,7 @@ export function OrderDetailSheet({
                 </div>
 
                 {/* Line items */}
-                <div className="space-y-4 pt-1">
+                <div className="space-y-4 pt-1 max-h-[35vh] overflow-y-auto">
                   {order.lineItems
                     .slice()
                     .sort((a, b) => a.rank - b.rank)
@@ -298,9 +297,7 @@ export function OrderDetailSheet({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-blue-600">
-                              {item.name}
-                            </p>
+                            <p className="text-sm font-medium">{item.name}</p>
                             {options.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {options.map((opt, i) => (
@@ -387,7 +384,7 @@ export function OrderDetailSheet({
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                   <Store className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <span className="text-sm font-medium">店面</span>
+                <span className="text-sm font-medium">{order.source}</span>
               </div>
             </div>
 
@@ -410,8 +407,7 @@ export function OrderDetailSheet({
               <Textarea
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
-                onBlur={handleSaveNote}
-                disabled={isSavingNote}
+                disabled={isUpdating}
                 placeholder="新增客人備註..."
                 className="text-sm resize-none h-40"
                 rows={3}
@@ -419,31 +415,42 @@ export function OrderDetailSheet({
             </div>
 
             {/* 店內備註 */}
-            <div className="p-4 border-b bg-amber-50">
+            <div className="p-4 border-b bg-muted">
               <div className="flex items-center gap-1.5 mb-2">
-                <Lock className="h-3.5 w-3.5 text-amber-600" />
-                <p className="text-sm font-medium text-amber-800">店內備註</p>
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  店內備註
+                </p>
               </div>
               <Textarea
                 value={internalNote}
                 onChange={(e) => setInternalNote(e.target.value)}
-                onBlur={handleSaveInternalNote}
-                disabled={isSavingInternalNote}
+                disabled={isUpdating}
                 placeholder="新增店內備註..."
-                className="h-40 text-sm resize-none bg-amber-50 border-amber-200 placeholder:text-amber-400"
+                className="h-40 text-sm resize-none bg-muted border-muted-foreground placeholder:text-muted-foreground"
                 rows={3}
               />
             </div>
-
-            {/* Delete */}
-            <div className="mt-auto p-4">
+            <div className="flex flex-col mt-auto p-4 gap-2">
+              {/* Delete */}
               <Button
                 variant="destructive"
                 className="w-full"
+                size="xl"
                 onClick={handleDelete}
                 disabled={isDeleting}
               >
                 {isDeleting ? "刪除中..." : "刪除"}
+              </Button>
+
+              {/* Update */}
+              <Button
+                className="w-full"
+                size="xl"
+                onClick={handleUpdate}
+                disabled={isUpdating}
+              >
+                {isUpdating ? "更新中..." : "儲存"}
               </Button>
             </div>
           </div>
