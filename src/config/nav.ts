@@ -1,6 +1,5 @@
 import {
   ClipboardList,
-  ConciergeBell,
   Package,
   Store,
 } from "lucide-react";
@@ -23,8 +22,7 @@ export const sidebarNav: SidebarNav[] = [
     label: "訂單管理",
     color: "bg-primary",
     items: [
-      { title: "處理中訂單", url: "/orders/restaurant", icon: ConciergeBell },
-      { title: "訂單列表", url: "/orders", icon: ClipboardList },
+      { title: "訂單管理", url: "/orders", icon: ClipboardList },
     ],
   },
   {
@@ -58,14 +56,12 @@ export const navGroups: NavGroup[] = [
     color: "bg-primary",
     items: [
       {
-        title: "處理中訂單",
-        icon: ConciergeBell,
-        url: "/orders/restaurant",
-      },
-      {
-        title: "訂單列表",
+        title: "訂單管理",
         icon: ClipboardList,
-        url: "/orders",
+        sub: [
+          { title: "處理中訂單", url: "/orders/restaurant" },
+          { title: "訂單列表", url: "/orders/list" },
+        ],
       },
     ],
   },
