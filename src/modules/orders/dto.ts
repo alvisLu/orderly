@@ -34,7 +34,7 @@ export const createOrderDto = z.object({
 
 const transactionDto = z.object({
   type: z.enum(["checkout", "refund"]),
-  amount: z.number().nonnegative(),
+  amount: z.number(),
   gateway: z.object({
     id: z.string(),
     name: z.string(),
@@ -43,7 +43,7 @@ const transactionDto = z.object({
 });
 
 export const updateOrderDto = z.object({
-  status: z.enum(["pending", "processing", "done"]).optional(),
+  status: z.enum(["pending", "processing", "done", "cancelled"]).optional(),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
   note: z.string().optional(),

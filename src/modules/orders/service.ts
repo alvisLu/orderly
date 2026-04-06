@@ -13,7 +13,10 @@ import type {
   PaginatedOrders,
   UpdateOrderInput,
 } from "./types";
-import { OrderNotFoundError } from "@/lib/http-error";
+import {
+  OrderAlreadyCheckedOutError,
+  OrderNotFoundError,
+} from "@/lib/http-error";
 
 export async function getOrders(query: OrderQuery): Promise<PaginatedOrders> {
   return findAllOrders(query);
@@ -71,13 +74,21 @@ export async function editOrder(
   let transactionsUpdate: unknown[] | undefined;
   if (transaction) {
     const existing_txns = (existing.transactions as unknown[] | null) ?? [];
+    if (
+      transaction.type === "checkout" &&
+      existing_txns.some((t) => (t as { type: string }).type === "checkout")
+    ) {
+      throw new OrderAlreadyCheckedOutError();
+    }
     transactionsUpdate = [...existing_txns, transaction];
   }
 
   const order = await updateOrder(id, {
     ...rest,
     ...(transactionsUpdate !== undefined && {
-      transactions: transactionsUpdate as Parameters<typeof updateOrder>[1]["transactions"],
+      transactions: transactionsUpdate as Parameters<
+        typeof updateOrder
+      >[1]["transactions"],
     }),
   });
   if (!order) throw new OrderNotFoundError();

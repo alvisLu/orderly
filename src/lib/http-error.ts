@@ -84,6 +84,15 @@ export class OrderNotFoundError extends HttpError {
     this.name = "OrderNotFoundError";
   }
 }
+export class OrderAlreadyCheckedOutError extends HttpError {
+  constructor() {
+    const status = 400;
+    const message = "此訂單已結帳，不可重複結帳";
+    const code = "4001";
+    super(status, message, code);
+    this.name = "OrderAlreadyCheckedOutError";
+  }
+}
 
 export class PaymentNotFoundError extends HttpError {
   constructor() {
