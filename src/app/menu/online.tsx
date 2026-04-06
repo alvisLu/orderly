@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import {
+  CircleCheckBig,
+  CircleDollarSign,
+  Minus,
+  Plus,
+  Recycle,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -272,6 +279,47 @@ interface StoreInfo {
   businessHours?: { day: string; hours: string }[];
 }
 
+function OrderSuccess({
+  tableName,
+  onContinue,
+}: {
+  tableName: string;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
+      <div className=" flex flex-col items-start gap-2">
+        <p className="flex items-start gap-2 text-muted-foreground">
+          <CircleCheckBig className="text-primary" />
+          桌號：{tableName}，訂單已送出...
+        </p>
+        <p className="text-2xl font-bold flex items-center gap-2">
+          <CircleDollarSign className="text-yellow-500" />
+          請到櫃檯結帳
+        </p>
+        <p className="flex items-start gap-2 text-muted-foreground">
+          <Recycle className="text-secondary" />
+          用餐完請將餐盤回收
+        </p>
+      </div>
+      <div className="flex gap-3">
+        <Button onClick={onContinue} size="xl">
+          繼續點餐
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            // TODO: review order
+          }}
+          size="xl"
+        >
+          查看訂單
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function MenuClient({
   tableName,
   products,
@@ -367,17 +415,10 @@ export function MenuClient({
 
   if (ordered) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
-        <p className="text-2xl font-bold">訂單已送出！</p>
-        <p className="text-muted-foreground">桌號：{tableName}，請稍候</p>
-        <button
-          type="button"
-          onClick={() => setOrdered(false)}
-          className="mt-4 rounded-xl bg-primary text-primary-foreground px-8 py-3 font-semibold"
-        >
-          繼續點餐
-        </button>
-      </div>
+      <OrderSuccess
+        tableName={tableName}
+        onContinue={() => setOrdered(false)}
+      />
     );
   }
 
