@@ -8,6 +8,10 @@ export type CreateProductInput = {
   name: string;
   description?: string | null;
   price: number;
+  price2?: number;
+  price3?: number;
+  price4?: number;
+  price5?: number;
   cost?: number;
   imageUrls?: string[];
   isFavorite?: boolean;

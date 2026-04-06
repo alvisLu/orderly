@@ -4,7 +4,11 @@ import { paginationDto } from "@/lib/dto";
 export const createProductDto = z.object({
   name: z.string().min(1).max(50),
   description: z.string().max(500).nullable().optional(),
-  price: z.number().nonnegative(),
+  price: z.number(),
+  price2: z.number().optional(),
+  price3: z.number().optional(),
+  price4: z.number().optional(),
+  price5: z.number().optional(),
   cost: z.number().nonnegative().optional(),
   imageUrls: z.array(z.url()).optional(),
   isFavorite: z.boolean().optional(),

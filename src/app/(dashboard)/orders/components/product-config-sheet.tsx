@@ -212,6 +212,7 @@ export function ProductConfigSheet({
                   size="xl"
                   variant={discountMode === mode ? "default" : "outline"}
                   onClick={() => {
+                    setPriceKey("price");
                     setDiscountMode(mode);
                     if (mode === "自訂") setCustomPrice(computedPrice);
                   }}
@@ -223,19 +224,16 @@ export function ProductConfigSheet({
             <div className="flex flex-wrap gap-1.5">
               {(Object.keys(PRICE_LABELS) as PriceKey[]).map((key) => {
                 const val = Number(product[key]);
+                const isActive =
+                  priceKey === key && discountMode === null;
                 return (
                   <Button
                     key={key}
                     size="xl"
-                    variant={
-                      priceKey === key && discountMode !== "免費"
-                        ? "default"
-                        : "outline"
-                    }
+                    variant={isActive ? "default" : "outline"}
                     onClick={() => {
                       setPriceKey(key);
-                      if (key === "price" || discountMode === "免費")
-                        setDiscountMode(null);
+                      setDiscountMode(null);
                     }}
                     disabled={val === 0}
                   >

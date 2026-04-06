@@ -50,8 +50,12 @@ const MAX_IMAGES = 10;
 
 const schema = z.object({
   name: z.string().min(1, "請輸入商品名稱").max(50, "商品名稱不能超過50個字符"),
-  price: z.coerce.number().min(0, "價格不能為負數"),
-  cost: z.coerce.number().min(0),
+  price: z.coerce.number(),
+  price2: z.coerce.number(),
+  price3: z.coerce.number(),
+  price4: z.coerce.number(),
+  price5: z.coerce.number(),
+  cost: z.coerce.number().min(0, "成本不能為負數"),
   description: z.string().optional(),
   categoryId: z.string().nullable(),
   isPosAvailable: z.boolean(),
@@ -105,6 +109,10 @@ export function EditProductDialog({
     defaultValues: {
       name: product.name,
       price: product.price,
+      price2: product.price2,
+      price3: product.price3,
+      price4: product.price4,
+      price5: product.price5,
       cost: product.cost,
       description: product.description ?? "",
       categoryId: product.categoryId,
@@ -263,34 +271,34 @@ export function EditProductDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="price" className="text-base">
-                售價 *
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                className="h-10"
-                {...register("price")}
-              />
-              {errors.price && (
-                <p className="text-sm text-destructive">
-                  {errors.price.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="cost" className="text-base">
-                成本
-              </Label>
-              <Input
-                id="cost"
-                type="number"
-                className="h-10"
-                {...register("cost")}
-              />
-            </div>
+          <div className="grid grid-cols-6 gap-4">
+            {(
+              [
+                { key: "price", label: "售價 *" },
+                { key: "price2", label: "價格 2" },
+                { key: "price3", label: "價格 3" },
+                { key: "price4", label: "價格 4" },
+                { key: "price5", label: "價格 5" },
+                { key: "cost", label: "成本" },
+              ] as const
+            ).map(({ key, label }) => (
+              <div key={key} className="space-y-1">
+                <Label htmlFor={key} className="text-base">
+                  {label}
+                </Label>
+                <Input
+                  id={key}
+                  type="number"
+                  className="h-10"
+                  {...register(key)}
+                />
+                {errors[key] && (
+                  <p className="text-sm text-destructive">
+                    {errors[key].message}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* description */}

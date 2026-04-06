@@ -10,7 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <div className="flex-1 flex flex-col h-dvh overflow-hidden">
         <header className="flex items-center justify-between h-12 shrink-0 px-4">
