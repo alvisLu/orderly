@@ -75,6 +75,23 @@ export async function updateOrder(
   }
 }
 
+export async function findOrdersByIds(ids: string[]): Promise<Order[]> {
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  try {
+    return await prisma.order.findMany({
+      where: {
+        id: { in: ids },
+        deletedAt: null,
+        createdAt: { gte: twoHoursAgo },
+      },
+      orderBy: { createdAt: "desc" },
+      include,
+    });
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
 export async function softDeleteOrder(id: string): Promise<void> {
   try {
     await prisma.order.update({

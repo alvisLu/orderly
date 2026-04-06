@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, startTransition } from "react";
 import Image from "next/image";
 import {
+  ArrowLeft,
   CircleCheckBig,
   CircleDollarSign,
+  Clock,
   Minus,
   Plus,
   Recycle,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,12 +31,46 @@ import {
   ScrollSpyViewport,
 } from "@/components/ui/scroll-spy";
 import type { Product } from "@/modules/products/types";
-import type { LineItemOption } from "@/modules/orders/types";
+import type { LineItemOption, Order } from "@/modules/orders/types";
 import type { ProductTypeItem } from "@/modules/product-types/types";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 const NAV_HEIGHT = 60;
 const UNCATEGORIZED_ID = "uncategorized";
+const STORAGE_KEY = "orderly_my_orders";
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
+interface StoredOrder {
+  id: string;
+  createdAt: number; // timestamp
+}
+
+function readStoredOrders(): StoredOrder[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const entries: StoredOrder[] = JSON.parse(raw);
+    const now = Date.now();
+    const valid = entries.filter((e) => now - e.createdAt < TWO_HOURS_MS);
+    if (valid.length !== entries.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(valid));
+    }
+    return valid;
+  } catch {
+    return [];
+  }
+}
+
+function getMyOrderIds(): string[] {
+  return readStoredOrders().map((e) => e.id);
+}
+
+function saveMyOrderId(id: string) {
+  const entries = readStoredOrders();
+  entries.push({ id, createdAt: Date.now() });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
 
 type SelectedOptions = Record<string, ProductTypeItem[]>;
 
@@ -268,6 +305,132 @@ function ProductOptionDialog({
   );
 }
 
+// ── Order history ────────────────────────────────────────────────────────────
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "訂單已送出",
+  processing: "製作中",
+  done: "完成",
+  cancelled: "已取消",
+};
+
+function OrderHistory({ onBack }: { onBack: () => void }) {
+  const [orders, setOrders] = useState<Order[] | null>(null);
+
+  useEffect(() => {
+    const ids = getMyOrderIds();
+    if (ids.length === 0) {
+      startTransition(() => setOrders([]));
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/menu/orders?ids=${ids.join(",")}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!cancelled) setOrders(data);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const loading = orders === null;
+
+  return (
+    <div className="flex flex-col h-dvh bg-primary/5">
+      {/* Header */}
+      <div className="shrink-0 px-4 py-3 flex items-center gap-3 bg-background border-b">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <p className="text-xl font-semibold flex-1">我的訂單</p>
+      </div>
+
+      {/* Order list */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Spinner className="size-6 text-primary" />
+          </div>
+        ) : orders.length === 0 ? (
+          <p className="text-center text-muted-foreground py-10 text-lg">
+            目前沒有訂單
+          </p>
+        ) : (
+          orders.map((order) => (
+            <Card key={order.id}>
+              <CardContent className="space-y-3">
+                {/* Order header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
+                    {STATUS_LABELS[order.status] ?? order.status}
+                  </span>
+                </div>
+
+                {/* Line items */}
+                <div className="space-y-1.5">
+                  {order.lineItems.map((item) => {
+                    const options = (item.itemOptions ??
+                      []) as unknown as LineItemOption[];
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex justify-between text-base"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-muted-foreground ml-1">
+                            x{item.quantity}
+                          </span>
+                          {options.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {options.map((o) => o.name).join("、")}
+                            </p>
+                          )}
+                        </div>
+                        <span className="shrink-0 font-medium">
+                          ${Number(item.price) * item.quantity}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Order note */}
+                {order.userNote && (
+                  <p className="text-sm text-muted-foreground">
+                    備註：{order.userNote}
+                  </p>
+                )}
+
+                {/* Total */}
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>小計</span>
+                  <span>${Number(order.total)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Back button */}
+      <div className="px-4 py-2.5">
+        <Button size="xl" className="w-full" onClick={onBack}>
+          繼續點餐
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface StoreInfo {
@@ -282,9 +445,11 @@ interface StoreInfo {
 function OrderSuccess({
   tableName,
   onContinue,
+  onViewOrders,
 }: {
   tableName: string;
   onContinue: () => void;
+  onViewOrders: () => void;
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
@@ -306,13 +471,7 @@ function OrderSuccess({
         <Button onClick={onContinue} size="xl">
           繼續點餐
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            // TODO: review order
-          }}
-          size="xl"
-        >
+        <Button variant="secondary" onClick={onViewOrders} size="xl">
           查看訂單
         </Button>
       </div>
@@ -336,6 +495,7 @@ export function MenuClient({
   const [configProduct, setConfigProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordered, setOrdered] = useState(false);
+  const [viewOrders, setViewOrders] = useState(false);
 
   // Group products by category
   const groups: CategoryGroup[] = (() => {
@@ -401,6 +561,8 @@ export function MenuClient({
         return;
       }
 
+      const order = await res.json();
+      saveMyOrderId(order.id);
       setOrdered(true);
       setCart([]);
       setCartOpen(false);
@@ -413,11 +575,19 @@ export function MenuClient({
     setCartOpen(false);
   }
 
+  if (viewOrders) {
+    return <OrderHistory onBack={() => setViewOrders(false)} />;
+  }
+
   if (ordered) {
     return (
       <OrderSuccess
         tableName={tableName}
         onContinue={() => setOrdered(false)}
+        onViewOrders={() => {
+          setOrdered(false);
+          setViewOrders(true);
+        }}
       />
     );
   }
@@ -427,9 +597,12 @@ export function MenuClient({
       {/* Table name (fixed) */}
       <div className="shrink-0 px-4 py-3 flex items-center justify-between">
         <p className="text-2xl font-semibold text-primary">{store?.name}</p>
-        <Button size="lg" className="text-lg">
-          桌號：{tableName}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button>桌號：{tableName}</Button>
+          <Button variant="secondary" onClick={() => setViewOrders(true)}>
+            查看訂單
+          </Button>
+        </div>
       </div>
 
       {/* ScrollSpy (fills remaining space) */}
