@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { LineItemOption, Order } from "@/modules/orders/types";
 import { getMyOrderIds } from "../storage";
 import { Badge } from "@/components/ui/badge";
+import { DiningBadge } from "@/components/shared/dining-badge";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "訂單已送出",
@@ -75,9 +76,13 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                       {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm")}
                     </span>
                   </div>
-                  <span className="text-sm font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
-                    {STATUS_LABELS[order.status] ?? order.status}
-                  </span>
+
+                  <div className="flex gap-2">
+                    <DiningBadge isDining={order.isDining} />
+                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
+                      {STATUS_LABELS[order.status] ?? order.status}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Line items */}

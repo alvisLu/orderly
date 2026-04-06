@@ -7,6 +7,7 @@ import { ChevronDown, Lock, User, Store, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { DiningBadge } from "@/components/shared/dining-badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -264,9 +265,7 @@ export function OrderDetailSheet({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                  <Badge variant="outline">
-                    {order.isDining ? "用餐中" : "已離場"}
-                  </Badge>
+                  <DiningBadge isDining={order.isDining} />
                   <span>
                     {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm:ss")}
                   </span>

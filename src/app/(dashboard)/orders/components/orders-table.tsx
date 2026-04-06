@@ -7,6 +7,7 @@ import { Eye } from "lucide-react";
 import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DiningBadge } from "@/components/shared/dining-badge";
 import type { Order } from "@/modules/orders/types";
 import {
   OrderStatusBadge,
@@ -97,9 +98,7 @@ function getColumns(
       id: "type",
       header: "類型",
       cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.isDining ? "用餐中" : "已離場"}
-        </Badge>
+        <DiningBadge isDining={row.original.isDining} />
       ),
     },
   ];

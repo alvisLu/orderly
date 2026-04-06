@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { apiGetOrders, apiGetOrder } from "@/app/api/orders/api";
+import { apiGetOrders, apiGetOrder, apiLeaveAllDining } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import { OrderColumns } from "./components/order-columns";
 import { Button } from "@/components/ui/button";
@@ -154,6 +155,23 @@ export default function RestaurantOrdersPage() {
             {tab.label}
           </Button>
         ))}
+        <div className="flex-1" />
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={orders.length === 0}
+          onClick={async () => {
+            try {
+              const { count } = await apiLeaveAllDining();
+              setOrders([]);
+              toast.success(`已將 ${count} 筆訂單離場`);
+            } catch {
+              toast.error("操作失敗");
+            }
+          }}
+        >
+          全部離場
+        </Button>
       </div>
 
       <Scroller className="flex-1 min-h-0">
