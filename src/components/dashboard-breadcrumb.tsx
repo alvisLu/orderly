@@ -18,10 +18,11 @@ const PATH_LABELS: Record<string, string> = {
   list: "商品列表",
   categories: "目錄管理",
   types: "商品選項",
-  payments: "付款",
-  tables: "桌位",
-  store: "商店",
+  settings: "設定",
+  stores: "商店",
   profile: "店家資料",
+  tables: "桌位管理",
+  payments: "付款管理",
 };
 
 export function DashboardBreadcrumb() {

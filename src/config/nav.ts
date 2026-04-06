@@ -3,8 +3,6 @@ import {
   ConciergeBell,
   Package,
   Store,
-  TableProperties,
-  WalletCards,
 } from "lucide-react";
 
 export type SidebarNavItem = {
@@ -37,11 +35,7 @@ export const sidebarNav: SidebarNav[] = [
   {
     label: "設定",
     color: "bg-muted-foreground",
-    items: [
-      { title: "付款管理", url: "/payments", icon: WalletCards },
-      { title: "桌位管理", url: "/tables", icon: TableProperties },
-      { title: "店家資料", url: "/store/profile", icon: Store },
-    ],
+    items: [{ title: "設定", url: "/settings", icon: Store }],
   },
 ];
 
@@ -95,19 +89,13 @@ export const navGroups: NavGroup[] = [
     color: "bg-muted-foreground",
     items: [
       {
-        title: "付款管理",
-        icon: WalletCards,
-        url: "/payments",
-      },
-      {
-        title: "桌位管理",
-        icon: TableProperties,
-        url: "/tables",
-      },
-      {
-        title: "店家資料",
+        title: "設定",
         icon: Store,
-        url: "/store/profile",
+        sub: [
+          { title: "店家資料", url: "/settings/stores/profile" },
+          { title: "桌位管理", url: "/settings/tables" },
+          { title: "付款管理", url: "/settings/payments" },
+        ],
       },
     ],
   },
