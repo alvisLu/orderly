@@ -93,3 +93,18 @@ export const navGroups: Record<string, NavGroup> = {
     ],
   },
 };
+
+export const pathLabels: Record<string, string> = {
+  "/orders": "訂單管理",
+  "/orders/restaurant": "處理中",
+  "/orders/list": "訂單列表",
+  "/products": "商品管理",
+  "/products/list": "商品列表",
+  "/products/categories": "目錄管理",
+  "/products/productTypes": "商品選項",
+  "/settings": "設定",
+  "/settings/stores": "商店",
+  "/settings/stores/profile": "店家資料",
+  "/settings/tables": "桌位管理",
+  "/settings/payments": "付款管理",
+};

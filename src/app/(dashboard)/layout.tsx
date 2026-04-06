@@ -12,7 +12,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <div className="flex-1 flex flex-col h-dvh overflow-hidden">
-        <header className="flex items-center h-12 shrink-0 border-b px-4">
+        <header className="flex items-center h-12 shrink-0 px-4">
           <DashboardBreadcrumb />
         </header>
         <main className="flex-1 overflow-auto">{children}</main>

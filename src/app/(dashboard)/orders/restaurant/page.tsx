@@ -6,12 +6,11 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { apiGetOrders, apiGetOrder } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import { OrderColumns } from "./components/order-columns";
-import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Scroller } from "@/components/ui/scroller";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -137,7 +136,7 @@ export default function RestaurantOrdersPage() {
   }
 
   return (
-    <div className="p-6 h-full flex flex-col bg-primary/5">
+    <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">餐廳訂單</h1>
         {/* <CreateOrderDialog

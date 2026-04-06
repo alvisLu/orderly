@@ -296,7 +296,7 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
             <Button variant={orderStatusVariant} size="sm">
               {ORDER_STATUS_LABEL[order.status]}
             </Button>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5">
               <Button variant={fulfillmentVariant} size="sm">
                 <Utensils />
                 {FULFILLMENT_LABEL[order.fulfillmentStatus]}
