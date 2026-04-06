@@ -6,4 +6,5 @@ export const updateStoreDto = z.object({
   address: z.string().max(200).nullable().optional(),
   bannerURL: z.string().url().nullable().optional(),
   opening: z.any().optional(),
+  orderCounter: z.number().int().min(0).optional(),
 });

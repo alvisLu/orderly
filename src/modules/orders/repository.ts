@@ -55,9 +55,16 @@ export async function insertOrder(
   data: Prisma.OrderCreateInput
 ): Promise<Order> {
   try {
-    return await prisma.order.create({
-      data,
-      include,
+    return await prisma.$transaction(async (tx) => {
+      const store = await tx.store.findFirstOrThrow();
+      const updated = await tx.store.update({
+        where: { id: store.id },
+        data: { orderCounter: { increment: 1 } },
+      });
+      return tx.order.create({
+        data: { ...data, takeNumber: updated.orderCounter },
+        include,
+      });
     });
   } catch (e) {
     throw new DatabaseError(String(e));

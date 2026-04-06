@@ -28,6 +28,7 @@ export default function StoreProfilePage() {
   const [isLoading, startLoading] = useTransition();
   const [isSaving, startSaving] = useTransition();
   const [isUploading, startUploading] = useTransition();
+  const [isResetting, startResetting] = useTransition();
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -210,6 +211,31 @@ export default function StoreProfilePage() {
               {errors.bannerURL.message}
             </p>
           )}
+        </div>
+
+        {/* 取餐號碼 */}
+        <div className="flex items-center gap-3">
+          <Label>下一個取餐號碼: </Label>
+          <span className="text-2xl font-bold tabular-nums">
+            {store.orderCounter + 1}
+          </span>
+          <Button
+            variant="secondary"
+            disabled={isResetting || store.orderCounter === 0}
+            onClick={() => {
+              startResetting(async () => {
+                try {
+                  const updated = await apiUpdateStore({ orderCounter: 0 });
+                  setStore(updated);
+                  toast.success("取餐號碼已重置");
+                } catch {
+                  toast.error("重置失敗");
+                }
+              });
+            }}
+          >
+            {isResetting ? "重置中..." : "重置"}
+          </Button>
         </div>
 
         <div className="flex gap-2 pt-2">
