@@ -32,7 +32,7 @@ export const sidebarNav: SidebarNav[] = [
   {
     label: "商品",
     color: "bg-secondary",
-    items: [{ title: "商品列表", url: "/products", icon: Package }],
+    items: [{ title: "商品管理", url: "/products", icon: Package }],
   },
   {
     label: "設定",
@@ -83,9 +83,9 @@ export const navGroups: NavGroup[] = [
         title: "商品管理",
         icon: Package,
         sub: [
-          { title: "目錄管理", url: "/categories" },
-          { title: "商品列表", url: "/products" },
-          { title: "商品選項", url: "/product-types" },
+          { title: "商品列表", url: "/products/list" },
+          { title: "目錄管理", url: "/products/categories" },
+          { title: "商品選項", url: "/products/types" },
         ],
       },
     ],
