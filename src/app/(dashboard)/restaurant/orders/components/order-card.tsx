@@ -256,18 +256,22 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => setCheckoutOpen(true)}
-                    // disabled={order.financialStatus === "paid"}
+                    disabled={order.financialStatus !== "pending"}
                   >
                     <CircleDollarSign className="h-4 w-4" />
                     {order.financialStatus === "paid" ? "已結帳" : "結帳"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleFulfill}>
+                  <DropdownMenuItem
+                    onClick={handleFulfill}
+                    disabled={order.fulfillmentStatus !== "pending"}
+                  >
                     <Truck className="h-4 w-4" />
                     出餐
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setVoidOpen(true)}
                     className="text-destructive"
+                    disabled={order.status === "cancelled"}
                   >
                     <BookmarkX className="h-4 w-4" />
                     作廢
