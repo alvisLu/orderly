@@ -28,12 +28,14 @@ export function DashboardBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  if (segments.length === 0) return null;
-
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {segments.map((seg, i) => {
+        {segments.length === 0 ? (
+          <BreadcrumbItem>
+            <BreadcrumbPage>主選單</BreadcrumbPage>
+          </BreadcrumbItem>
+        ) : segments.map((seg, i) => {
           const href = "/" + segments.slice(0, i + 1).join("/");
           const label = PATH_LABELS[seg] ?? seg;
           const isLast = i === segments.length - 1;
