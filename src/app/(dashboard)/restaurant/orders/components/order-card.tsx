@@ -254,9 +254,12 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setCheckoutOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setCheckoutOpen(true)}
+                    // disabled={order.financialStatus === "paid"}
+                  >
                     <CircleDollarSign className="h-4 w-4" />
-                    結帳
+                    {order.financialStatus === "paid" ? "已結帳" : "結帳"}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleFulfill}>
                     <Truck className="h-4 w-4" />
@@ -289,7 +292,7 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
             <Button variant={orderStatusVariant} size="sm">
               {ORDER_STATUS_LABEL[order.status]}
             </Button>
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-col items-end gap-1">
               <Button variant={fulfillmentVariant} size="sm">
                 <Utensils />
                 {FULFILLMENT_LABEL[order.fulfillmentStatus]}

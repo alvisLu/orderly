@@ -137,7 +137,7 @@ export default function RestaurantOrdersPage() {
   }
 
   return (
-    <div className="p-6 h-full flex flex-col bg-primary/10">
+    <div className="p-6 h-full flex flex-col bg-primary/5">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">餐廳訂單</h1>
         {/* <CreateOrderDialog
