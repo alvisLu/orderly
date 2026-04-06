@@ -25,7 +25,7 @@ export const sidebarNav: SidebarNav[] = [
     label: "訂單管理",
     color: "bg-primary",
     items: [
-      { title: "處理中訂單", url: "/restaurant/orders", icon: ConciergeBell },
+      { title: "處理中訂單", url: "/orders/restaurant", icon: ConciergeBell },
       { title: "訂單列表", url: "/orders", icon: ClipboardList },
     ],
   },
@@ -66,7 +66,7 @@ export const navGroups: NavGroup[] = [
       {
         title: "處理中訂單",
         icon: ConciergeBell,
-        url: "/restaurant/orders",
+        url: "/orders/restaurant",
       },
       {
         title: "訂單列表",

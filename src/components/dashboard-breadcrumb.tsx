@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/breadcrumb";
 
 const PATH_LABELS: Record<string, string> = {
-  restaurant: "餐廳",
   orders: "訂單",
+  restaurant: "處理中",
   products: "商品管理",
   list: "商品列表",
   categories: "目錄管理",
