@@ -20,12 +20,10 @@ apiClient.interceptors.response.use(
 
         if (message === "Validation failed") {
           const ValidationErrorMsg = `Validation error: [${message}] ${error.response?.data?.fields.map((f: any) => `${f.path}: ${f.message}`).join(", ")}`;
-          console.error(ValidationErrorMsg);
           return Promise.reject(toast.error(ValidationErrorMsg));
         }
 
         const RequestErrorMsg = `Request error: [${code}] ${message}`;
-        console.error(RequestErrorMsg);
         return Promise.reject(toast.error(RequestErrorMsg));
       }
       if (status === 401) {
@@ -35,7 +33,6 @@ apiClient.interceptors.response.use(
       const code = error.response?.data?.code ?? "";
 
       const ServerErrorMsg = `Server error: [${code}] ${message}`;
-      console.error(ServerErrorMsg);
       return Promise.reject(toast.error(ServerErrorMsg));
     }
     return Promise.reject(error);

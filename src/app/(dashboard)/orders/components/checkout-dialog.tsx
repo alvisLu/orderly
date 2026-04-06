@@ -23,7 +23,12 @@ interface Props {
   onUpdated: (order: Order) => void;
 }
 
-export function CheckoutDialog({ order, open, onOpenChange, onUpdated }: Props) {
+export function CheckoutDialog({
+  order,
+  open,
+  onOpenChange,
+  onUpdated,
+}: Props) {
   const total = Number(order.total);
   const [calcValue, setCalcValue] = useState(total.toString());
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -39,7 +44,9 @@ export function CheckoutDialog({ order, open, onOpenChange, onUpdated }: Props) 
     });
   }, [open, total]);
 
-  const change = Big(calcValue || "0").minus(total).toNumber();
+  const change = Big(calcValue || "0")
+    .minus(total)
+    .toNumber();
 
   function buildTransaction() {
     if (!selectedPayment) return undefined;
@@ -123,10 +130,34 @@ export function CheckoutDialog({ order, open, onOpenChange, onUpdated }: Props) 
             <div className="flex-1 flex flex-col gap-4">
               <div className="flex flex-col justify-between gap-2">
                 <div className="flex justify-between">
-                  <Button variant="outline" size="xl" onClick={() => setCalcValue("100")}>$100</Button>
-                  <Button variant="outline" size="xl" onClick={() => setCalcValue("200")}>$200</Button>
-                  <Button variant="outline" size="xl" onClick={() => setCalcValue("500")}>$500</Button>
-                  <Button variant="outline" size="xl" onClick={() => setCalcValue("1000")}>$1000</Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue("100")}
+                  >
+                    $100
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue("200")}
+                  >
+                    $200
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue("500")}
+                  >
+                    $500
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    onClick={() => setCalcValue("1000")}
+                  >
+                    $1000
+                  </Button>
                 </div>
               </div>
               <Calculator

@@ -12,13 +12,17 @@ async function authenticate(request: Request) {
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    const { data: { user } } = await createClient().auth.getUser(token);
+    const {
+      data: { user },
+    } = await createClient().auth.getUser(token);
     if (!user) throw new UnauthorizedError();
     return user;
   }
 
   const supabase = await createAuthClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new UnauthorizedError();
   return user;
 }
@@ -66,12 +70,16 @@ export function routeHandler(handler: RouteHandler): RouteHandler {
       }
 
       if (error instanceof HttpError) {
+        console.error(
+          ` HTTP error: [${error.status}] ${error.code}: ${error.message}`
+        );
         return Response.json(
           { error: error.message, code: error.code },
           { status: error.status }
         );
       }
 
+      console.error(" Unhandled error:", error);
       return Response.json(
         { error: (error as Error).message },
         { status: 500 }
