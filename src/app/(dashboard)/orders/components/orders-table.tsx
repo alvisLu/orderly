@@ -13,7 +13,7 @@ import {
   OrderStatusBadge,
   FinancialStatusBadge,
   FulfillmentStatusBadge,
-} from "./order-status-badge";
+} from "@/components/shared/order-status-badge";
 import { OrderDetailSheet } from "./order-detail-sheet";
 import Big from "big.js";
 

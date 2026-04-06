@@ -51,7 +51,12 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
     variant: "outline" as const,
   };
   return (
-    <Badge variant={variant}>
+    <Badge
+      variant={variant}
+      className={
+        status === "pending" ? "bg-primary/10 text-primary border-0" : undefined
+      }
+    >
       <ReceiptText className="w-4 h-4" />
       {label}
     </Badge>

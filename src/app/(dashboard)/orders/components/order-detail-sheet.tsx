@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import dayjs from "dayjs";
-import { ChevronDown, Lock, User, Store, Info } from "lucide-react";
+import { ChevronDown, Lock, User, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ import {
   OrderStatusBadge,
   FulfillmentStatusBadge,
   FinancialStatusBadge,
-} from "./order-status-badge";
+} from "@/components/shared/order-status-badge";
 import {
   apiGetOrder,
   apiUpdateOrder,
@@ -60,8 +60,7 @@ export function OrderDetailSheet({
     useState<Order["fulfillmentStatus"]>("pending");
   const [financialStatus, setFinancialStatus] =
     useState<Order["financialStatus"]>("pending");
-  const [orderStatus, setOrderStatus] =
-    useState<Order["status"]>("pending");
+  const [orderStatus, setOrderStatus] = useState<Order["status"]>("pending");
 
   useEffect(() => {
     if (!orderId) {
@@ -224,9 +223,7 @@ export function OrderDetailSheet({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => setOrderStatus("pending")}
-                    >
+                    <DropdownMenuItem onClick={() => setOrderStatus("pending")}>
                       未處理
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -234,9 +231,7 @@ export function OrderDetailSheet({
                     >
                       處理中
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setOrderStatus("done")}
-                    >
+                    <DropdownMenuItem onClick={() => setOrderStatus("done")}>
                       完成
                     </DropdownMenuItem>
                     <DropdownMenuItem

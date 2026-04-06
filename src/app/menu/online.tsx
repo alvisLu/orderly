@@ -146,6 +146,7 @@ export function MenuClient({
       saveMyOrderId(order.id);
       setOrdered(true);
       setCart([]);
+      setUserNote("");
       setCartOpen(false);
     } finally {
       setIsSubmitting(false);
@@ -269,13 +270,14 @@ export function MenuClient({
 
       {/* Bottom cart bar */}
       <div className="px-4 py-2.5">
-        <button
-          type="button"
+        <Button
+          size="2xl"
           onClick={() => setCartOpen(true)}
-          className="w-full rounded-xl bg-primary text-primary-foreground py-3.5 font-semibold text-base"
+          disabled={cart.length <= 0}
+          className="w-full"
         >
           {`查看購物車(${totalQuantity}) $${subtotal}`}
-        </button>
+        </Button>
       </div>
 
       {/* Cart dialog */}
@@ -346,40 +348,38 @@ export function MenuClient({
             )}
           </div>
 
-          {cart.length > 0 && (
-            <div className="space-y-3 pt-3 border-t">
-              <Textarea
-                placeholder="備註（例：不加冰、少糖）"
-                value={userNote}
-                onChange={(e) => setUserNote(e.target.value)}
-                rows={2}
-                className="text-base resize-none"
-              />
-              <div className="flex justify-between font-bold text-2xl">
-                <span>合計</span>
-                <span>${subtotal}</span>
-              </div>
-
-              <div className="flex flex-row gap-2">
-                <Button
-                  size="xl"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleCancel}
-                >
-                  繼續選購
-                </Button>
-                <Button
-                  size="xl"
-                  className="flex-1"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "送出中..." : "送出訂單"}
-                </Button>
-              </div>
+          <div className="space-y-3 pt-3 border-t">
+            <Textarea
+              placeholder="備註（例：不加冰、少糖）"
+              value={userNote}
+              onChange={(e) => setUserNote(e.target.value)}
+              rows={2}
+              className="text-base resize-none"
+            />
+            <div className="flex justify-between font-bold text-2xl">
+              <span>合計</span>
+              <span>${subtotal}</span>
             </div>
-          )}
+
+            <div className="flex flex-row gap-2">
+              <Button
+                size="xl"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCancel}
+              >
+                繼續選購
+              </Button>
+              <Button
+                size="xl"
+                className="flex-1"
+                onClick={handleSubmit}
+                disabled={isSubmitting || cart.length <= 0}
+              >
+                {isSubmitting ? "送出中..." : "送出訂單"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

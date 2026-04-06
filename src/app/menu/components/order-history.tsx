@@ -11,13 +11,9 @@ import type { LineItemOption, Order } from "@/modules/orders/types";
 import { getMyOrderIds } from "../storage";
 import { Badge } from "@/components/ui/badge";
 import { DiningBadge } from "@/components/shared/dining-badge";
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "訂單已送出",
-  processing: "製作中",
-  done: "完成",
-  cancelled: "已取消",
-};
+import { OrderStatusBadge } from "@/components/shared/order-status-badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function OrderHistory({ onBack }: { onBack: () => void }) {
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -71,22 +67,21 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                     {order.takeNumber && (
                       <Badge>取餐號 #{order.takeNumber}</Badge>
                     )}
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm")}
-                    </span>
                   </div>
 
                   <div className="flex gap-2">
                     <DiningBadge isDining={order.isDining} />
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
-                      {STATUS_LABELS[order.status] ?? order.status}
-                    </span>
+                    <OrderStatusBadge status={order.status} />
                   </div>
                 </div>
-
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    {dayjs(order.createdAt).format("YYYY-MM-DD HH:mm")}
+                  </span>
+                </div>
                 {/* Line items */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 border-b pb-1 ">
                   {order.lineItems.map((item) => {
                     const options = (item.itemOptions ??
                       []) as unknown as LineItemOption[];
@@ -115,11 +110,10 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                 </div>
 
                 {/* Order note */}
-                {order.userNote && (
-                  <p className="text-sm text-muted-foreground">
-                    備註：{order.userNote}
-                  </p>
-                )}
+                <p className="h-20 text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
+                  <Label>備註:</Label>
+                  {order.userNote}
+                </p>
 
                 {/* Total */}
                 <Separator />
