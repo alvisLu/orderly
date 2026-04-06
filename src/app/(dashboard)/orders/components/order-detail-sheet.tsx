@@ -133,7 +133,7 @@ export function OrderDetailSheet({
   if (!order) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
+        <DialogContent className="!inset-0 !translate-x-0 !translate-y-0 !w-full !h-full !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
           <div className="flex h-full items-center justify-center">
             {isLoadingOrder ? (
               <Spinner className="size-18 text-muted-foreground" />
@@ -151,7 +151,7 @@ export function OrderDetailSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
+      <DialogContent className="!w-[100dvw] !h-[100dvh] !max-w-none !max-h-none p-0 gap-0 overflow-hidden">
         <div className="flex h-full">
           {/* Left panel */}
           <div className="flex-1 flex flex-col overflow-hidden border-r">
@@ -371,61 +371,63 @@ export function OrderDetailSheet({
           </div>
 
           {/* Right panel */}
-          <div className="w-72 flex flex-col overflow-y-auto">
-            {/* 店面 */}
-            <div className="p-4 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <Store className="h-5 w-5 text-muted-foreground" />
+          <div className="w-72 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              {/* 店面 */}
+              <div className="p-4 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <Store className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <span className="text-sm font-medium">{order.source}</span>
                 </div>
-                <span className="text-sm font-medium">{order.source}</span>
               </div>
-            </div>
 
-            {/* 顧客資訊 */}
-            <div className="p-4 border-b">
-              <p className="text-sm font-medium mb-3">顧客資訊</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-5 w-5 text-muted-foreground" />
+              {/* 顧客資訊 */}
+              <div className="p-4 border-b">
+                <p className="text-sm font-medium mb-3">顧客資訊</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  {order.userPhone && (
+                    <span className="text-sm">{order.userPhone}</span>
+                  )}
                 </div>
-                {order.userPhone && (
-                  <span className="text-sm">{order.userPhone}</span>
-                )}
+              </div>
+
+              {/* 客人備註 */}
+              <div className="p-4">
+                <p className="text-sm font-medium mb-2">客人備註</p>
+                <Textarea
+                  value={userNote}
+                  onChange={(e) => setUserNote(e.target.value)}
+                  disabled={isUpdating}
+                  placeholder="新增客人備註..."
+                  className="text-sm resize-none"
+                  rows={6}
+                />
+              </div>
+
+              {/* 店內備註 */}
+              <div className="p-4 bg-muted">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    店內備註
+                  </p>
+                </div>
+                <Textarea
+                  value={internalNote}
+                  onChange={(e) => setInternalNote(e.target.value)}
+                  disabled={isUpdating}
+                  placeholder="新增店內備註..."
+                  className="text-sm resize-none bg-muted border-muted-foreground placeholder:text-muted-foreground"
+                  rows={6}
+                />
               </div>
             </div>
-
-            {/* 客人備註 */}
-            <div className="p-4 border-b">
-              <p className="text-sm font-medium mb-2">客人備註</p>
-              <Textarea
-                value={userNote}
-                onChange={(e) => setUserNote(e.target.value)}
-                disabled={isUpdating}
-                placeholder="新增客人備註..."
-                className="text-sm resize-none h-40"
-                rows={3}
-              />
-            </div>
-
-            {/* 店內備註 */}
-            <div className="p-4 border-b bg-muted">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  店內備註
-                </p>
-              </div>
-              <Textarea
-                value={internalNote}
-                onChange={(e) => setInternalNote(e.target.value)}
-                disabled={isUpdating}
-                placeholder="新增店內備註..."
-                className="h-40 text-sm resize-none bg-muted border-muted-foreground placeholder:text-muted-foreground"
-                rows={3}
-              />
-            </div>
-            <div className="flex flex-col mt-auto p-4 gap-2">
+            <div className="flex flex-col shrink-0 p-4 gap-2">
               {/* Delete */}
               <Button
                 variant="destructive"
