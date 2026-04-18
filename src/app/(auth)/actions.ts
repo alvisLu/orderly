@@ -20,3 +20,9 @@ export async function login(
 
   redirect("/");
 }
+
+export async function logout(): Promise<void> {
+  const supabase = await createAuthClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
