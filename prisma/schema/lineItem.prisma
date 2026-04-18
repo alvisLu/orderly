@@ -6,9 +6,9 @@ model LineItem {
   name          String   @db.VarChar(255)
   quantity      Int      @default(1)
   rank          Int      @default(0)
-  orderId       String?  @map("order_id") @db.Uuid
+  orderId       String   @map("order_id") @db.Uuid
   productId     String?  @map("product_id") @db.Uuid
-  order         Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   itemOptions   Json     @default("[]")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
