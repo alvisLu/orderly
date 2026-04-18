@@ -45,3 +45,6 @@ next-env.d.ts
 /src/generated/prisma
 
 .env*.local
+
+# data migration scripts & dumps
+/map-data
