@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && pnpm db:deploy:auto && next build",
     "start": "next start",
     "lint": "eslint",
     "fmt": "prettier --write .",
     "db:migrate": "prisma migrate dev --create-only",
     "db:resolve": "prisma migrate resolve",
     "db:deploy": "prisma migrate deploy",
+    "db:deploy:auto": "sh -c 'if [ -n \"$VERCEL_ENV\" ] && [ \"$VERCEL_ENV\" != \"production\" ]; then prisma migrate deploy; else echo \"[migrate] skipped (VERCEL_ENV=$VERCEL_ENV)\"; fi'",
     "db:generate": "NODE_OPTIONS=--experimental-require-module prisma generate",
     "db:studio": "prisma studio"
   },
