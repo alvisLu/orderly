@@ -169,7 +169,12 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="bottom" className="w-56">
-                <DropdownMenuItem onSelect={() => logout()}>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    useStoreInfo.getState().clearStore();
+                    void logout();
+                  }}
+                >
                   <LogOut />
                   <span>登出</span>
                 </DropdownMenuItem>

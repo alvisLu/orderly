@@ -23,6 +23,9 @@ export async function login(
 
 export async function logout(): Promise<void> {
   const supabase = await createAuthClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(`Failed to sign out: ${error.message}`);
+  }
   redirect("/login");
 }

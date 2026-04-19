@@ -7,6 +7,9 @@
 -- DropForeignKey
 ALTER TABLE "line_items" DROP CONSTRAINT "line_items_order_id_fkey";
 
+-- Remove orphaned line items before tightening the NOT NULL constraint
+DELETE FROM "line_items" WHERE "order_id" IS NULL;
+
 -- AlterTable
 ALTER TABLE "line_items" ALTER COLUMN "order_id" SET NOT NULL;
 
