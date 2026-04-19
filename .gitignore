@@ -44,3 +44,7 @@ next-env.d.ts
 .vscode/*
 /src/generated/prisma
 
+.env*.local
+
+# data migration scripts & dumps
+/map-data

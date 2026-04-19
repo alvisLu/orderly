@@ -20,3 +20,12 @@ export async function login(
 
   redirect("/");
 }
+
+export async function logout(): Promise<void> {
+  const supabase = await createAuthClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(`Failed to sign out: ${error.message}`);
+  }
+  redirect("/login");
+}

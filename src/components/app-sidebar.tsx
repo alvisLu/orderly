@@ -26,12 +26,28 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronRight, LayoutGrid, ShoppingBag, Store } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ChevronRight,
+  LayoutGrid,
+  LogOut,
+  ShoppingBag,
+  Store,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Status, StatusIndicator, StatusLabel } from "./ui/status";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { sidebarNav, type SidebarNavItem } from "@/config/nav";
+import { apiGetStore } from "@/app/api/stores/api";
+import { logout } from "@/app/(auth)/actions";
+import { useStoreInfo } from "@/store/store-info";
 
 function NavMenuItem({ item }: { item: SidebarNavItem }) {
   if (item.sub) {
@@ -111,7 +127,7 @@ function RealtimeStatusItem() {
         </StatusLabel>
       </Status>
       <span className="group-data-[collapsible=icon]:hidden">
-        {retryCount > 0 && ` (重試 ${retryCount} 次)`}
+        {retryCount > 0 && `重連 ${retryCount} 次`}
       </span>
     </>
   );
@@ -119,23 +135,51 @@ function RealtimeStatusItem() {
 
 export function AppSidebar() {
   const router = useRouter();
+  const store = useStoreInfo((s) => s.store);
+  const setStore = useStoreInfo((s) => s.setStore);
+  useEffect(() => {
+    apiGetStore()
+      .then(setStore)
+      .catch(() => {});
+  }, [setStore]);
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center group-data-[collapsible=icon]:justify-center">
-            <SidebarMenuButton
-              size="lg"
-              className="group-data-[collapsible=icon]:hidden"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Store className="size-6" />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Orderly</span>
-                <span className="text-xs text-muted-foreground">POS 系統</span>
-              </div>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="group-data-[collapsible=icon]:hidden"
+                >
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <Store className="size-6" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 leading-none">
+                    <span className="font-semibold whitespace-nowrap">
+                      {store?.name ?? "Orderly"}
+                    </span>
+                    {!store?.name && (
+                      <span className="text-xs text-muted-foreground">
+                        POS 系統
+                      </span>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="bottom" className="w-56">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    useStoreInfo.getState().clearStore();
+                    void logout();
+                  }}
+                >
+                  <LogOut />
+                  <span>登出</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <SidebarTrigger className="ml-auto" />
           </SidebarMenuItem>
         </SidebarMenu>
