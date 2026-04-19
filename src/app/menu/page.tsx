@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
 import { MenuClient } from "./online";
 
 interface Props {
@@ -8,16 +10,8 @@ interface Props {
 export default async function MenuPage({ searchParams }: Props) {
   const { t } = await searchParams;
 
-  if (!t) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">請掃描桌上的 QR Code 點餐</p>
-      </div>
-    );
-  }
-
   const [table, store, products] = await Promise.all([
-    prisma.table.findFirst({ where: { name: t, isActive: true } }),
+    t ? prisma.table.findFirst({ where: { name: t, isActive: true } }) : null,
     prisma.store.findFirst(),
     prisma.product.findMany({
       where: { isMenuAvailable: true },
@@ -30,9 +24,26 @@ export default async function MenuPage({ searchParams }: Props) {
   ]);
 
   if (!table) {
+    const tables = await prisma.table.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    });
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">桌號不存在或已停用</p>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-6">
+        <p className="text-xl font-semibold text-primary">請選擇桌號</p>
+        {tables.length === 0 ? (
+          <p className="text-muted-foreground">目前沒有可用桌號</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3 w-full max-w-md">
+            {tables.map((item) => (
+              <Button key={item.id} asChild size="xl" className="w-full">
+                <Link href={`/menu?t=${encodeURIComponent(item.name)}`}>
+                  {item.name}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
