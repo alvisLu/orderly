@@ -1,7 +1,8 @@
 import { config } from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
-config({ path: ".env.local" });
+const envFile = process.env.ENV_FILE ?? ".env.local";
+config({ path: envFile });
 config({ path: ".env" });
 
 export default defineConfig({
