@@ -16,9 +16,18 @@ export default async function MenuPage({ searchParams }: Props) {
     );
   }
 
-  const table = await prisma.table.findFirst({
-    where: { name: t, isActive: true },
-  });
+  const [table, store, products] = await Promise.all([
+    prisma.table.findFirst({ where: { name: t, isActive: true } }),
+    prisma.store.findFirst(),
+    prisma.product.findMany({
+      where: { isMenuAvailable: true },
+      orderBy: { name: "asc" },
+      include: {
+        category: true,
+        productTypes: { include: { productType: true } },
+      },
+    }),
+  ]);
 
   if (!table) {
     return (
@@ -28,36 +37,22 @@ export default async function MenuPage({ searchParams }: Props) {
     );
   }
 
-  const products = await prisma.product.findMany({
-    where: { isMenuAvailable: true },
-    orderBy: { name: "asc" },
-    include: {
-      category: true,
-      productTypes: { include: { productType: true } },
-    },
-  });
-
   const serialized = JSON.parse(JSON.stringify(products));
 
   return (
     <MenuClient
       tableName={table.name}
       products={serialized}
-      store={{
-        name: "羊肉盧-麵食堂-",
-        phone: "0982724358",
-        address: "花蓮市府前路396號",
-        description: "點餐說明",
-        businessHours: [
-          { day: "週日", hours: "未營業" },
-          { day: "週一", hours: "11:00-14:00, 16:30-20:00" },
-          { day: "週二", hours: "11:00-14:00, 16:30-20:00" },
-          { day: "週三", hours: "11:00-14:00, 16:30-20:00" },
-          { day: "週四", hours: "11:00-14:00, 16:30-20:00" },
-          { day: "週五", hours: "11:00-14:00, 16:00-20:00" },
-          { day: "週六", hours: "11:00-14:00, 16:30-20:00" },
-        ],
-      }}
+      store={
+        store
+          ? {
+              name: store.name,
+              phone: store.phone ?? undefined,
+              address: store.address ?? undefined,
+              bannerUrl: store.bannerURL ?? undefined,
+            }
+          : undefined
+      }
     />
   );
 }
