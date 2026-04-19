@@ -55,7 +55,9 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     })),
   };
 
-  return insertOrder({ ...rest, discount, lineItems, total });
+  const status = rest.source === "store" ? "processing" : undefined;
+
+  return insertOrder({ ...rest, discount, lineItems, total, ...(status && { status }) });
 }
 
 export async function editOrder(
