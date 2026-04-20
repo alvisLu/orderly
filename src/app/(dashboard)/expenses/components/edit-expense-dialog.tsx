@@ -3,7 +3,7 @@
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { apiUpdateExpense } from "@/app/api/expenses/api";
@@ -92,7 +92,7 @@ export function EditExpenseDialog({
     if (!expense) return;
     try {
       const updated = await apiUpdateExpense(expense.id, {
-        expendAt: new Date(values.expendAt),
+        expendAt: new Date(`${values.expendAt}T00:00:00`),
         expendType: values.expendType,
         payMethod: values.payMethod,
         price: values.price,
@@ -137,7 +137,12 @@ export function EditExpenseDialog({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
+                      selected={
+                        field.value ? dayjs(field.value).toDate() : undefined
+                      }
+                      defaultMonth={
+                        field.value ? dayjs(field.value).toDate() : undefined
+                      }
                       onSelect={(d) => {
                         if (!d) return;
                         field.onChange(dayjs(d).format("YYYY-MM-DD"));

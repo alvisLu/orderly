@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { Pencil, Trash2 } from "lucide-react";
 import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";

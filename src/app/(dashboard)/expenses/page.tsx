@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import {
   CalendarIcon,
   ChevronDownIcon,
@@ -68,7 +68,7 @@ export default function ExpensesPage() {
       const res = await apiGetExpenses({
         page: pageIndex + 1,
         limit: pageSize,
-        from: new Date(range.from),
+        from: new Date(`${range.from}T00:00:00`),
         to: new Date(`${range.to}T23:59:59.999`),
       });
       setExpenses(res.data);
@@ -83,9 +83,16 @@ export default function ExpensesPage() {
   );
 
   function applyMonthOffset(offset: number) {
-    const target = dayjs().add(offset, "month");
+    const base = range.from ? dayjs(range.from) : dayjs();
+    const target = base.add(offset, "month");
     setPageIndex(0);
     setRange(monthRange(target.year(), target.month() + 1));
+  }
+
+  function goToCurrentMonth() {
+    const now = dayjs();
+    setPageIndex(0);
+    setRange(monthRange(now.year(), now.month() + 1));
   }
 
   function handleMonthChange(month: number) {
@@ -147,7 +154,10 @@ export default function ExpensesPage() {
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={range.from ? new Date(range.from) : undefined}
+                selected={range.from ? dayjs(range.from).toDate() : undefined}
+                defaultMonth={
+                  range.from ? dayjs(range.from).toDate() : undefined
+                }
                 onSelect={(d) => {
                   if (!d) return;
                   const next = dayjs(d).format("YYYY-MM-DD");
@@ -183,7 +193,10 @@ export default function ExpensesPage() {
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={range.to ? new Date(range.to) : undefined}
+                selected={range.to ? dayjs(range.to).toDate() : undefined}
+                defaultMonth={
+                  range.to ? dayjs(range.to).toDate() : undefined
+                }
                 onSelect={(d) => {
                   if (!d) return;
                   const next = dayjs(d).format("YYYY-MM-DD");
@@ -214,7 +227,7 @@ export default function ExpensesPage() {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => applyMonthOffset(0)}
+              onClick={goToCurrentMonth}
             >
               本月
             </Button>
