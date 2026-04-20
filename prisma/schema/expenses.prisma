@@ -4,9 +4,10 @@ model Expenses {
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   reimburse   String?
   expendType  String?
+  payMethod   String?
   price       Decimal  @default(0) @db.Decimal(10, 2)
   description String?
   expendAt    DateTime @default(now()) @map("expend_at") @db.Timestamptz(6)
 
-  @@map("Expenses")
+  @@map("expenses")
 }

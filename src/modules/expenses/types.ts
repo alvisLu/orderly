@@ -5,6 +5,7 @@ export type { Expenses };
 export type CreateExpenseInput = {
   reimburse?: string | null;
   expendType?: string | null;
+  payMethod?: string | null;
   price?: number;
   description?: string | null;
   expendAt?: Date;

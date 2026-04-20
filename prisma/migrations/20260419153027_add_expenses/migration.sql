@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "Expenses" (
+CREATE TABLE "expenses" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -9,5 +9,5 @@ CREATE TABLE "Expenses" (
     "description" TEXT,
     "expend_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Expenses_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "expenses_pkey" PRIMARY KEY ("id")
 );
