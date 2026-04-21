@@ -61,7 +61,7 @@ export async function insertExpense(
 export async function updateExpense(
   id: string,
   input: UpdateExpenseInput
-): Promise<Expenses | null> {
+): Promise<Expenses> {
   try {
     return await prisma.expenses.update({ where: { id }, data: input });
   } catch (e) {

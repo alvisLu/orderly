@@ -36,13 +36,11 @@ export async function editExpense(
   id: string,
   input: UpdateExpenseInput
 ): Promise<Expenses> {
-  const e = await updateExpense(id, input);
-  if (!e) throw new ExpenseNotFoundError();
-  return e;
+  await getExpense(id);
+  return updateExpense(id, input);
 }
 
 export async function removeExpense(id: string): Promise<void> {
-  const e = await findExpenseById(id);
-  if (!e) throw new ExpenseNotFoundError();
+  await getExpense(id);
   return deleteExpense(id);
 }
