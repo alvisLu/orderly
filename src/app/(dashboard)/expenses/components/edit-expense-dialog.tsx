@@ -95,7 +95,7 @@ export function EditExpenseDialog({
     if (!expense) return;
     try {
       const updated = await apiUpdateExpense(expense.id, {
-        expendAt: new Date(`${values.expendAt}T00:00:00`),
+        expendAt: dayjs.utc(values.expendAt).toDate(),
         expendType: values.expendType,
         payMethod: values.payMethod,
         price: values.price,

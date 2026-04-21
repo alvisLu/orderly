@@ -68,8 +68,8 @@ export default function ExpensesPage() {
       const res = await apiGetExpenses({
         page: pageIndex + 1,
         limit: pageSize,
-        from: new Date(`${range.from}T00:00:00`),
-        to: new Date(`${range.to}T23:59:59.999`),
+        from: dayjs.utc(range.from).toDate(),
+        to: dayjs.utc(range.to).endOf("day").toDate(),
       });
       setExpenses(res.data);
       setTotal(res.total);
