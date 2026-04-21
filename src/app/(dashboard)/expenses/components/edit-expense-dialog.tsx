@@ -71,22 +71,25 @@ export function EditExpenseDialog({
     values: expense
       ? ({
           expendAt: dayjs(expense.expendAt).format("YYYY-MM-DD"),
-          expendType: (EXPEND_TYPE_OPTIONS as readonly string[]).includes(
-            expense.expendType ?? ""
-          )
-            ? expense.expendType
-            : undefined,
-          payMethod: (PAY_METHOD_OPTIONS as readonly string[]).includes(
-            expense.payMethod ?? ""
-          )
-            ? expense.payMethod
-            : undefined,
+          expendType: expense.expendType ?? undefined,
+          payMethod: expense.payMethod ?? undefined,
           price: Number(expense.price),
           reimburse: expense.reimburse ?? "",
           description: expense.description ?? "",
         } as FormInput)
       : undefined,
   });
+
+  const legacyExpendType =
+    expense?.expendType &&
+    !(EXPEND_TYPE_OPTIONS as readonly string[]).includes(expense.expendType)
+      ? expense.expendType
+      : null;
+  const legacyPayMethod =
+    expense?.payMethod &&
+    !(PAY_METHOD_OPTIONS as readonly string[]).includes(expense.payMethod)
+      ? expense.payMethod
+      : null;
 
   async function onSubmit(values: FormValues) {
     if (!expense) return;
@@ -175,6 +178,11 @@ export function EditExpenseDialog({
                         {option}
                       </SelectItem>
                     ))}
+                    {legacyExpendType && (
+                      <SelectItem value={legacyExpendType}>
+                        {`${legacyExpendType}（舊資料）`}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               )}
@@ -202,6 +210,11 @@ export function EditExpenseDialog({
                         {option}
                       </SelectItem>
                     ))}
+                    {legacyPayMethod && (
+                      <SelectItem value={legacyPayMethod}>
+                        {`${legacyPayMethod}（舊資料）`}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               )}
