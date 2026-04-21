@@ -60,6 +60,7 @@ export default function ExpensesPage() {
   const [editing, setEditing] = useState<Expenses | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState<Expenses | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [isLoading, startLoading] = useTransition();
 
@@ -74,7 +75,7 @@ export default function ExpensesPage() {
       setExpenses(res.data);
       setTotal(res.total);
     });
-  }, [pageIndex, pageSize, range]);
+  }, [pageIndex, pageSize, range, refreshKey]);
 
   const selectedYear = useMemo(() => dayjs(range.from).year(), [range.from]);
   const selectedMonth = useMemo(
@@ -113,8 +114,7 @@ export default function ExpensesPage() {
     if (!deleting) return;
     try {
       await apiDeleteExpense(deleting.id);
-      setExpenses((prev) => prev.filter((e) => e.id !== deleting.id));
-      setTotal((t) => Math.max(0, t - 1));
+      setRefreshKey((k) => k + 1);
       toast.success("已刪除支出");
     } catch {
       toast.error("刪除支出失敗");
@@ -128,10 +128,7 @@ export default function ExpensesPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">支出列表</h1>
         <CreateExpenseDialog
-          onCreated={(e) => {
-            setExpenses((prev) => [e, ...prev]);
-            setTotal((t) => t + 1);
-          }}
+          onCreated={() => setRefreshKey((k) => k + 1)}
         />
       </div>
 
