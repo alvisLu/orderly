@@ -2,6 +2,7 @@ import {
   ClipboardList,
   ConciergeBell,
   Package,
+  Receipt,
   Store,
   WalletCards,
 } from "lucide-react";
@@ -36,6 +37,11 @@ export const sidebarNav: SidebarNav[] = [
       // { title: "目錄管理", url: "/products/categories", icon: Package },
       // { title: "商品選項", url: "/products/productTypes", icon: Package },
     ],
+  },
+  {
+    label: "支出",
+    color: "bg-info",
+    items: [{ title: "支出列表", url: "/expenses", icon: Receipt }],
   },
   {
     label: "設定",
@@ -92,6 +98,12 @@ export const navGroups: Record<string, NavGroup> = {
       { title: "付款管理", url: "/settings/payments" },
     ],
   },
+  "/expenses": {
+    label: "支出管理",
+    color: "bg-info",
+    icon: Receipt,
+    sub: [{ title: "支出列表", url: "/expenses" }],
+  },
 };
 
 export const pathLabels: Record<string, string> = {
@@ -107,4 +119,5 @@ export const pathLabels: Record<string, string> = {
   "/settings/stores/profile": "店家資料",
   "/settings/tables": "桌位管理",
   "/settings/payments": "付款管理",
+  "/expenses": "支出管理",
 };
