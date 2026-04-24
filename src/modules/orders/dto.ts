@@ -19,6 +19,16 @@ const createOrderItemDto = z.object({
   productOptions: z.array(lineItemOptionDto).default([]),
 });
 
+const transactionDto = z.object({
+  type: z.enum(["checkout", "refund"]),
+  amount: z.number(),
+  gateway: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  note: z.string().optional(),
+});
+
 export const createOrderDto = z.object({
   items: z.array(createOrderItemDto).min(1),
   discount: z.number().nonnegative().default(0),
@@ -30,16 +40,7 @@ export const createOrderDto = z.object({
   source: z.enum(["store", "qrcode", "online"]),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
-});
-
-const transactionDto = z.object({
-  type: z.enum(["checkout", "refund"]),
-  amount: z.number(),
-  gateway: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
-  note: z.string().optional(),
+  transaction: transactionDto.optional(),
 });
 
 export const updateOrderDto = z.object({

@@ -49,7 +49,7 @@ export async function getOrder(id: string): Promise<Order> {
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
-  const { items, discount, ...rest } = input;
+  const { items, discount, transaction, ...rest } = input;
 
   const total = items
     .reduce((sum, item) => {
@@ -88,6 +88,11 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     lineItems,
     total,
     status,
+    ...(transaction && {
+      transactions: [transaction] as Parameters<
+        typeof insertOrder
+      >[0]["transactions"],
+    }),
   });
 }
 

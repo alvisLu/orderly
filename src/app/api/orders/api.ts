@@ -9,10 +9,13 @@ import type {
   UpdateOrderInput,
 } from "@/modules/orders/types";
 
-export async function apiGetOrders(query?: Partial<OrderQuery>): Promise<PaginatedOrders> {
+export async function apiGetOrders(
+  query?: Partial<OrderQuery>
+): Promise<PaginatedOrders> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
-  if (query?.isDining !== undefined) params.set("isDining", String(query.isDining));
+  if (query?.isDining !== undefined)
+    params.set("isDining", String(query.isDining));
   if (query?.sort) params.set("sort", query.sort);
   if (query?.page) params.set("page", String(query.page));
   if (query?.limit) params.set("limit", String(query.limit));
@@ -44,7 +47,10 @@ export async function apiCreateOrder(input: CreateOrderInput): Promise<Order> {
   return data;
 }
 
-export async function apiUpdateOrder(id: string, input: UpdateOrderInput): Promise<Order> {
+export async function apiUpdateOrder(
+  id: string,
+  input: UpdateOrderInput
+): Promise<Order> {
   const { data } = await apiClient.patch<Order>(`/orders/${id}`, input);
   return data;
 }
