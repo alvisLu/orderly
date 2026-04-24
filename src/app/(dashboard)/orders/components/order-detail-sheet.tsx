@@ -38,6 +38,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Spinner } from "@/components/ui/spinner";
+import Big from "big.js";
 
 interface Props {
   orderId: string | null;
@@ -374,7 +375,8 @@ export function OrderDetailSheet({
                         className="flex justify-between text-sm text-muted-foreground"
                       >
                         <span>
-                          {txn.type === "refund" ? "-" : ""}${txn.amount}
+                          {txn.type === "refund" ? "-" : ""}$
+                          {Big(txn.amount).abs().toString()}
                         </span>
                         <span>{txn.gateway.name}</span>
                       </div>

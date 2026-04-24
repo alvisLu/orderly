@@ -114,7 +114,6 @@ interface CheckoutProps {
   disabled?: boolean;
   buildPayload: (opts?: {
     selectedPayment?: Payment | null;
-    total?: number;
     fulfillmentStatus?: "fulfilled";
   }) => CreateOrderInput;
   total: number;
@@ -150,9 +149,7 @@ function Checkout({
     if (!selectedPayment) return;
     setIsSubmitting(true);
     try {
-      const order = await apiCreateOrder(
-        buildPayload({ selectedPayment, total })
-      );
+      const order = await apiCreateOrder(buildPayload({ selectedPayment }));
       toast.success("訂單已建立");
       setOpen(false);
       onCreated?.(order);
@@ -167,7 +164,7 @@ function Checkout({
     setIsSubmitting(true);
     try {
       const order = await apiCreateOrder(
-        buildPayload({ selectedPayment, total, fulfillmentStatus: "fulfilled" })
+        buildPayload({ selectedPayment, fulfillmentStatus: "fulfilled" })
       );
       toast.success("訂單已建立並出餐");
       setOpen(false);
@@ -456,7 +453,6 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
 
   function buildOrderPayload(opts?: {
     selectedPayment?: Payment | null;
-    total?: number;
     fulfillmentStatus?: "fulfilled";
   }): CreateOrderInput {
     const items = cart.map((item, idx) => ({
@@ -469,15 +465,8 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
       cost: Number(item.product.cost),
       productOptions: item.productOptions,
     }));
-    const transaction = opts?.selectedPayment
-      ? {
-          type: "checkout" as const,
-          amount: opts.total ?? 0,
-          gateway: {
-            id: opts.selectedPayment.id,
-            name: opts.selectedPayment.name,
-          },
-        }
+    const gateway = opts?.selectedPayment
+      ? { id: opts.selectedPayment.id, name: opts.selectedPayment.name }
       : undefined;
     return {
       items,
@@ -485,7 +474,7 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
       isDining,
       note: note || undefined,
       source: "store",
-      transaction,
+      gateway,
       financialStatus: opts?.selectedPayment ? "paid" : undefined,
       fulfillmentStatus: opts?.fulfillmentStatus,
     };

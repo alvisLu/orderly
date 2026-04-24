@@ -54,7 +54,7 @@ export type CreateOrderInput = {
   source: OrderSource;
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;
-  transaction?: OrderTransactionInput;
+  gateway?: Gateway;
 };
 
 export type UpdateOrderInput = {
@@ -65,7 +65,7 @@ export type UpdateOrderInput = {
   isDining?: boolean;
   userPhone?: string;
   userNote?: string;
-  transaction?: OrderTransactionInput;
+  gateway?: Gateway;
 };
 
 export interface OrderQuery {

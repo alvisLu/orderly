@@ -15,6 +15,7 @@ import type {
   OrderQuery,
   OrderStats,
   OrderStatsQuery,
+  OrderTransactionInput,
   PaginatedOrders,
   UpdateOrderInput,
 } from "./types";
@@ -49,7 +50,7 @@ export async function getOrder(id: string): Promise<Order> {
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
-  const { items, discount, transaction, ...rest } = input;
+  const { items, discount, gateway, ...rest } = input;
 
   const total = items
     .reduce((sum, item) => {
@@ -82,6 +83,10 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     status = OrderStatus.processing;
   }
 
+  const transaction = gateway
+    ? { type: "checkout" as const, amount: total, gateway }
+    : undefined;
+
   return insertOrder({
     ...rest,
     discount,
@@ -103,7 +108,7 @@ export async function editOrder(
   const existing = await findOrderById(id);
   if (!existing) throw new OrderNotFoundError();
 
-  const { transaction, ...rest } = input;
+  const { gateway, ...rest } = input;
 
   // Resolve final statuses (input overrides existing)
   const finalFinancial = rest.financialStatus ?? existing.financialStatus;
@@ -117,17 +122,35 @@ export async function editOrder(
     rest.status = OrderStatus.done;
   }
 
-  // Append transaction to existing transactions array
+  // Compose transaction from gateway + financialStatus transition
   let transactionsUpdate: unknown[] | undefined;
-  if (transaction) {
-    const existing_txns = (existing.transactions as unknown[] | null) ?? [];
-    if (
-      transaction.type === "checkout" &&
-      existing_txns.some((t) => (t as { type: string }).type === "checkout")
-    ) {
-      throw new OrderAlreadyCheckedOutError();
+  if (gateway) {
+    const existingTxns =
+      (existing.transactions as unknown as OrderTransactionInput[] | null) ??
+      [];
+    let newTxn: OrderTransactionInput | undefined;
+
+    if (finalFinancial === OrderFinancialStatus.paid) {
+      if (existingTxns.some((t) => t.type === "checkout")) {
+        throw new OrderAlreadyCheckedOutError();
+      }
+      newTxn = {
+        type: "checkout",
+        amount: Number(existing.total),
+        gateway,
+      };
+    } else if (finalFinancial === OrderFinancialStatus.refunded) {
+      const checkoutTotal = existingTxns
+        .filter((t) => t.type === "checkout")
+        .reduce((sum, t) => sum + t.amount, 0);
+      if (checkoutTotal > 0) {
+        newTxn = { type: "refund", amount: -checkoutTotal, gateway };
+      }
     }
-    transactionsUpdate = [...existing_txns, transaction];
+
+    if (newTxn) {
+      transactionsUpdate = [...existingTxns, newTxn];
+    }
   }
 
   const order = await updateOrder(id, {
