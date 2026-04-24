@@ -15,7 +15,7 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, isDining, sort = "desc", page, limit, showDeleted } = query;
+  const { status, isDining, sort = "desc", page, limit, showDeleted, from, to } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
@@ -23,6 +23,12 @@ export async function findAllOrders(
     ...(!showDeleted && { deletedAt: null }),
     ...(status && { status }),
     ...(isDining !== undefined && { isDining }),
+    ...((from || to) && {
+      createdAt: {
+        ...(from && { gte: from }),
+        ...(to && { lte: to }),
+      },
+    }),
   };
   try {
     const [rows, total] = await Promise.all([

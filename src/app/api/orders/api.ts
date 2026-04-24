@@ -15,6 +15,8 @@ export async function apiGetOrders(query?: Partial<OrderQuery>): Promise<Paginat
   if (query?.page) params.set("page", String(query.page));
   if (query?.limit) params.set("limit", String(query.limit));
   if (query?.showDeleted) params.set("showDeleted", "true");
+  if (query?.from) params.set("from", query.from.toISOString());
+  if (query?.to) params.set("to", query.to.toISOString());
   const { data } = await apiClient.get<PaginatedOrders>(`/orders?${params}`);
   return data;
 }

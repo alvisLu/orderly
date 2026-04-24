@@ -75,6 +75,8 @@ export interface OrderQuery {
   page: number;
   limit: number;
   showDeleted?: boolean;
+  from?: Date;
+  to?: Date;
 }
 
 export interface PaginatedOrders {

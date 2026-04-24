@@ -58,4 +58,6 @@ export const orderQueryDto = paginationDto.extend({
   isDining: z.coerce.boolean().optional(),
   sort: z.enum(["asc", "desc"]).optional(),
   showDeleted: z.coerce.boolean().optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
