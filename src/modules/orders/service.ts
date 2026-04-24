@@ -22,6 +22,11 @@ import {
   OrderAlreadyCheckedOutError,
   OrderNotFoundError,
 } from "@/lib/http-error";
+import {
+  OrderStatus,
+  OrderFinancialStatus,
+  OrderFulfillmentStatus,
+} from "@/generated/prisma/client";
 
 export async function getOrders(query: OrderQuery): Promise<PaginatedOrders> {
   return findAllOrders(query);
@@ -64,9 +69,26 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     })),
   };
 
-  const status = rest.source === "store" ? "processing" : undefined;
+  const isCompleted =
+    rest.financialStatus === OrderFinancialStatus.paid &&
+    rest.fulfillmentStatus === OrderFulfillmentStatus.fulfilled;
+  const isStoreOrder = rest.source === "store";
 
-  return insertOrder({ ...rest, discount, lineItems, total, ...(status && { status }) });
+  let status: OrderStatus = OrderStatus.pending;
+
+  if (isCompleted) {
+    status = OrderStatus.done;
+  } else if (isStoreOrder) {
+    status = OrderStatus.processing;
+  }
+
+  return insertOrder({
+    ...rest,
+    discount,
+    lineItems,
+    total,
+    status,
+  });
 }
 
 export async function editOrder(
@@ -83,8 +105,11 @@ export async function editOrder(
   const finalFulfillment = rest.fulfillmentStatus ?? existing.fulfillmentStatus;
 
   // Auto-complete order when both paid and fulfilled
-  if (finalFinancial === "paid" && finalFulfillment === "fulfilled") {
-    rest.status = "done";
+  if (
+    finalFinancial === OrderFinancialStatus.paid &&
+    finalFulfillment === OrderFulfillmentStatus.fulfilled
+  ) {
+    rest.status = OrderStatus.done;
   }
 
   // Append transaction to existing transactions array
