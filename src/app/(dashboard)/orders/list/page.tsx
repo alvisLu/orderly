@@ -177,10 +177,8 @@ export default function OrdersPage() {
             </Button>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 h-9">
           <Checkbox
             id="showDeleted"
             checked={showDeleted}
