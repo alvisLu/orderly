@@ -3,6 +3,8 @@ import type {
   CreateOrderInput,
   Order,
   OrderQuery,
+  OrderStats,
+  OrderStatsQuery,
   PaginatedOrders,
   UpdateOrderInput,
 } from "@/modules/orders/types";
@@ -18,6 +20,17 @@ export async function apiGetOrders(query?: Partial<OrderQuery>): Promise<Paginat
   if (query?.from) params.set("from", query.from.toISOString());
   if (query?.to) params.set("to", query.to.toISOString());
   const { data } = await apiClient.get<PaginatedOrders>(`/orders?${params}`);
+  return data;
+}
+
+export async function apiGetOrderStats(
+  query?: Partial<OrderStatsQuery>
+): Promise<OrderStats> {
+  const params = new URLSearchParams();
+  if (query?.showDeleted) params.set("showDeleted", "true");
+  if (query?.from) params.set("from", query.from.toISOString());
+  if (query?.to) params.set("to", query.to.toISOString());
+  const { data } = await apiClient.get<OrderStats>(`/orders/stats?${params}`);
   return data;
 }
 

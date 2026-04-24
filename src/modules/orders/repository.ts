@@ -4,6 +4,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import type {
   Order,
   OrderQuery,
+  OrderStats,
+  OrderStatsQuery,
   PaginatedOrders,
 } from "./types";
 import Big from "big.js";
@@ -113,6 +115,110 @@ export async function clearAllDining(): Promise<number> {
       data: { isDining: false },
     });
     return result.count;
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
+type TxnRecord = {
+  type: "checkout" | "refund";
+  amount: number;
+  gateway: { id: string; name: string };
+};
+
+export async function findOrderStats(
+  query: OrderStatsQuery
+): Promise<OrderStats> {
+  const { from, to, showDeleted } = query;
+  const where = {
+    ...(!showDeleted && { deletedAt: null }),
+    ...((from || to) && {
+      createdAt: {
+        ...(from && { gte: from }),
+        ...(to && { lte: to }),
+      },
+    }),
+  };
+
+  try {
+    const rows = await prisma.order.findMany({
+      where,
+      select: {
+        total: true,
+        discount: true,
+        status: true,
+        financialStatus: true,
+        transactions: true,
+      },
+    });
+
+    let count = 0;
+    let total = Big(0);
+    let doneTotal = Big(0);
+    let cancelledTotal = Big(0);
+    let unfinishedTotal = Big(0);
+    let processingCount = 0;
+    let paidTotal = Big(0);
+    let pendingTotal = Big(0);
+    let discount = Big(0);
+    let refundTotal = Big(0);
+    const gatewayMap = new Map<string, Big>();
+
+    for (const o of rows) {
+      const orderTotal = Big(o.total.toString());
+      const orderDiscount = Big(o.discount.toString());
+      const isCancelled = o.status === "cancelled";
+
+      count += 1;
+      if (!isCancelled) {
+        total = total.plus(orderTotal);
+        discount = discount.plus(orderDiscount);
+      }
+      if (o.status === "done") doneTotal = doneTotal.plus(orderTotal);
+      if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
+      if (o.status === "pending" || o.status === "processing") {
+        unfinishedTotal = unfinishedTotal.plus(orderTotal);
+      }
+      if (o.status === "processing") processingCount += 1;
+      if (o.financialStatus === "paid") paidTotal = paidTotal.plus(orderTotal);
+      if (o.financialStatus === "pending" && !isCancelled) {
+        pendingTotal = pendingTotal.plus(orderTotal);
+      }
+      if (o.financialStatus === "refunded") {
+        refundTotal = refundTotal.plus(orderTotal);
+      }
+
+      const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
+      for (const t of txns) {
+        if (t.type !== "checkout") continue;
+        const key = t.gateway?.name ?? "未知";
+        const prev = gatewayMap.get(key) ?? Big(0);
+        gatewayMap.set(key, prev.plus(Big(t.amount)));
+      }
+    }
+
+    const countBig = Big(count);
+    const avgPerOrder = count > 0 ? total.div(countBig).round(0).toNumber() : 0;
+
+    return {
+      count,
+      total: total.toNumber(),
+      doneTotal: doneTotal.toNumber(),
+      cancelledTotal: cancelledTotal.toNumber(),
+      unfinishedTotal: unfinishedTotal.toNumber(),
+      processingCount,
+      paidTotal: paidTotal.toNumber(),
+      pendingTotal: pendingTotal.toNumber(),
+      discount: discount.toNumber(),
+      refundTotal: refundTotal.toNumber(),
+      peopleCount: count,
+      avgPerOrder,
+      avgPerPerson: avgPerOrder,
+      byGateway: Array.from(gatewayMap.entries()).map(([name, amount]) => ({
+        name,
+        amount: amount.toNumber(),
+      })),
+    };
   } catch (e) {
     throw new DatabaseError(String(e));
   }

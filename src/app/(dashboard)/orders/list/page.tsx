@@ -3,9 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiGetOrders } from "@/app/api/orders/api";
-import type { Order } from "@/modules/orders/types";
+import { apiGetOrders, apiGetOrderStats } from "@/app/api/orders/api";
+import type { Order, OrderStats } from "@/modules/orders/types";
 import { OrdersTable } from "../components/orders-table";
+import { OrderStatsPanel } from "../components/order-stats";
 import { CreateOrderDialog } from "../components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,6 +33,8 @@ export default function OrdersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [showDeleted, setShowDeleted] = useState(false);
   const [range, setRange] = useState(initialRange);
+  const [stats, setStats] = useState<OrderStats | null>(null);
+  const [isStatsLoading, startStatsLoading] = useTransition();
 
   useEffect(() => {
     startLoading(async () => {
@@ -46,6 +49,17 @@ export default function OrdersPage() {
       setTotal(res.total);
     });
   }, [pageIndex, pageSize, showDeleted, range]);
+
+  useEffect(() => {
+    startStatsLoading(async () => {
+      const s = await apiGetOrderStats({
+        showDeleted,
+        from: dayjs.utc(range.from).toDate(),
+        to: dayjs.utc(range.to).endOf("day").toDate(),
+      });
+      setStats(s);
+    });
+  }, [showDeleted, range]);
 
   function applyDayOffset(offset: number) {
     const base = range.from ? dayjs(range.from) : dayjs();
@@ -135,9 +149,7 @@ export default function OrdersPage() {
               <Calendar
                 mode="single"
                 selected={range.to ? dayjs(range.to).toDate() : undefined}
-                defaultMonth={
-                  range.to ? dayjs(range.to).toDate() : undefined
-                }
+                defaultMonth={range.to ? dayjs(range.to).toDate() : undefined}
                 onSelect={(d) => {
                   if (!d) return;
                   const next = dayjs(d).format("YYYY-MM-DD");
@@ -193,6 +205,8 @@ export default function OrdersPage() {
           </Label>
         </div>
       </div>
+
+      <OrderStatsPanel stats={stats} isLoading={isStatsLoading} />
 
       <div className="flex-1 min-h-0">
         <OrdersTable

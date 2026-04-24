@@ -85,3 +85,31 @@ export interface PaginatedOrders {
   page: number;
   limit: number;
 }
+
+export interface OrderStatsQuery {
+  from?: Date;
+  to?: Date;
+  showDeleted?: boolean;
+}
+
+export interface GatewayAmount {
+  name: string;
+  amount: number;
+}
+
+export interface OrderStats {
+  count: number;
+  total: number;
+  doneTotal: number;
+  cancelledTotal: number;
+  unfinishedTotal: number;
+  processingCount: number;
+  paidTotal: number;
+  pendingTotal: number;
+  discount: number;
+  refundTotal: number;
+  peopleCount: number;
+  avgPerOrder: number;
+  avgPerPerson: number;
+  byGateway: GatewayAmount[];
+}

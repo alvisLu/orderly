@@ -2,6 +2,7 @@ import Big from "big.js";
 import {
   findAllOrders,
   findOrderById,
+  findOrderStats,
   findOrdersByIds,
   insertOrder,
   updateOrder,
@@ -12,6 +13,8 @@ import type {
   CreateOrderInput,
   Order,
   OrderQuery,
+  OrderStats,
+  OrderStatsQuery,
   PaginatedOrders,
   UpdateOrderInput,
 } from "./types";
@@ -22,6 +25,12 @@ import {
 
 export async function getOrders(query: OrderQuery): Promise<PaginatedOrders> {
   return findAllOrders(query);
+}
+
+export async function getOrderStats(
+  query: OrderStatsQuery
+): Promise<OrderStats> {
+  return findOrderStats(query);
 }
 
 export async function getOrdersByIds(ids: string[]): Promise<Order[]> {
