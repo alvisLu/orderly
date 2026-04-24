@@ -48,6 +48,7 @@ import { sidebarNav, type SidebarNavItem } from "@/config/nav";
 import { apiGetStore } from "@/app/api/stores/api";
 import { logout } from "@/app/(auth)/actions";
 import { useStoreInfo } from "@/store/store-info";
+import { version } from "../../package.json";
 
 function NavMenuItem({ item }: { item: SidebarNavItem }) {
   if (item.sub) {
@@ -160,11 +161,9 @@ export function AppSidebar() {
                     <span className="font-semibold whitespace-nowrap">
                       {store?.name ?? "Orderly"}
                     </span>
-                    {!store?.name && (
-                      <span className="text-xs text-muted-foreground">
-                        POS 系統
-                      </span>
-                    )}
+                    <span className="text-xs text-muted-foreground">
+                      v{version}
+                    </span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
