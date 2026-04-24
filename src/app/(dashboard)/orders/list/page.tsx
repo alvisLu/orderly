@@ -5,7 +5,6 @@ import dayjs from "@/lib/dayjs";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiGetOrders } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
-import type { OrderStatus } from "@/generated/prisma/client";
 import { OrdersTable } from "../components/orders-table";
 import { CreateOrderDialog } from "../components/create-order-dialog";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,6 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-const STATUS_TABS: { label: string; value: OrderStatus | undefined }[] = [
-  { label: "全部", value: undefined },
-  { label: "待處理", value: "pending" },
-  { label: "處理中", value: "processing" },
-  { label: "完成", value: "done" },
-  { label: "已取消", value: "cancelled" },
-];
-
 function dayRange(date: string) {
   return { from: date, to: date };
 }
@@ -39,14 +30,12 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
   const [showDeleted, setShowDeleted] = useState(false);
   const [range, setRange] = useState(initialRange);
 
   useEffect(() => {
     startLoading(async () => {
       const res = await apiGetOrders({
-        status,
         page: pageIndex + 1,
         limit: pageSize,
         showDeleted,
@@ -56,7 +45,7 @@ export default function OrdersPage() {
       setOrders(res.data);
       setTotal(res.total);
     });
-  }, [status, pageIndex, pageSize, showDeleted, range]);
+  }, [pageIndex, pageSize, showDeleted, range]);
 
   function applyDayOffset(offset: number) {
     const base = range.from ? dayjs(range.from) : dayjs();
@@ -191,16 +180,6 @@ export default function OrdersPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {STATUS_TABS.map((tab) => (
-          <Button
-            key={String(tab.value)}
-            variant={status === tab.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatus(tab.value)}
-          >
-            {tab.label}
-          </Button>
-        ))}
         <div className="flex items-center gap-2">
           <Checkbox
             id="showDeleted"
