@@ -123,3 +123,13 @@ export class StoreNotFoundError extends HttpError {
     this.name = "StoreNotFoundError";
   }
 }
+
+export class ExpenseNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "找不到支出紀錄";
+    const code = "8000";
+    super(status, message, code);
+    this.name = "ExpenseNotFoundError";
+  }
+}
