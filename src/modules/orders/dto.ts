@@ -63,3 +63,7 @@ export const orderStatsQueryDto = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });
+
+export const orderPollQueryDto = z.object({
+  from: z.coerce.date(),
+});

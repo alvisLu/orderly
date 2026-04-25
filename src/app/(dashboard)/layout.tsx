@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { OrderNotifications } from "@/components/shared/order-notifications";
+import { OrderPollingNotifications } from "@/components/shared/order-polling-notifications";
 import { DashboardBreadcrumb } from "@/components/dashboard-breadcrumb";
 import { RefreshButton } from "@/components/refresh-button";
 
@@ -22,7 +22,7 @@ export default function DashboardLayout({
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
-      <OrderNotifications />
+      <OrderPollingNotifications />
     </SidebarProvider>
   );
 }

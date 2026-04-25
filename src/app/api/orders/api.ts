@@ -26,6 +26,14 @@ export async function apiGetOrders(
   return data;
 }
 
+export async function apiPollOrders(from: Date): Promise<PaginatedOrders> {
+  const params = new URLSearchParams({ from: from.toISOString() });
+  const { data } = await apiClient.get<PaginatedOrders>(
+    `/orders/poll?${params}`
+  );
+  return data;
+}
+
 export async function apiGetOrderStats(
   query?: Partial<OrderStatsQuery>
 ): Promise<OrderStats> {
