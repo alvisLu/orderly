@@ -5,6 +5,7 @@ import dayjs from "@/lib/dayjs";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiGetOrders, apiGetOrderStats } from "@/app/api/orders/api";
 import type { Order, OrderStats } from "@/modules/orders/types";
+import { useNewOrdersStore } from "@/store/new-orders";
 import { OrdersTable } from "../components/orders-table";
 import { OrderStatsPanel } from "../components/order-stats";
 import { CreateOrderDialog } from "../components/create-order-dialog";
@@ -61,6 +62,25 @@ export default function OrdersPage() {
     });
   }, [showDeleted, range]);
 
+  const newOrdersBatch = useNewOrdersStore((s) => s.batch);
+  const newOrdersVersion = useNewOrdersStore((s) => s.version);
+
+  useEffect(() => {
+    if (newOrdersBatch.length === 0) return;
+    const fromMs = dayjs.utc(range.from).valueOf();
+    const toMs = dayjs.utc(range.to).endOf("day").valueOf();
+    setOrders((prev) => {
+      const seen = new Set(prev.map((o) => o.id));
+      const additions = newOrdersBatch.filter((o) => {
+        if (seen.has(o.id)) return false;
+        const ts = new Date(o.createdAt).getTime();
+        return ts >= fromMs && ts <= toMs;
+      });
+      return additions.length > 0 ? [...additions, ...prev] : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newOrdersVersion]);
+
   function applyDayOffset(offset: number) {
     const base = range.from ? dayjs(range.from) : dayjs();
     const target = base.add(offset, "day").format("YYYY-MM-DD");
@@ -86,7 +106,7 @@ export default function OrdersPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">訂單列表</h1>
         <CreateOrderDialog
-          onCreated={(o) => setOrders((prev) => [o, ...prev])}
+          onCreated={(o) => useNewOrdersStore.getState().publish([o])}
         />
       </div>
 

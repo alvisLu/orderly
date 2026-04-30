@@ -43,6 +43,7 @@ import { sidebarNav, type SidebarNavItem } from "@/config/nav";
 import { apiGetStore } from "@/app/api/stores/api";
 import { logout } from "@/app/(auth)/actions";
 import { useStoreInfo } from "@/store/store-info";
+import { useNewOrdersStore } from "@/store/new-orders";
 import { version } from "../../package.json";
 
 function NavMenuItem({ item }: { item: SidebarNavItem }) {
@@ -140,6 +141,9 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <CreateOrderDialog
+                onCreated={(order) =>
+                  useNewOrdersStore.getState().publish([order])
+                }
                 trigger={
                   <SidebarMenuButton>
                     <ShoppingBag />
