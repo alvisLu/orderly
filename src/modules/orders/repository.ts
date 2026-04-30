@@ -149,6 +149,7 @@ export async function findOrderStats(
         status: true,
         financialStatus: true,
         transactions: true,
+        deletedAt: true,
       },
     });
 
@@ -167,19 +168,24 @@ export async function findOrderStats(
     for (const o of rows) {
       const orderTotal = Big(o.total.toString());
       const orderDiscount = Big(o.discount.toString());
-      const isCancelled = o.status === "cancelled";
+      const isCancelled = o.status === "cancelled" || o.deletedAt !== null;
 
       count += 1;
       if (!isCancelled) {
         total = total.plus(orderTotal);
         discount = discount.plus(orderDiscount);
       }
-      if (o.status === "done") doneTotal = doneTotal.plus(orderTotal);
+      if (o.status === "done" && !isCancelled) {
+        doneTotal = doneTotal.plus(orderTotal);
+      }
       if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
-      if (o.status === "pending" || o.status === "processing") {
+      if (
+        (o.status === "pending" || o.status === "processing") &&
+        !isCancelled
+      ) {
         unfinishedTotal = unfinishedTotal.plus(orderTotal);
       }
-      if (o.status === "processing") processingCount += 1;
+      if (o.status === "processing" && !isCancelled) processingCount += 1;
       if (o.financialStatus === "paid") paidTotal = paidTotal.plus(orderTotal);
       if (o.financialStatus === "pending" && !isCancelled) {
         pendingTotal = pendingTotal.plus(orderTotal);

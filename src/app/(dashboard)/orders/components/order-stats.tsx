@@ -10,6 +10,7 @@ import type { OrderStats } from "@/modules/orders/types";
 interface Props {
   stats: OrderStats | null;
   isLoading?: boolean;
+  showDeleted?: boolean;
 }
 
 function formatNumber(value: number): string {
@@ -35,7 +36,7 @@ function StatCell({
   );
 }
 
-export function OrderStatsPanel({ stats, isLoading }: Props) {
+export function OrderStatsPanel({ stats, isLoading, showDeleted }: Props) {
   if (isLoading && !stats) {
     return (
       <div className="flex flex-col gap-2 mb-4">
@@ -58,9 +59,11 @@ export function OrderStatsPanel({ stats, isLoading }: Props) {
               已完成 {formatNumber(stats.doneTotal)}
             </Button>
 
-            <Button variant="destructive">
-              已取消 {formatNumber(stats.cancelledTotal)}
-            </Button>
+            {showDeleted && (
+              <Button variant="destructive">
+                已取消 {formatNumber(stats.cancelledTotal)}
+              </Button>
+            )}
             <Button variant="default">
               未完成 {formatNumber(stats.unfinishedTotal)}
             </Button>

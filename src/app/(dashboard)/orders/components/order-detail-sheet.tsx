@@ -251,7 +251,10 @@ export function OrderDetailSheet({
               <div className="flex gap-2">
                 <FinancialStatusBadge status={financialStatus} />
                 <FulfillmentStatusBadge status={fulfillmentStatus} />
-                <OrderStatusBadge status={orderStatus} />
+                <OrderStatusBadge
+                  status={orderStatus}
+                  deletedAt={order.deletedAt}
+                />
               </div>
             </div>
 

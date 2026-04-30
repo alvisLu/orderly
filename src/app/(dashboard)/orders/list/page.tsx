@@ -226,7 +226,11 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <OrderStatsPanel stats={stats} isLoading={isStatsLoading} />
+      <OrderStatsPanel
+        stats={stats}
+        isLoading={isStatsLoading}
+        showDeleted={showDeleted}
+      />
 
       <div className="flex-1 min-h-0">
         <OrdersTable
