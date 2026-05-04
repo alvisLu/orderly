@@ -105,7 +105,6 @@ export interface OrderStats {
   unfinishedTotal: number;
   processingCount: number;
   paidTotal: number;
-  pendingTotal: number;
   discount: number;
   refundTotal: number;
   peopleCount: number;

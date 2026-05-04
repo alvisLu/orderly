@@ -160,7 +160,6 @@ export async function findOrderStats(
     let unfinishedTotal = Big(0);
     let processingCount = 0;
     let paidTotal = Big(0);
-    let pendingTotal = Big(0);
     let discount = Big(0);
     let refundTotal = Big(0);
     const gatewayMap = new Map<string, Big>();
@@ -187,9 +186,6 @@ export async function findOrderStats(
       }
       if (o.status === "processing" && !isCancelled) processingCount += 1;
       if (o.financialStatus === "paid") paidTotal = paidTotal.plus(orderTotal);
-      if (o.financialStatus === "pending" && !isCancelled) {
-        pendingTotal = pendingTotal.plus(orderTotal);
-      }
       if (o.financialStatus === "refunded") {
         refundTotal = refundTotal.plus(orderTotal);
       }
@@ -214,7 +210,6 @@ export async function findOrderStats(
       unfinishedTotal: unfinishedTotal.toNumber(),
       processingCount,
       paidTotal: paidTotal.toNumber(),
-      pendingTotal: pendingTotal.toNumber(),
       discount: discount.toNumber(),
       refundTotal: refundTotal.toNumber(),
       peopleCount: count,

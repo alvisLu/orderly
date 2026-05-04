@@ -71,7 +71,6 @@ export function OrderStatsPanel({ stats, isLoading, showDeleted }: Props) {
 
           <div className="flex flex-wrap gap-2">
             <StatCell label="已收款" value={formatNumber(stats.paidTotal)} />
-            <StatCell label="待請款" value={formatNumber(stats.pendingTotal)} />
             <StatCell label="處理中" value={`${stats.processingCount} 筆`} />
             <StatCell label="折扣" value={formatNumber(stats.discount)} />
             <StatCell label="已退款" value={formatNumber(stats.refundTotal)} />
