@@ -1,4 +1,5 @@
 import Big from "big.js";
+import dayjs from "@/lib/dayjs";
 import {
   findAllOrders,
   findOrderById,
@@ -84,7 +85,12 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   }
 
   const transaction = gateway
-    ? { type: "checkout" as const, amount: total, gateway }
+    ? {
+        type: "checkout" as const,
+        amount: total,
+        gateway,
+        date: dayjs().toISOString(),
+      }
     : undefined;
 
   return insertOrder({
@@ -138,13 +144,19 @@ export async function editOrder(
         type: "checkout",
         amount: Number(existing.total),
         gateway,
+        date: dayjs().toISOString(),
       };
     } else if (finalFinancial === OrderFinancialStatus.refunded) {
       const checkoutTotal = existingTxns
         .filter((t) => t.type === "checkout")
         .reduce((sum, t) => sum + t.amount, 0);
       if (checkoutTotal > 0) {
-        newTxn = { type: "refund", amount: -checkoutTotal, gateway };
+        newTxn = {
+          type: "refund",
+          amount: -checkoutTotal,
+          gateway,
+          date: dayjs().toISOString(),
+        };
       }
     }
 

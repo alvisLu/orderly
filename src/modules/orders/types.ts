@@ -40,6 +40,7 @@ export type OrderTransactionInput = {
   type: TransactionType;
   amount: number;
   gateway: Gateway;
+  date: string;
   note?: string;
 };
 
@@ -94,7 +95,8 @@ export interface OrderStatsQuery {
 
 export interface GatewayAmount {
   name: string;
-  amount: number;
+  totalIn: number;
+  totalOut: number;
 }
 
 export interface OrderStats {

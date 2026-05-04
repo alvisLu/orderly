@@ -162,7 +162,8 @@ export async function findOrderStats(
     let paidTotal = Big(0);
     let discount = Big(0);
     let refundTotal = Big(0);
-    const gatewayMap = new Map<string, Big>();
+    const inMap = new Map<string, Big>();
+    const outMap = new Map<string, Big>();
 
     for (const o of rows) {
       const orderTotal = Big(o.total.toString());
@@ -192,10 +193,14 @@ export async function findOrderStats(
 
       const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
       for (const t of txns) {
-        if (t.type !== "checkout") continue;
         const key = t.gateway?.name ?? "未知";
-        const prev = gatewayMap.get(key) ?? Big(0);
-        gatewayMap.set(key, prev.plus(Big(t.amount)));
+        if (t.type === "checkout") {
+          const prev = inMap.get(key) ?? Big(0);
+          inMap.set(key, prev.plus(Big(t.amount)));
+        } else if (t.type === "refund") {
+          const prev = outMap.get(key) ?? Big(0);
+          outMap.set(key, prev.plus(Big(t.amount).abs()));
+        }
       }
     }
 
@@ -215,9 +220,12 @@ export async function findOrderStats(
       peopleCount: count,
       avgPerOrder,
       avgPerPerson: avgPerOrder,
-      byGateway: Array.from(gatewayMap.entries()).map(([name, amount]) => ({
+      byGateway: Array.from(
+        new Set([...inMap.keys(), ...outMap.keys()])
+      ).map((name) => ({
         name,
-        amount: amount.toNumber(),
+        totalIn: (inMap.get(name) ?? Big(0)).toNumber(),
+        totalOut: (outMap.get(name) ?? Big(0)).toNumber(),
       })),
     };
   } catch (e) {

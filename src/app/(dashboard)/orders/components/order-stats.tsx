@@ -85,7 +85,7 @@ export function OrderStatsPanel({ stats, isLoading, showDeleted }: Props) {
                 <StatCell
                   key={g.name}
                   label={g.name}
-                  value={formatNumber(g.amount)}
+                  value={formatNumber(g.totalIn)}
                 />
               ))}
             </div>
