@@ -1,13 +1,20 @@
+enum OnlineOrdering {
+  auto
+  enabled
+  disabled
+}
+
 model Store {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String
-  phone        String?  @map("phone") @db.VarChar(20)
-  address      String?
-  bannerURL    String?  @map("banner_url")
-  opening      Json?    @default("{\"weekly\":{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}}")
-  orderCounter Int      @default(0)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  phone          String?        @map("phone") @db.VarChar(20)
+  address        String?
+  bannerURL      String?        @map("banner_url")
+  opening        Json?          @default("{\"weekly\":{\"0\":[],\"1\":[],\"2\":[],\"3\":[],\"4\":[],\"5\":[],\"6\":[]}}")
+  onlineOrdering OnlineOrdering @default(auto) @map("online_ordering")
+  orderCounter   Int            @default(0)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("store")
 }

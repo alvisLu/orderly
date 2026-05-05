@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
+import { findFirstStore } from "@/modules/stores/repository";
+import { isStoreOpen } from "@/modules/stores/hours";
 import { MenuClient } from "./online";
+import { StoreClosed } from "./components/store-closed";
 
 interface Props {
   searchParams: Promise<{ t?: string }>;
@@ -12,7 +15,7 @@ export default async function MenuPage({ searchParams }: Props) {
 
   const [table, store, products] = await Promise.all([
     t ? prisma.table.findFirst({ where: { name: t, isActive: true } }) : null,
-    prisma.store.findFirst(),
+    findFirstStore(),
     prisma.product.findMany({
       where: { isMenuAvailable: true },
       orderBy: { name: "asc" },
@@ -22,6 +25,25 @@ export default async function MenuPage({ searchParams }: Props) {
       },
     }),
   ]);
+
+  const isClosed =
+    store &&
+    (store.onlineOrdering === "disabled" ||
+      (store.onlineOrdering === "auto" && !isStoreOpen(store.opening)));
+
+  if (isClosed) {
+    return (
+      <StoreClosed
+        store={{
+          name: store.name,
+          phone: store.phone ?? undefined,
+          address: store.address ?? undefined,
+          bannerUrl: store.bannerURL ?? undefined,
+          opening: store.opening,
+        }}
+      />
+    );
+  }
 
   if (!table) {
     const tables = await prisma.table.findMany({

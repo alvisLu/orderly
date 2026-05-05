@@ -11,8 +11,16 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { openingSchema } from "@/modules/stores/dto";
+import { ChevronDownIcon } from "lucide-react";
+import { onlineOrderingSchema, openingSchema } from "@/modules/stores/dto";
 import {
   EMPTY_OPENING,
   type Opening,
@@ -26,7 +34,17 @@ const storeFormSchema = z.object({
   address: z.string().max(200).optional().or(z.literal("")),
   bannerURL: z.string().url("請輸入有效網址").optional().or(z.literal("")),
   opening: openingSchema,
+  onlineOrdering: onlineOrderingSchema,
 });
+
+const ONLINE_ORDERING_LABELS: Record<
+  z.infer<typeof onlineOrderingSchema>,
+  string
+> = {
+  auto: "依照營業時間",
+  enabled: "啟用",
+  disabled: "禁用",
+};
 
 type StoreFormInput = z.input<typeof storeFormSchema>;
 type StoreFormValues = z.infer<typeof storeFormSchema>;
@@ -50,7 +68,7 @@ export default function StoreProfilePage() {
     setValue,
   } = useForm<StoreFormInput, unknown, StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
-    defaultValues: { opening: EMPTY_OPENING },
+    defaultValues: { opening: EMPTY_OPENING, onlineOrdering: "auto" },
   });
 
   useEffect(() => {
@@ -65,6 +83,7 @@ export default function StoreProfilePage() {
           address: data.address ?? "",
           bannerURL: data.bannerURL ?? "",
           opening: data.opening,
+          onlineOrdering: data.onlineOrdering,
         });
       } catch {
         toast.error("無法載入店家資料");
@@ -105,9 +124,7 @@ export default function StoreProfilePage() {
   function onInvalid(errs: FieldErrors<StoreFormValues>) {
     if (errs.opening) {
       toast.error(
-        errs.opening.message ??
-          errs.opening.root?.message ??
-          "營業時間設定有誤",
+        errs.opening.message ?? errs.opening.root?.message ?? "營業時間設定有誤"
       );
     }
   }
@@ -121,6 +138,7 @@ export default function StoreProfilePage() {
           address: values.address || null,
           bannerURL: values.bannerURL || null,
           opening: values.opening,
+          onlineOrdering: values.onlineOrdering,
         });
         setStore(updated);
         setBannerPreview(updated.bannerURL);
@@ -130,6 +148,7 @@ export default function StoreProfilePage() {
           address: updated.address ?? "",
           bannerURL: updated.bannerURL ?? "",
           opening: updated.opening,
+          onlineOrdering: updated.onlineOrdering,
         });
         toast.success("店家資料已更新");
       } catch {
@@ -149,10 +168,7 @@ export default function StoreProfilePage() {
   return (
     <div className="p-6 h-full overflow-auto">
       <h1 className="text-xl font-semibold mb-6">店家資料</h1>
-      <form
-        onSubmit={handleSubmit(onSubmit, onInvalid)}
-        className="space-y-6"
-      >
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="max-w-lg space-y-4">
             <div className="space-y-2">
@@ -247,6 +263,47 @@ export default function StoreProfilePage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="onlineOrdering">線上點餐</Label>
+              <Controller
+                control={control}
+                name="onlineOrdering"
+                render={({ field }) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        id="onlineOrdering"
+                        className="w-full justify-between font-normal"
+                      >
+                        {ONLINE_ORDERING_LABELS[field.value]}
+                        <ChevronDownIcon className="ml-1 h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-full">
+                      <DropdownMenuRadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        {(
+                          Object.entries(ONLINE_ORDERING_LABELS) as [
+                            keyof typeof ONLINE_ORDERING_LABELS,
+                            string,
+                          ][]
+                        ).map(([value, label]) => (
+                          <DropdownMenuRadioItem key={value} value={value}>
+                            {label}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              />
+            </div>
+
             {/* 取餐號碼 */}
             <div className="flex items-center gap-3">
               <Label>下一個取餐號碼: </Label>
@@ -271,24 +328,23 @@ export default function StoreProfilePage() {
                 {isResetting ? "重置中..." : "重置"}
               </Button>
             </div>
-
           </div>
 
           <div className="space-y-2">
-          <Label>營業時間</Label>
-          <p className="text-xs text-muted-foreground">
-            未設定時段的日期視為公休
-          </p>
-          <Controller
-            control={control}
-            name="opening"
-            render={({ field }) => (
-              <OpeningEditor
-                value={field.value as Opening}
-                onChange={field.onChange}
-              />
-            )}
-          />
+            <Label>營業時間</Label>
+            <p className="text-xs text-muted-foreground">
+              未設定時段的日期視為公休
+            </p>
+            <Controller
+              control={control}
+              name="opening"
+              render={({ field }) => (
+                <OpeningEditor
+                  value={field.value as Opening}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
         </div>
 
@@ -305,6 +361,7 @@ export default function StoreProfilePage() {
                 address: store.address ?? "",
                 bannerURL: store.bannerURL ?? "",
                 opening: store.opening,
+                onlineOrdering: store.onlineOrdering,
               })
             }
           >
