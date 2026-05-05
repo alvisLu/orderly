@@ -16,13 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Stat, StatLabel, StatValue } from "@/components/ui/stat";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { GatewayDailyTable } from "../components/gateway-daily-table";
 import { GatewayStat } from "../components/gateway-stat";
 import { GatewayTotalInChart } from "../components/gateway-totalin-chart";
 import { usePaymentOrder } from "../hooks/use-payment-order";
@@ -52,6 +55,23 @@ export default function MonthlyReportPage() {
     () => (reports ? aggregateDailyReports(reports) : null),
     [reports]
   );
+
+  const summary = useMemo(() => {
+    if (!reports) return null;
+    const days = reports.map((r) => ({
+      net: r.byGateway.reduce((s, g) => s + (g.totalIn - g.totalOut), 0),
+      hasIncome: r.byGateway.some((g) => g.totalIn > 0),
+    }));
+    const working = days.filter((d) => d.hasIncome);
+    const totalNet = working.reduce((s, d) => s + d.net, 0);
+    const dailyAverage = working.length > 0 ? totalNet / working.length : 0;
+    const aboveAverageDays = working.filter((d) => d.net > dailyAverage).length;
+    return {
+      workingDays: working.length,
+      dailyAverage,
+      aboveAverageDays,
+    };
+  }, [reports]);
 
   function setMonth(target: dayjs.Dayjs) {
     setStartDate(target.startOf("month").format("YYYY-MM-DD"));
@@ -193,11 +213,48 @@ export default function MonthlyReportPage() {
               <GatewayStat key={g.name} gateway={g} />
             ))}
           </div>
-          <GatewayTotalInChart
-            reports={reports}
-            isLoading={isLoading}
-            gatewayOrder={getPaymentRank}
-          />
+          {summary && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-9">
+              <Stat>
+                <StatLabel>工作日天數</StatLabel>
+                <StatValue className="text-lg">
+                  {summary.workingDays} 天
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>日均收入</StatLabel>
+                <StatValue className="text-lg">
+                  {Math.round(summary.dailyAverage).toLocaleString()}
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>大於日均天數</StatLabel>
+                <StatValue className="text-lg">
+                  {summary.aboveAverageDays} 天
+                </StatValue>
+              </Stat>
+            </div>
+          )}
+          <Tabs defaultValue="chart">
+            <TabsList>
+              <TabsTrigger value="chart">圖表</TabsTrigger>
+              <TabsTrigger value="table">表格</TabsTrigger>
+            </TabsList>
+            <TabsContent value="chart">
+              <GatewayTotalInChart
+                reports={reports}
+                isLoading={isLoading}
+                gatewayOrder={getPaymentRank}
+              />
+            </TabsContent>
+            <TabsContent value="table">
+              <GatewayDailyTable
+                reports={reports}
+                isLoading={isLoading}
+                gatewayOrder={getPaymentRank}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
