@@ -1,0 +1,20 @@
+model OrderReport {
+  date            DateTime @id @db.Date
+  count           Int      @default(0)
+  total           Decimal  @default(0) @db.Decimal(10, 2)
+  doneTotal       Decimal  @default(0) @map("done_total") @db.Decimal(10, 2)
+  cancelledTotal  Decimal  @default(0) @map("cancelled_total") @db.Decimal(10, 2)
+  unfinishedTotal Decimal  @default(0) @map("unfinished_total") @db.Decimal(10, 2)
+  processingCount Int      @default(0) @map("processing_count")
+  paidTotal       Decimal  @default(0) @map("paid_total") @db.Decimal(10, 2)
+  discount        Decimal  @default(0) @db.Decimal(10, 2)
+  refundTotal     Decimal  @default(0) @map("refund_total") @db.Decimal(10, 2)
+  peopleCount     Int      @default(0) @map("people_count")
+  avgPerOrder     Decimal  @default(0) @map("avg_per_order") @db.Decimal(10, 2)
+  avgPerPerson    Decimal  @default(0) @map("avg_per_person") @db.Decimal(10, 2)
+  byGateway       Json?    @default("[]")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("order_reports")
+}
