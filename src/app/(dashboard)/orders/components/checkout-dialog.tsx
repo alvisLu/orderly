@@ -48,13 +48,9 @@ export function CheckoutDialog({
     .minus(total)
     .toNumber();
 
-  function buildTransaction() {
+  function buildGateway() {
     if (!selectedPayment) return undefined;
-    return {
-      type: "checkout" as const,
-      amount: total,
-      gateway: { id: selectedPayment.id, name: selectedPayment.name },
-    };
+    return { id: selectedPayment.id, name: selectedPayment.name };
   }
 
   async function handlePay() {
@@ -63,7 +59,7 @@ export function CheckoutDialog({
     try {
       const updated = await apiUpdateOrder(order.id, {
         financialStatus: "paid",
-        transaction: buildTransaction(),
+        gateway: buildGateway(),
       });
       toast.success("已結帳");
       onOpenChange(false);
@@ -82,7 +78,7 @@ export function CheckoutDialog({
       const updated = await apiUpdateOrder(order.id, {
         financialStatus: "paid",
         fulfillmentStatus: "fulfilled",
-        transaction: buildTransaction(),
+        gateway: buildGateway(),
       });
       toast.success("已結帳並出餐");
       onOpenChange(false);

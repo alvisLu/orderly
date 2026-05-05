@@ -70,7 +70,10 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
 
                   <div className="flex gap-2">
                     <DiningBadge isDining={order.isDining} />
-                    <OrderStatusBadge status={order.status} />
+                    <OrderStatusBadge
+                      status={order.status}
+                      deletedAt={order.deletedAt}
+                    />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">

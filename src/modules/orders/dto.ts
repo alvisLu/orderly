@@ -19,6 +19,11 @@ const createOrderItemDto = z.object({
   productOptions: z.array(lineItemOptionDto).default([]),
 });
 
+const gatewayDto = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 export const createOrderDto = z.object({
   items: z.array(createOrderItemDto).min(1),
   discount: z.number().nonnegative().default(0),
@@ -30,16 +35,7 @@ export const createOrderDto = z.object({
   source: z.enum(["store", "qrcode", "online"]),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
   fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
-});
-
-const transactionDto = z.object({
-  type: z.enum(["checkout", "refund"]),
-  amount: z.number(),
-  gateway: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
-  note: z.string().optional(),
+  gateway: gatewayDto.optional(),
 });
 
 export const updateOrderDto = z.object({
@@ -50,7 +46,7 @@ export const updateOrderDto = z.object({
   isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
   userNote: z.string().optional(),
-  transaction: transactionDto.optional(),
+  gateway: gatewayDto.optional(),
 });
 
 export const orderQueryDto = paginationDto.extend({
@@ -58,4 +54,21 @@ export const orderQueryDto = paginationDto.extend({
   isDining: z.coerce.boolean().optional(),
   sort: z.enum(["asc", "desc"]).optional(),
   showDeleted: z.coerce.boolean().optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
+export const ordersReportQueryDto = z.object({
+  showDeleted: z.coerce.boolean().optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
+export const dailyOrderReportsQueryDto = z.object({
+  from: z.coerce.date(),
+  to: z.coerce.date(),
+});
+
+export const orderPollQueryDto = z.object({
+  from: z.coerce.date(),
 });

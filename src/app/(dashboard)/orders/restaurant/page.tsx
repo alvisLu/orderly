@@ -1,24 +1,16 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback, useRef } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import {
-  apiGetOrders,
-  apiGetOrder,
-  apiLeaveAllDining,
-} from "@/app/api/orders/api";
+import { apiGetOrders, apiLeaveAllDining } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
+import { useNewOrdersStore } from "@/store/new-orders";
 import { OrderColumns } from "./components/order-columns";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Scroller } from "@/components/ui/scroller";
 
 const PAGE_SIZE = 5;
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const STATUS_TABS: {
   label: string;
@@ -93,52 +85,24 @@ export default function RestaurantOrdersPage() {
     return () => observer.disconnect();
   });
 
-  // Realtime: auto-insert new orders
-  const statusRef = useCallback(() => status, [status]);
+  // Auto-insert new orders pushed by OrderPollingNotifications
+  const newOrdersVersion = useNewOrdersStore((s) => s.version);
+  const newOrdersBatch = useNewOrdersStore((s) => s.batch);
 
   useEffect(() => {
-    const authClient = createClient();
-    let realtimeClient: ReturnType<typeof createSupabaseClient> | null = null;
-    let cleanup = () => {};
-
-    authClient.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-
-      realtimeClient = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        realtime: { params: { apikey: SUPABASE_ANON_KEY } },
-      });
-      realtimeClient.realtime.setAuth(session.access_token);
-
-      const channel = realtimeClient
-        .channel("restaurant-orders")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "orders" },
-          async (payload) => {
-            const newOrderStatus = payload.new.status as string;
-            const currentStatus = statusRef();
-            if (currentStatus && newOrderStatus !== currentStatus) return;
-
-            try {
-              const fullOrder = await apiGetOrder(payload.new.id as string);
-              setOrders((prev) => {
-                if (prev.some((o) => o.id === fullOrder.id)) return prev;
-                return [...prev, fullOrder];
-              });
-            } catch {
-              // order may have been deleted before we could fetch
-            }
-          }
-        )
-        .subscribe();
-
-      cleanup = () => {
-        realtimeClient!.removeChannel(channel);
-      };
+    if (newOrdersBatch.length === 0) return;
+    setOrders((prev) => {
+      const seen = new Set(prev.map((o) => o.id));
+      const additions = newOrdersBatch.filter(
+        (o) =>
+          !seen.has(o.id) &&
+          o.isDining &&
+          (status === undefined || o.status === status)
+      );
+      return additions.length > 0 ? [...prev, ...additions] : prev;
     });
-
-    return () => cleanup();
-  }, [statusRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newOrdersVersion]);
 
   function handleUpdated(updated: Order) {
     setOrders((prev) =>

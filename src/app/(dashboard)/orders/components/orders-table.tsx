@@ -78,7 +78,12 @@ function getColumns(
     {
       id: "status",
       header: "訂單狀態",
-      cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <OrderStatusBadge
+          status={row.original.status}
+          deletedAt={row.original.deletedAt}
+        />
+      ),
     },
     {
       id: "financialStatus",

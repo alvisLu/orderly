@@ -40,6 +40,7 @@ export type OrderTransactionInput = {
   type: TransactionType;
   amount: number;
   gateway: Gateway;
+  date: string;
   note?: string;
 };
 
@@ -54,7 +55,7 @@ export type CreateOrderInput = {
   source: OrderSource;
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;
-  transaction?: OrderTransactionInput;
+  gateway?: Gateway;
 };
 
 export type UpdateOrderInput = {
@@ -65,7 +66,7 @@ export type UpdateOrderInput = {
   isDining?: boolean;
   userPhone?: string;
   userNote?: string;
-  transaction?: OrderTransactionInput;
+  gateway?: Gateway;
 };
 
 export interface OrderQuery {
@@ -75,6 +76,8 @@ export interface OrderQuery {
   page: number;
   limit: number;
   showDeleted?: boolean;
+  from?: Date;
+  to?: Date;
 }
 
 export interface PaginatedOrders {
@@ -82,4 +85,36 @@ export interface PaginatedOrders {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface OrdersReportQuery {
+  from?: Date;
+  to?: Date;
+  showDeleted?: boolean;
+}
+
+export interface GatewayAmount {
+  name: string;
+  totalIn: number;
+  totalOut: number;
+}
+
+export interface OrdersReport {
+  count: number;
+  total: number;
+  doneTotal: number;
+  cancelledTotal: number;
+  unfinishedTotal: number;
+  processingCount: number;
+  paidTotal: number;
+  discount: number;
+  refundTotal: number;
+  peopleCount: number;
+  avgPerOrder: number;
+  avgPerPerson: number;
+  byGateway: GatewayAmount[];
+}
+
+export interface DailyOrdersReport extends OrdersReport {
+  date: string;
 }

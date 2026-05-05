@@ -1,8 +1,12 @@
 import Big from "big.js";
+import dayjs from "@/lib/dayjs";
 import {
   findAllOrders,
   findOrderById,
+  findOrderReportsInRange,
+  findOrdersReport,
   findOrdersByIds,
+  generateOrderReportForDate,
   insertOrder,
   updateOrder,
   clearAllDining,
@@ -10,8 +14,12 @@ import {
 } from "./repository";
 import type {
   CreateOrderInput,
+  DailyOrdersReport,
   Order,
   OrderQuery,
+  OrdersReport,
+  OrdersReportQuery,
+  OrderTransactionInput,
   PaginatedOrders,
   UpdateOrderInput,
 } from "./types";
@@ -19,9 +27,95 @@ import {
   OrderAlreadyCheckedOutError,
   OrderNotFoundError,
 } from "@/lib/http-error";
+import {
+  OrderStatus,
+  OrderFinancialStatus,
+  OrderFulfillmentStatus,
+} from "@/generated/prisma/client";
 
 export async function getOrders(query: OrderQuery): Promise<PaginatedOrders> {
   return findAllOrders(query);
+}
+
+export async function getOrdersReport(
+  query: OrdersReportQuery
+): Promise<OrdersReport> {
+  return findOrdersReport(query);
+}
+
+export async function regenerateOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  const startUtc = dayjs.utc(from).startOf("day");
+  const endUtc = dayjs.utc(to).startOf("day");
+  const todayUtc = dayjs.utc().startOf("day");
+
+  const dates: dayjs.Dayjs[] = [];
+  let cursor = startUtc;
+  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
+    dates.push(cursor);
+    cursor = cursor.add(1, "day");
+  }
+
+  return Promise.all(
+    dates.map((d) =>
+      d.isAfter(todayUtc)
+        ? zeroDailyReport(d.format("YYYY-MM-DD"))
+        : generateOrderReportForDate(d.toDate())
+    )
+  );
+}
+
+function zeroDailyReport(date: string): DailyOrdersReport {
+  return {
+    date,
+    count: 0,
+    total: 0,
+    doneTotal: 0,
+    cancelledTotal: 0,
+    unfinishedTotal: 0,
+    processingCount: 0,
+    paidTotal: 0,
+    discount: 0,
+    refundTotal: 0,
+    peopleCount: 0,
+    avgPerOrder: 0,
+    avgPerPerson: 0,
+    byGateway: [],
+  };
+}
+
+export async function getDailyOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  const startUtc = dayjs.utc(from).startOf("day");
+  const endUtc = dayjs.utc(to).startOf("day");
+  const todayUtc = dayjs.utc().startOf("day");
+
+  const existing = new Map(
+    (
+      await findOrderReportsInRange(startUtc.toDate(), endUtc.toDate())
+    ).map((r) => [r.date, r])
+  );
+
+  const reports: DailyOrdersReport[] = [];
+  let cursor = startUtc;
+  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
+    const key = cursor.format("YYYY-MM-DD");
+    const cached = existing.get(key);
+    if (cached) {
+      reports.push(cached);
+    } else if (cursor.isAfter(todayUtc)) {
+      reports.push(zeroDailyReport(key));
+    } else {
+      reports.push(await generateOrderReportForDate(cursor.toDate()));
+    }
+    cursor = cursor.add(1, "day");
+  }
+
+  return reports;
 }
 
 export async function getOrdersByIds(ids: string[]): Promise<Order[]> {
@@ -35,7 +129,7 @@ export async function getOrder(id: string): Promise<Order> {
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
-  const { items, discount, ...rest } = input;
+  const { items, discount, gateway, ...rest } = input;
 
   const total = items
     .reduce((sum, item) => {
@@ -55,9 +149,40 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     })),
   };
 
-  const status = rest.source === "store" ? "processing" : undefined;
+  const isCompleted =
+    rest.financialStatus === OrderFinancialStatus.paid &&
+    rest.fulfillmentStatus === OrderFulfillmentStatus.fulfilled;
+  const isStoreOrder = rest.source === "store";
 
-  return insertOrder({ ...rest, discount, lineItems, total, ...(status && { status }) });
+  let status: OrderStatus = OrderStatus.pending;
+
+  if (isCompleted) {
+    status = OrderStatus.done;
+  } else if (isStoreOrder) {
+    status = OrderStatus.processing;
+  }
+
+  const transaction = gateway
+    ? {
+        type: "checkout" as const,
+        amount: total,
+        gateway,
+        date: dayjs().toISOString(),
+      }
+    : undefined;
+
+  return insertOrder({
+    ...rest,
+    discount,
+    lineItems,
+    total,
+    status,
+    ...(transaction && {
+      transactions: [transaction] as Parameters<
+        typeof insertOrder
+      >[0]["transactions"],
+    }),
+  });
 }
 
 export async function editOrder(
@@ -67,28 +192,55 @@ export async function editOrder(
   const existing = await findOrderById(id);
   if (!existing) throw new OrderNotFoundError();
 
-  const { transaction, ...rest } = input;
+  const { gateway, ...rest } = input;
 
   // Resolve final statuses (input overrides existing)
   const finalFinancial = rest.financialStatus ?? existing.financialStatus;
   const finalFulfillment = rest.fulfillmentStatus ?? existing.fulfillmentStatus;
 
   // Auto-complete order when both paid and fulfilled
-  if (finalFinancial === "paid" && finalFulfillment === "fulfilled") {
-    rest.status = "done";
+  if (
+    finalFinancial === OrderFinancialStatus.paid &&
+    finalFulfillment === OrderFulfillmentStatus.fulfilled
+  ) {
+    rest.status = OrderStatus.done;
   }
 
-  // Append transaction to existing transactions array
+  // Compose transaction from gateway + financialStatus transition
   let transactionsUpdate: unknown[] | undefined;
-  if (transaction) {
-    const existing_txns = (existing.transactions as unknown[] | null) ?? [];
-    if (
-      transaction.type === "checkout" &&
-      existing_txns.some((t) => (t as { type: string }).type === "checkout")
-    ) {
-      throw new OrderAlreadyCheckedOutError();
+  if (gateway) {
+    const existingTxns =
+      (existing.transactions as unknown as OrderTransactionInput[] | null) ??
+      [];
+    let newTxn: OrderTransactionInput | undefined;
+
+    if (finalFinancial === OrderFinancialStatus.paid) {
+      if (existingTxns.some((t) => t.type === "checkout")) {
+        throw new OrderAlreadyCheckedOutError();
+      }
+      newTxn = {
+        type: "checkout",
+        amount: Number(existing.total),
+        gateway,
+        date: dayjs().toISOString(),
+      };
+    } else if (finalFinancial === OrderFinancialStatus.refunded) {
+      const checkoutTotal = existingTxns
+        .filter((t) => t.type === "checkout")
+        .reduce((sum, t) => sum + t.amount, 0);
+      if (checkoutTotal > 0) {
+        newTxn = {
+          type: "refund",
+          amount: -checkoutTotal,
+          gateway,
+          date: dayjs().toISOString(),
+        };
+      }
     }
-    transactionsUpdate = [...existing_txns, transaction];
+
+    if (newTxn) {
+      transactionsUpdate = [...existingTxns, newTxn];
+    }
   }
 
   const order = await updateOrder(id, {
