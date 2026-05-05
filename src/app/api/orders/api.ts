@@ -47,6 +47,24 @@ export async function apiGetOrdersReport(
   return data;
 }
 
+export async function apiGetOrderReportByDate(
+  date: string
+): Promise<OrdersReport | null> {
+  const { data } = await apiClient.get<OrdersReport | null>(
+    `/orders/report/${date}`
+  );
+  return data;
+}
+
+export async function apiGenerateOrderReport(
+  date: string
+): Promise<OrdersReport> {
+  const { data } = await apiClient.post<OrdersReport>(
+    `/orders/report/${date}`
+  );
+  return data;
+}
+
 export async function apiGetDailyGatewayStats(
   query: DailyGatewayStatsQuery
 ): Promise<DailyGatewayStats> {

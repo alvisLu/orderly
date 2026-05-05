@@ -129,6 +129,93 @@ type TxnRecord = {
   gateway: { id: string; name: string };
 };
 
+type OrderForAggregation = {
+  total: Prisma.Decimal;
+  discount: Prisma.Decimal;
+  status: string;
+  financialStatus: string;
+  transactions: Prisma.JsonValue;
+  deletedAt: Date | null;
+};
+
+function aggregateOrdersReport(rows: OrderForAggregation[]): OrdersReport {
+  let count = 0;
+  let total = Big(0);
+  let doneTotal = Big(0);
+  let cancelledTotal = Big(0);
+  let unfinishedTotal = Big(0);
+  let processingCount = 0;
+  let paidTotal = Big(0);
+  let discount = Big(0);
+  let refundTotal = Big(0);
+  const inMap = new Map<string, Big>();
+  const outMap = new Map<string, Big>();
+
+  for (const o of rows) {
+    const orderTotal = Big(o.total.toString());
+    const orderDiscount = Big(o.discount.toString());
+    const isCancelled = o.status === "cancelled" || o.deletedAt !== null;
+
+    count += 1;
+    if (!isCancelled) {
+      total = total.plus(orderTotal);
+      discount = discount.plus(orderDiscount);
+    }
+    if (o.status === "done" && !isCancelled) {
+      doneTotal = doneTotal.plus(orderTotal);
+    }
+    if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
+    if (
+      (o.status === "pending" || o.status === "processing") &&
+      !isCancelled
+    ) {
+      unfinishedTotal = unfinishedTotal.plus(orderTotal);
+    }
+    if (o.status === "processing" && !isCancelled) processingCount += 1;
+    if (o.financialStatus === "paid") paidTotal = paidTotal.plus(orderTotal);
+    if (o.financialStatus === "refunded") {
+      refundTotal = refundTotal.plus(orderTotal);
+    }
+
+    const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
+    for (const t of txns) {
+      const key = t.gateway?.name ?? "未知";
+      if (t.type === "checkout") {
+        const prev = inMap.get(key) ?? Big(0);
+        inMap.set(key, prev.plus(Big(t.amount)));
+      } else if (t.type === "refund") {
+        const prev = outMap.get(key) ?? Big(0);
+        outMap.set(key, prev.plus(Big(t.amount).abs()));
+      }
+    }
+  }
+
+  const countBig = Big(count);
+  const avgPerOrder = count > 0 ? total.div(countBig).round(0).toNumber() : 0;
+
+  return {
+    count,
+    total: total.toNumber(),
+    doneTotal: doneTotal.toNumber(),
+    cancelledTotal: cancelledTotal.toNumber(),
+    unfinishedTotal: unfinishedTotal.toNumber(),
+    processingCount,
+    paidTotal: paidTotal.toNumber(),
+    discount: discount.toNumber(),
+    refundTotal: refundTotal.toNumber(),
+    peopleCount: count,
+    avgPerOrder,
+    avgPerPerson: avgPerOrder,
+    byGateway: Array.from(new Set([...inMap.keys(), ...outMap.keys()])).map(
+      (name) => ({
+        name,
+        totalIn: (inMap.get(name) ?? Big(0)).toNumber(),
+        totalOut: (outMap.get(name) ?? Big(0)).toNumber(),
+      })
+    ),
+  };
+}
+
 export async function findOrdersReport(
   query: OrdersReportQuery
 ): Promise<OrdersReport> {
@@ -155,82 +242,94 @@ export async function findOrdersReport(
         deletedAt: true,
       },
     });
+    return aggregateOrdersReport(rows);
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
 
-    let count = 0;
-    let total = Big(0);
-    let doneTotal = Big(0);
-    let cancelledTotal = Big(0);
-    let unfinishedTotal = Big(0);
-    let processingCount = 0;
-    let paidTotal = Big(0);
-    let discount = Big(0);
-    let refundTotal = Big(0);
-    const inMap = new Map<string, Big>();
-    const outMap = new Map<string, Big>();
+function rowToReport(row: {
+  count: number;
+  total: Prisma.Decimal;
+  doneTotal: Prisma.Decimal;
+  cancelledTotal: Prisma.Decimal;
+  unfinishedTotal: Prisma.Decimal;
+  processingCount: number;
+  paidTotal: Prisma.Decimal;
+  discount: Prisma.Decimal;
+  refundTotal: Prisma.Decimal;
+  peopleCount: number;
+  avgPerOrder: Prisma.Decimal;
+  avgPerPerson: Prisma.Decimal;
+  byGateway: Prisma.JsonValue | null;
+}): OrdersReport {
+  return {
+    count: row.count,
+    total: Number(row.total),
+    doneTotal: Number(row.doneTotal),
+    cancelledTotal: Number(row.cancelledTotal),
+    unfinishedTotal: Number(row.unfinishedTotal),
+    processingCount: row.processingCount,
+    paidTotal: Number(row.paidTotal),
+    discount: Number(row.discount),
+    refundTotal: Number(row.refundTotal),
+    peopleCount: row.peopleCount,
+    avgPerOrder: Number(row.avgPerOrder),
+    avgPerPerson: Number(row.avgPerPerson),
+    byGateway: (row.byGateway as unknown as OrdersReport["byGateway"]) ?? [],
+  };
+}
 
-    for (const o of rows) {
-      const orderTotal = Big(o.total.toString());
-      const orderDiscount = Big(o.discount.toString());
-      const isCancelled = o.status === "cancelled" || o.deletedAt !== null;
+export async function findOrderReportByDate(
+  date: Date
+): Promise<OrdersReport | null> {
+  try {
+    const row = await prisma.orderReport.findUnique({ where: { date } });
+    return row ? rowToReport(row) : null;
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
 
-      count += 1;
-      if (!isCancelled) {
-        total = total.plus(orderTotal);
-        discount = discount.plus(orderDiscount);
-      }
-      if (o.status === "done" && !isCancelled) {
-        doneTotal = doneTotal.plus(orderTotal);
-      }
-      if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
-      if (
-        (o.status === "pending" || o.status === "processing") &&
-        !isCancelled
-      ) {
-        unfinishedTotal = unfinishedTotal.plus(orderTotal);
-      }
-      if (o.status === "processing" && !isCancelled) processingCount += 1;
-      if (o.financialStatus === "paid") paidTotal = paidTotal.plus(orderTotal);
-      if (o.financialStatus === "refunded") {
-        refundTotal = refundTotal.plus(orderTotal);
-      }
-
-      const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
-      for (const t of txns) {
-        const key = t.gateway?.name ?? "未知";
-        if (t.type === "checkout") {
-          const prev = inMap.get(key) ?? Big(0);
-          inMap.set(key, prev.plus(Big(t.amount)));
-        } else if (t.type === "refund") {
-          const prev = outMap.get(key) ?? Big(0);
-          outMap.set(key, prev.plus(Big(t.amount).abs()));
-        }
-      }
-    }
-
-    const countBig = Big(count);
-    const avgPerOrder = count > 0 ? total.div(countBig).round(0).toNumber() : 0;
-
-    return {
-      count,
-      total: total.toNumber(),
-      doneTotal: doneTotal.toNumber(),
-      cancelledTotal: cancelledTotal.toNumber(),
-      unfinishedTotal: unfinishedTotal.toNumber(),
-      processingCount,
-      paidTotal: paidTotal.toNumber(),
-      discount: discount.toNumber(),
-      refundTotal: refundTotal.toNumber(),
-      peopleCount: count,
-      avgPerOrder,
-      avgPerPerson: avgPerOrder,
-      byGateway: Array.from(
-        new Set([...inMap.keys(), ...outMap.keys()])
-      ).map((name) => ({
-        name,
-        totalIn: (inMap.get(name) ?? Big(0)).toNumber(),
-        totalOut: (outMap.get(name) ?? Big(0)).toNumber(),
-      })),
+export async function generateOrderReportForDate(
+  date: Date
+): Promise<OrdersReport> {
+  const from = dayjs.utc(date).startOf("day").toDate();
+  const to = dayjs.utc(date).endOf("day").toDate();
+  try {
+    const rows = await prisma.order.findMany({
+      where: { createdAt: { gte: from, lte: to } },
+      select: {
+        total: true,
+        discount: true,
+        status: true,
+        financialStatus: true,
+        transactions: true,
+        deletedAt: true,
+      },
+    });
+    const report = aggregateOrdersReport(rows);
+    const data = {
+      count: report.count,
+      total: report.total,
+      doneTotal: report.doneTotal,
+      cancelledTotal: report.cancelledTotal,
+      unfinishedTotal: report.unfinishedTotal,
+      processingCount: report.processingCount,
+      paidTotal: report.paidTotal,
+      discount: report.discount,
+      refundTotal: report.refundTotal,
+      peopleCount: report.peopleCount,
+      avgPerOrder: report.avgPerOrder,
+      avgPerPerson: report.avgPerPerson,
+      byGateway: report.byGateway as unknown as Prisma.InputJsonValue,
     };
+    await prisma.orderReport.upsert({
+      where: { date: from },
+      create: { date: from, ...data },
+      update: data,
+    });
+    return report;
   } catch (e) {
     throw new DatabaseError(String(e));
   }

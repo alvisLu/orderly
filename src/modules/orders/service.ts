@@ -4,8 +4,10 @@ import {
   findAllOrders,
   findDailyGatewayStats,
   findOrderById,
+  findOrderReportByDate,
   findOrdersReport,
   findOrdersByIds,
+  generateOrderReportForDate,
   insertOrder,
   updateOrder,
   clearAllDining,
@@ -41,6 +43,16 @@ export async function getOrdersReport(
   query: OrdersReportQuery
 ): Promise<OrdersReport> {
   return findOrdersReport(query);
+}
+
+export async function getOrderReportByDate(
+  date: Date
+): Promise<OrdersReport | null> {
+  return findOrderReportByDate(date);
+}
+
+export async function generateOrderReport(date: Date): Promise<OrdersReport> {
+  return generateOrderReportForDate(date);
 }
 
 export async function getDailyGatewayStats(

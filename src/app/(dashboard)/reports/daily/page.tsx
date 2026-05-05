@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "@/lib/dayjs";
 import {
   CalendarIcon,
@@ -9,7 +9,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { apiGetOrdersReport } from "@/app/api/orders/api";
+import {
+  apiGenerateOrderReport,
+  apiGetOrderReportByDate,
+} from "@/app/api/orders/api";
 import type { OrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,23 +23,38 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { GatewayStat } from "../components/gateway-stat";
 
 export default function DailyReportPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [stats, setStats] = useState<OrdersReport | null>(null);
-  const [isLoading, startLoading] = useTransition();
+  const [phase, setPhase] = useState<"loading" | "generating" | "ready">(
+    "loading"
+  );
 
   useEffect(() => {
-    startLoading(async () => {
-      const s = await apiGetOrdersReport({
-        from: dayjs.utc(date).toDate(),
-        to: dayjs.utc(date).endOf("day").toDate(),
-      });
-      setStats(s);
-    });
+    let cancelled = false;
+    (async () => {
+      setPhase("loading");
+      const existing = await apiGetOrderReportByDate(date);
+      if (cancelled) return;
+      if (existing !== null) {
+        setStats(existing);
+        setPhase("ready");
+        return;
+      }
+      setStats(null);
+      setPhase("generating");
+      const generated = await apiGenerateOrderReport(date);
+      if (cancelled) return;
+      setStats(generated);
+      setPhase("ready");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [date]);
 
   function applyDayOffset(offset: number) {
@@ -124,8 +142,12 @@ export default function DailyReportPage() {
         </div>
       </div>
 
-      {isLoading && !stats ? (
-        <Skeleton className="h-32 w-full" />
+      {phase === "loading" || phase === "generating" ? (
+        <Card size="sm">
+          <CardContent className="py-8 flex justify-center text-muted-foreground">
+            <Spinner className="size-6" />
+          </CardContent>
+        </Card>
       ) : rows.length === 0 ? (
         <Card size="sm">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
