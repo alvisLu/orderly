@@ -9,8 +9,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { apiGetOrderStats } from "@/app/api/orders/api";
-import type { OrderStats } from "@/modules/orders/types";
+import { apiGetOrdersReport } from "@/app/api/orders/api";
+import type { OrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,21 +21,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Stat, StatLabel, StatValue } from "@/components/ui/stat";
 import { cn } from "@/lib/utils";
-
-function formatNumber(value: number): string {
-  return Math.round(value).toLocaleString();
-}
+import { GatewayStat } from "../components/gateway-stat";
 
 export default function DailyReportPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [stats, setStats] = useState<OrderStats | null>(null);
+  const [stats, setStats] = useState<OrdersReport | null>(null);
   const [isLoading, startLoading] = useTransition();
 
   useEffect(() => {
     startLoading(async () => {
-      const s = await apiGetOrderStats({
+      const s = await apiGetOrdersReport({
         from: dayjs.utc(date).toDate(),
         to: dayjs.utc(date).endOf("day").toDate(),
       });
@@ -139,17 +135,7 @@ export default function DailyReportPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {rows.map((g) => (
-            <Stat key={g.name} className="items-center">
-              <div className="col-span-2 font-semibold text-base">{g.name}</div>
-              <StatLabel>收入</StatLabel>
-              <StatValue className="text-lg text-green-600 dark:text-green-400">
-                +{formatNumber(g.totalIn)}
-              </StatValue>
-              <StatLabel>退款</StatLabel>
-              <StatValue className="text-lg text-destructive">
-                -{formatNumber(g.totalOut)}
-              </StatValue>
-            </Stat>
+            <GatewayStat key={g.name} gateway={g} />
           ))}
         </div>
       )}

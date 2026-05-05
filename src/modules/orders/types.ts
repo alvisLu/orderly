@@ -87,7 +87,7 @@ export interface PaginatedOrders {
   limit: number;
 }
 
-export interface OrderStatsQuery {
+export interface OrdersReportQuery {
   from?: Date;
   to?: Date;
   showDeleted?: boolean;
@@ -99,7 +99,7 @@ export interface GatewayAmount {
   totalOut: number;
 }
 
-export interface OrderStats {
+export interface OrdersReport {
   count: number;
   total: number;
   doneTotal: number;
@@ -113,4 +113,20 @@ export interface OrderStats {
   avgPerOrder: number;
   avgPerPerson: number;
   byGateway: GatewayAmount[];
+}
+
+export interface DailyGatewayStatsQuery {
+  from: Date;
+  to: Date;
+  showDeleted?: boolean;
+}
+
+export interface DailyGatewayStatsRow {
+  date: string;
+  totals: Record<string, number>;
+}
+
+export interface DailyGatewayStats {
+  gateways: string[];
+  rows: DailyGatewayStatsRow[];
 }

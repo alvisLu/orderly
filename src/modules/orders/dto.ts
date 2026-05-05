@@ -58,10 +58,16 @@ export const orderQueryDto = paginationDto.extend({
   to: z.coerce.date().optional(),
 });
 
-export const orderStatsQueryDto = z.object({
+export const ordersReportQueryDto = z.object({
   showDeleted: z.coerce.boolean().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+});
+
+export const dailyGatewayStatsQueryDto = z.object({
+  showDeleted: z.coerce.boolean().optional(),
+  from: z.coerce.date(),
+  to: z.coerce.date(),
 });
 
 export const orderPollQueryDto = z.object({

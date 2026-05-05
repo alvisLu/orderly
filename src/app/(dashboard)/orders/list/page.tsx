@@ -3,11 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiGetOrders, apiGetOrderStats } from "@/app/api/orders/api";
-import type { Order, OrderStats } from "@/modules/orders/types";
+import { apiGetOrders, apiGetOrdersReport } from "@/app/api/orders/api";
+import type { Order, OrdersReport } from "@/modules/orders/types";
 import { useNewOrdersStore } from "@/store/new-orders";
 import { OrdersTable } from "../components/orders-table";
-import { OrderStatsPanel } from "../components/order-stats";
+import { OrdersReportPanel } from "../components/orders-report";
 import { CreateOrderDialog } from "../components/create-order-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,7 +34,7 @@ export default function OrdersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [showDeleted, setShowDeleted] = useState(false);
   const [range, setRange] = useState(initialRange);
-  const [stats, setStats] = useState<OrderStats | null>(null);
+  const [stats, setStats] = useState<OrdersReport | null>(null);
   const [isStatsLoading, startStatsLoading] = useTransition();
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     startStatsLoading(async () => {
-      const s = await apiGetOrderStats({
+      const s = await apiGetOrdersReport({
         showDeleted,
         from: dayjs.utc(range.from).toDate(),
         to: dayjs.utc(range.to).endOf("day").toDate(),
@@ -226,7 +226,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <OrderStatsPanel
+      <OrdersReportPanel
         stats={stats}
         isLoading={isStatsLoading}
         showDeleted={showDeleted}

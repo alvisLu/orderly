@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import type { OrderStats } from "@/modules/orders/types";
+import type { OrdersReport } from "@/modules/orders/types";
 
 interface Props {
-  stats: OrderStats | null;
+  stats: OrdersReport | null;
   isLoading?: boolean;
   showDeleted?: boolean;
 }
@@ -36,7 +36,7 @@ function StatCell({
   );
 }
 
-export function OrderStatsPanel({ stats, isLoading, showDeleted }: Props) {
+export function OrdersReportPanel({ stats, isLoading, showDeleted }: Props) {
   if (isLoading && !stats) {
     return (
       <div className="flex flex-col gap-2 mb-4">

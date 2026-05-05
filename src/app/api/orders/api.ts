@@ -1,10 +1,12 @@
 import apiClient from "@/lib/api-client";
 import type {
   CreateOrderInput,
+  DailyGatewayStats,
+  DailyGatewayStatsQuery,
   Order,
   OrderQuery,
-  OrderStats,
-  OrderStatsQuery,
+  OrdersReport,
+  OrdersReportQuery,
   PaginatedOrders,
   UpdateOrderInput,
 } from "@/modules/orders/types";
@@ -34,14 +36,28 @@ export async function apiPollOrders(from: Date): Promise<PaginatedOrders> {
   return data;
 }
 
-export async function apiGetOrderStats(
-  query?: Partial<OrderStatsQuery>
-): Promise<OrderStats> {
+export async function apiGetOrdersReport(
+  query?: Partial<OrdersReportQuery>
+): Promise<OrdersReport> {
   const params = new URLSearchParams();
   if (query?.showDeleted) params.set("showDeleted", "true");
   if (query?.from) params.set("from", query.from.toISOString());
   if (query?.to) params.set("to", query.to.toISOString());
-  const { data } = await apiClient.get<OrderStats>(`/orders/stats?${params}`);
+  const { data } = await apiClient.get<OrdersReport>(`/orders/report?${params}`);
+  return data;
+}
+
+export async function apiGetDailyGatewayStats(
+  query: DailyGatewayStatsQuery
+): Promise<DailyGatewayStats> {
+  const params = new URLSearchParams({
+    from: query.from.toISOString(),
+    to: query.to.toISOString(),
+  });
+  if (query.showDeleted) params.set("showDeleted", "true");
+  const { data } = await apiClient.get<DailyGatewayStats>(
+    `/orders/stats/daily?${params}`
+  );
   return data;
 }
 

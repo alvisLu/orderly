@@ -2,13 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { DatabaseError } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  DailyGatewayStats,
+  DailyGatewayStatsQuery,
   Order,
   OrderQuery,
-  OrderStats,
-  OrderStatsQuery,
+  OrdersReport,
+  OrdersReportQuery,
   PaginatedOrders,
 } from "./types";
 import Big from "big.js";
+import dayjs from "@/lib/dayjs";
 
 const include = {
   lineItems: { include: { product: true } },
@@ -126,9 +129,9 @@ type TxnRecord = {
   gateway: { id: string; name: string };
 };
 
-export async function findOrderStats(
-  query: OrderStatsQuery
-): Promise<OrderStats> {
+export async function findOrdersReport(
+  query: OrdersReportQuery
+): Promise<OrdersReport> {
   const { from, to, showDeleted } = query;
   const where = {
     ...(!showDeleted && { deletedAt: null }),
@@ -228,6 +231,61 @@ export async function findOrderStats(
         totalOut: (outMap.get(name) ?? Big(0)).toNumber(),
       })),
     };
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
+export async function findDailyGatewayStats(
+  query: DailyGatewayStatsQuery
+): Promise<DailyGatewayStats> {
+  const { from, to, showDeleted } = query;
+  const where = {
+    ...(!showDeleted && { deletedAt: null }),
+    createdAt: { gte: from, lte: to },
+  };
+
+  try {
+    const rows = await prisma.order.findMany({
+      where,
+      select: { createdAt: true, transactions: true },
+    });
+
+    const dayMap = new Map<string, Map<string, Big>>();
+    const gatewaySet = new Set<string>();
+
+    for (const o of rows) {
+      const day = dayjs.utc(o.createdAt).format("YYYY-MM-DD");
+      const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
+      for (const t of txns) {
+        if (t.type !== "checkout") continue;
+        const name = t.gateway?.name ?? "未知";
+        gatewaySet.add(name);
+        const inner = dayMap.get(day) ?? new Map<string, Big>();
+        inner.set(name, (inner.get(name) ?? Big(0)).plus(Big(t.amount)));
+        dayMap.set(day, inner);
+      }
+    }
+
+    const days: string[] = [];
+    let cursor = dayjs.utc(from).startOf("day");
+    const last = dayjs.utc(to).startOf("day");
+    while (cursor.isBefore(last) || cursor.isSame(last)) {
+      days.push(cursor.format("YYYY-MM-DD"));
+      cursor = cursor.add(1, "day");
+    }
+
+    const gateways = Array.from(gatewaySet).sort();
+    const result = days.map((date) => {
+      const inner = dayMap.get(date);
+      const totals: Record<string, number> = {};
+      for (const name of gateways) {
+        totals[name] = inner?.get(name)?.toNumber() ?? 0;
+      }
+      return { date, totals };
+    });
+
+    return { gateways, rows: result };
   } catch (e) {
     throw new DatabaseError(String(e));
   }

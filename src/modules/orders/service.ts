@@ -2,8 +2,9 @@ import Big from "big.js";
 import dayjs from "@/lib/dayjs";
 import {
   findAllOrders,
+  findDailyGatewayStats,
   findOrderById,
-  findOrderStats,
+  findOrdersReport,
   findOrdersByIds,
   insertOrder,
   updateOrder,
@@ -12,10 +13,12 @@ import {
 } from "./repository";
 import type {
   CreateOrderInput,
+  DailyGatewayStats,
+  DailyGatewayStatsQuery,
   Order,
   OrderQuery,
-  OrderStats,
-  OrderStatsQuery,
+  OrdersReport,
+  OrdersReportQuery,
   OrderTransactionInput,
   PaginatedOrders,
   UpdateOrderInput,
@@ -34,10 +37,16 @@ export async function getOrders(query: OrderQuery): Promise<PaginatedOrders> {
   return findAllOrders(query);
 }
 
-export async function getOrderStats(
-  query: OrderStatsQuery
-): Promise<OrderStats> {
-  return findOrderStats(query);
+export async function getOrdersReport(
+  query: OrdersReportQuery
+): Promise<OrdersReport> {
+  return findOrdersReport(query);
+}
+
+export async function getDailyGatewayStats(
+  query: DailyGatewayStatsQuery
+): Promise<DailyGatewayStats> {
+  return findDailyGatewayStats(query);
 }
 
 export async function getOrdersByIds(ids: string[]): Promise<Order[]> {
