@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { DatabaseError } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
-  DailyGatewayStats,
-  DailyGatewayStatsQuery,
+  DailyOrdersReport,
   Order,
   OrderQuery,
   OrdersReport,
@@ -249,6 +248,7 @@ export async function findOrdersReport(
 }
 
 function rowToReport(row: {
+  date: Date;
   count: number;
   total: Prisma.Decimal;
   doneTotal: Prisma.Decimal;
@@ -262,8 +262,9 @@ function rowToReport(row: {
   avgPerOrder: Prisma.Decimal;
   avgPerPerson: Prisma.Decimal;
   byGateway: Prisma.JsonValue | null;
-}): OrdersReport {
+}): DailyOrdersReport {
   return {
+    date: dayjs.utc(row.date).format("YYYY-MM-DD"),
     count: row.count,
     total: Number(row.total),
     doneTotal: Number(row.doneTotal),
@@ -282,7 +283,7 @@ function rowToReport(row: {
 
 export async function findOrderReportByDate(
   date: Date
-): Promise<OrdersReport | null> {
+): Promise<DailyOrdersReport | null> {
   try {
     const row = await prisma.orderReport.findUnique({ where: { date } });
     return row ? rowToReport(row) : null;
@@ -291,9 +292,24 @@ export async function findOrderReportByDate(
   }
 }
 
+export async function findOrderReportsInRange(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  try {
+    const rows = await prisma.orderReport.findMany({
+      where: { date: { gte: from, lte: to } },
+      orderBy: { date: "asc" },
+    });
+    return rows.map(rowToReport);
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
 export async function generateOrderReportForDate(
   date: Date
-): Promise<OrdersReport> {
+): Promise<DailyOrdersReport> {
   const from = dayjs.utc(date).startOf("day").toDate();
   const to = dayjs.utc(date).endOf("day").toDate();
   try {
@@ -329,62 +345,7 @@ export async function generateOrderReportForDate(
       create: { date: from, ...data },
       update: data,
     });
-    return report;
-  } catch (e) {
-    throw new DatabaseError(String(e));
-  }
-}
-
-export async function findDailyGatewayStats(
-  query: DailyGatewayStatsQuery
-): Promise<DailyGatewayStats> {
-  const { from, to, showDeleted } = query;
-  const where = {
-    ...(!showDeleted && { deletedAt: null }),
-    createdAt: { gte: from, lte: to },
-  };
-
-  try {
-    const rows = await prisma.order.findMany({
-      where,
-      select: { createdAt: true, transactions: true },
-    });
-
-    const dayMap = new Map<string, Map<string, Big>>();
-    const gatewaySet = new Set<string>();
-
-    for (const o of rows) {
-      const day = dayjs.utc(o.createdAt).format("YYYY-MM-DD");
-      const txns = (o.transactions as unknown as TxnRecord[] | null) ?? [];
-      for (const t of txns) {
-        if (t.type !== "checkout") continue;
-        const name = t.gateway?.name ?? "未知";
-        gatewaySet.add(name);
-        const inner = dayMap.get(day) ?? new Map<string, Big>();
-        inner.set(name, (inner.get(name) ?? Big(0)).plus(Big(t.amount)));
-        dayMap.set(day, inner);
-      }
-    }
-
-    const days: string[] = [];
-    let cursor = dayjs.utc(from).startOf("day");
-    const last = dayjs.utc(to).startOf("day");
-    while (cursor.isBefore(last) || cursor.isSame(last)) {
-      days.push(cursor.format("YYYY-MM-DD"));
-      cursor = cursor.add(1, "day");
-    }
-
-    const gateways = Array.from(gatewaySet).sort();
-    const result = days.map((date) => {
-      const inner = dayMap.get(date);
-      const totals: Record<string, number> = {};
-      for (const name of gateways) {
-        totals[name] = inner?.get(name)?.toNumber() ?? 0;
-      }
-      return { date, totals };
-    });
-
-    return { gateways, rows: result };
+    return { ...report, date: dayjs.utc(from).format("YYYY-MM-DD") };
   } catch (e) {
     throw new DatabaseError(String(e));
   }

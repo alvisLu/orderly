@@ -26,6 +26,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { GatewayStat } from "../components/gateway-stat";
+import { usePaymentOrder } from "../hooks/use-payment-order";
 
 export default function DailyReportPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -33,6 +34,7 @@ export default function DailyReportPage() {
   const [phase, setPhase] = useState<"loading" | "generating" | "ready">(
     "loading"
   );
+  const getPaymentRank = usePaymentOrder();
 
   useEffect(() => {
     let cancelled = false;
@@ -66,7 +68,9 @@ export default function DailyReportPage() {
   }
 
   const rows =
-    stats?.byGateway.filter((g) => g.totalIn > 0 || g.totalOut > 0) ?? [];
+    stats?.byGateway
+      .filter((g) => g.totalIn > 0 || g.totalOut > 0)
+      .sort((a, b) => getPaymentRank(a.name) - getPaymentRank(b.name)) ?? [];
 
   return (
     <div className="p-6 h-full flex flex-col">

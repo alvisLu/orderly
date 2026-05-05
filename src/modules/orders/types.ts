@@ -115,18 +115,6 @@ export interface OrdersReport {
   byGateway: GatewayAmount[];
 }
 
-export interface DailyGatewayStatsQuery {
-  from: Date;
-  to: Date;
-  showDeleted?: boolean;
-}
-
-export interface DailyGatewayStatsRow {
+export interface DailyOrdersReport extends OrdersReport {
   date: string;
-  totals: Record<string, number>;
-}
-
-export interface DailyGatewayStats {
-  gateways: string[];
-  rows: DailyGatewayStatsRow[];
 }

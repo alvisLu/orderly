@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import dayjs from "@/lib/dayjs";
-import { apiGetDailyGatewayStats } from "@/app/api/orders/api";
-import type { DailyGatewayStats } from "@/modules/orders/types";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import type { DailyOrdersReport } from "@/modules/orders/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -30,35 +24,29 @@ const PALETTE = [
 ];
 
 export function GatewayTotalInChart({
-  startDate,
-  endDate,
+  reports,
+  isLoading,
+  gatewayOrder,
 }: {
-  startDate: string;
-  endDate: string;
+  reports: DailyOrdersReport[] | null;
+  isLoading: boolean;
+  gatewayOrder?: (name: string) => number;
 }) {
-  const [stats, setStats] = useState<DailyGatewayStats | null>(null);
-  const [isLoading, startLoading] = useTransition();
-
-  useEffect(() => {
-    startLoading(async () => {
-      const s = await apiGetDailyGatewayStats({
-        from: dayjs.utc(startDate).toDate(),
-        to: dayjs.utc(endDate).endOf("day").toDate(),
-      });
-      setStats(s);
-    });
-  }, [startDate, endDate]);
-
   const { chartConfig, chartData, series } = useMemo(() => {
-    if (!stats) {
+    if (!reports) {
       return {
         chartConfig: {} as ChartConfig,
         chartData: [] as Array<Record<string, number | string>>,
         series: [] as Array<{ key: string; label: string }>,
       };
     }
+    const gateways = Array.from(
+      new Set(reports.flatMap((r) => r.byGateway.map((g) => g.name)))
+    ).sort((a, b) =>
+      gatewayOrder ? gatewayOrder(a) - gatewayOrder(b) : a.localeCompare(b)
+    );
     const config: ChartConfig = {};
-    const seriesList = stats.gateways.map((name, index) => ({
+    const seriesList = gateways.map((name, index) => ({
       key: `g${index}`,
       label: name,
     }));
@@ -68,15 +56,16 @@ export function GatewayTotalInChart({
         color: PALETTE[index % PALETTE.length],
       };
     });
-    const data = stats.rows.map((row) => {
+    const data = reports.map((row) => {
       const entry: Record<string, number | string> = { date: row.date };
       for (const s of seriesList) {
-        entry[s.key] = row.totals[s.label] ?? 0;
+        const g = row.byGateway.find((b) => b.name === s.label);
+        entry[s.key] = g ? g.totalIn - g.totalOut : 0;
       }
       return entry;
     });
     return { chartConfig: config, chartData: data, series: seriesList };
-  }, [stats]);
+  }, [reports, gatewayOrder]);
 
   return (
     <Card>
@@ -84,9 +73,9 @@ export function GatewayTotalInChart({
         <CardTitle>各通路每日收入</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading && !stats ? (
+        {isLoading && !reports ? (
           <Skeleton className="h-64 w-full" />
-        ) : !stats || series.length === 0 ? (
+        ) : !reports || series.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             區間內無交易紀錄
           </div>

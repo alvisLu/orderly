@@ -64,8 +64,7 @@ export const ordersReportQueryDto = z.object({
   to: z.coerce.date().optional(),
 });
 
-export const dailyGatewayStatsQueryDto = z.object({
-  showDeleted: z.coerce.boolean().optional(),
+export const dailyOrderReportsQueryDto = z.object({
   from: z.coerce.date(),
   to: z.coerce.date(),
 });

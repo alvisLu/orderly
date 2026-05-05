@@ -1,8 +1,7 @@
 import apiClient from "@/lib/api-client";
 import type {
   CreateOrderInput,
-  DailyGatewayStats,
-  DailyGatewayStatsQuery,
+  DailyOrdersReport,
   Order,
   OrderQuery,
   OrdersReport,
@@ -65,16 +64,16 @@ export async function apiGenerateOrderReport(
   return data;
 }
 
-export async function apiGetDailyGatewayStats(
-  query: DailyGatewayStatsQuery
-): Promise<DailyGatewayStats> {
+export async function apiGetDailyOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
   const params = new URLSearchParams({
-    from: query.from.toISOString(),
-    to: query.to.toISOString(),
+    from: from.toISOString(),
+    to: to.toISOString(),
   });
-  if (query.showDeleted) params.set("showDeleted", "true");
-  const { data } = await apiClient.get<DailyGatewayStats>(
-    `/orders/stats/daily?${params}`
+  const { data } = await apiClient.get<DailyOrdersReport[]>(
+    `/orders/report/list?${params}`
   );
   return data;
 }

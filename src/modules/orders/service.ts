@@ -2,9 +2,9 @@ import Big from "big.js";
 import dayjs from "@/lib/dayjs";
 import {
   findAllOrders,
-  findDailyGatewayStats,
   findOrderById,
   findOrderReportByDate,
+  findOrderReportsInRange,
   findOrdersReport,
   findOrdersByIds,
   generateOrderReportForDate,
@@ -15,8 +15,7 @@ import {
 } from "./repository";
 import type {
   CreateOrderInput,
-  DailyGatewayStats,
-  DailyGatewayStatsQuery,
+  DailyOrdersReport,
   Order,
   OrderQuery,
   OrdersReport,
@@ -47,18 +46,65 @@ export async function getOrdersReport(
 
 export async function getOrderReportByDate(
   date: Date
-): Promise<OrdersReport | null> {
+): Promise<DailyOrdersReport | null> {
   return findOrderReportByDate(date);
 }
 
-export async function generateOrderReport(date: Date): Promise<OrdersReport> {
+export async function generateOrderReport(
+  date: Date
+): Promise<DailyOrdersReport> {
   return generateOrderReportForDate(date);
 }
 
-export async function getDailyGatewayStats(
-  query: DailyGatewayStatsQuery
-): Promise<DailyGatewayStats> {
-  return findDailyGatewayStats(query);
+function zeroDailyReport(date: string): DailyOrdersReport {
+  return {
+    date,
+    count: 0,
+    total: 0,
+    doneTotal: 0,
+    cancelledTotal: 0,
+    unfinishedTotal: 0,
+    processingCount: 0,
+    paidTotal: 0,
+    discount: 0,
+    refundTotal: 0,
+    peopleCount: 0,
+    avgPerOrder: 0,
+    avgPerPerson: 0,
+    byGateway: [],
+  };
+}
+
+export async function getDailyOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  const startUtc = dayjs.utc(from).startOf("day");
+  const endUtc = dayjs.utc(to).startOf("day");
+  const todayUtc = dayjs.utc().startOf("day");
+
+  const existing = new Map(
+    (
+      await findOrderReportsInRange(startUtc.toDate(), endUtc.toDate())
+    ).map((r) => [r.date, r])
+  );
+
+  const reports: DailyOrdersReport[] = [];
+  let cursor = startUtc;
+  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
+    const key = cursor.format("YYYY-MM-DD");
+    const cached = existing.get(key);
+    if (cached) {
+      reports.push(cached);
+    } else if (cursor.isAfter(todayUtc)) {
+      reports.push(zeroDailyReport(key));
+    } else {
+      reports.push(await generateOrderReportForDate(cursor.toDate()));
+    }
+    cursor = cursor.add(1, "day");
+  }
+
+  return reports;
 }
 
 export async function getOrdersByIds(ids: string[]): Promise<Order[]> {

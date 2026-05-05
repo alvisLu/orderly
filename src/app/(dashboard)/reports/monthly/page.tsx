@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
 import {
   CalendarIcon,
@@ -9,8 +9,9 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { apiGetOrdersReport } from "@/app/api/orders/api";
-import type { OrdersReport } from "@/modules/orders/types";
+import { apiGetDailyOrderReports } from "@/app/api/orders/api";
+import { aggregateDailyReports } from "@/modules/orders/aggregate";
+import type { DailyOrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,10 +21,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { GatewayStat } from "../components/gateway-stat";
 import { GatewayTotalInChart } from "../components/gateway-totalin-chart";
+import { usePaymentOrder } from "../hooks/use-payment-order";
 
 export default function MonthlyReportPage() {
   const [startDate, setStartDate] = useState(
@@ -32,18 +34,24 @@ export default function MonthlyReportPage() {
   const [endDate, setEndDate] = useState(
     dayjs().endOf("month").format("YYYY-MM-DD")
   );
-  const [stats, setStats] = useState<OrdersReport | null>(null);
+  const [reports, setReports] = useState<DailyOrdersReport[] | null>(null);
   const [isLoading, startLoading] = useTransition();
+  const getPaymentRank = usePaymentOrder();
 
   useEffect(() => {
     startLoading(async () => {
-      const s = await apiGetOrdersReport({
-        from: dayjs.utc(startDate).toDate(),
-        to: dayjs.utc(endDate).endOf("day").toDate(),
-      });
-      setStats(s);
+      const r = await apiGetDailyOrderReports(
+        dayjs.utc(startDate).toDate(),
+        dayjs.utc(endDate).toDate()
+      );
+      setReports(r);
     });
   }, [startDate, endDate]);
+
+  const stats = useMemo(
+    () => (reports ? aggregateDailyReports(reports) : null),
+    [reports]
+  );
 
   function setMonth(target: dayjs.Dayjs) {
     setStartDate(target.startOf("month").format("YYYY-MM-DD"));
@@ -59,7 +67,9 @@ export default function MonthlyReportPage() {
   }
 
   const rows =
-    stats?.byGateway.filter((g) => g.totalIn > 0 || g.totalOut > 0) ?? [];
+    stats?.byGateway
+      .filter((g) => g.totalIn > 0 || g.totalOut > 0)
+      .sort((a, b) => getPaymentRank(a.name) - getPaymentRank(b.name)) ?? [];
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -164,8 +174,12 @@ export default function MonthlyReportPage() {
         </div>
       </div>
 
-      {isLoading && !stats ? (
-        <Skeleton className="h-32 w-full" />
+      {isLoading ? (
+        <Card size="sm">
+          <CardContent className="py-8 flex justify-center text-muted-foreground">
+            <Spinner className="size-6" />
+          </CardContent>
+        </Card>
       ) : rows.length === 0 ? (
         <Card size="sm">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -179,7 +193,11 @@ export default function MonthlyReportPage() {
               <GatewayStat key={g.name} gateway={g} />
             ))}
           </div>
-          <GatewayTotalInChart startDate={startDate} endDate={endDate} />
+          <GatewayTotalInChart
+            reports={reports}
+            isLoading={isLoading}
+            gatewayOrder={getPaymentRank}
+          />
         </div>
       )}
     </div>
