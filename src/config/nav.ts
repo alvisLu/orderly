@@ -46,7 +46,7 @@ export const sidebarNav: SidebarNav[] = [
   },
   {
     label: "報表管理",
-    color: "bg-accent",
+    color: "bg-red",
     items: [{ title: "報表", url: "/reports", icon: BarChart3 }],
   },
   {
@@ -112,7 +112,7 @@ export const navGroups: Record<string, NavGroup> = {
   },
   "/reports": {
     label: "報表管理",
-    color: "bg-accent",
+    color: "bg-red",
     icon: BarChart3,
     sub: [
       { title: "日報表", url: "/reports/daily" },
