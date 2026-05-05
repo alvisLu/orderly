@@ -8,8 +8,12 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  RefreshCw,
 } from "lucide-react";
-import { apiGetDailyOrderReports } from "@/app/api/orders/api";
+import {
+  apiGetDailyOrderReports,
+  apiRegenerateOrderReports,
+} from "@/app/api/orders/api";
 import { aggregateDailyReports } from "@/modules/orders/aggregate";
 import type { DailyOrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
@@ -39,7 +43,18 @@ export default function MonthlyReportPage() {
   );
   const [reports, setReports] = useState<DailyOrdersReport[] | null>(null);
   const [isLoading, startLoading] = useTransition();
+  const [isRecalculating, startRecalculating] = useTransition();
   const getPaymentRank = usePaymentOrder();
+
+  function recalculate() {
+    startRecalculating(async () => {
+      const r = await apiRegenerateOrderReports(
+        dayjs.utc(startDate).toDate(),
+        dayjs.utc(endDate).toDate()
+      );
+      setReports(r);
+    });
+  }
 
   useEffect(() => {
     startLoading(async () => {
@@ -192,9 +207,21 @@ export default function MonthlyReportPage() {
             </Button>
           </div>
         </div>
+
+        <div className="space-y-1">
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={recalculate}
+            disabled={isLoading || isRecalculating}
+          >
+            <RefreshCw className={cn(isRecalculating && "animate-spin")} />
+            重新計算
+          </Button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {isLoading || isRecalculating ? (
         <Card size="sm">
           <CardContent className="py-8 flex justify-center text-muted-foreground">
             <Spinner className="size-6" />
@@ -214,9 +241,9 @@ export default function MonthlyReportPage() {
             ))}
           </div>
           {summary && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-9">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
               <Stat>
-                <StatLabel>工作日天數</StatLabel>
+                <StatLabel>工作日</StatLabel>
                 <StatValue className="text-lg">
                   {summary.workingDays} 天
                 </StatValue>

@@ -3,7 +3,6 @@ import dayjs from "@/lib/dayjs";
 import {
   findAllOrders,
   findOrderById,
-  findOrderReportByDate,
   findOrderReportsInRange,
   findOrdersReport,
   findOrdersByIds,
@@ -44,16 +43,28 @@ export async function getOrdersReport(
   return findOrdersReport(query);
 }
 
-export async function getOrderReportByDate(
-  date: Date
-): Promise<DailyOrdersReport | null> {
-  return findOrderReportByDate(date);
-}
+export async function regenerateOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  const startUtc = dayjs.utc(from).startOf("day");
+  const endUtc = dayjs.utc(to).startOf("day");
+  const todayUtc = dayjs.utc().startOf("day");
 
-export async function generateOrderReport(
-  date: Date
-): Promise<DailyOrdersReport> {
-  return generateOrderReportForDate(date);
+  const dates: dayjs.Dayjs[] = [];
+  let cursor = startUtc;
+  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
+    dates.push(cursor);
+    cursor = cursor.add(1, "day");
+  }
+
+  return Promise.all(
+    dates.map((d) =>
+      d.isAfter(todayUtc)
+        ? zeroDailyReport(d.format("YYYY-MM-DD"))
+        : generateOrderReportForDate(d.toDate())
+    )
+  );
 }
 
 function zeroDailyReport(date: string): DailyOrdersReport {

@@ -46,24 +46,6 @@ export async function apiGetOrdersReport(
   return data;
 }
 
-export async function apiGetOrderReportByDate(
-  date: string
-): Promise<OrdersReport | null> {
-  const { data } = await apiClient.get<OrdersReport | null>(
-    `/orders/report/${date}`
-  );
-  return data;
-}
-
-export async function apiGenerateOrderReport(
-  date: string
-): Promise<OrdersReport> {
-  const { data } = await apiClient.post<OrdersReport>(
-    `/orders/report/${date}`
-  );
-  return data;
-}
-
 export async function apiGetDailyOrderReports(
   from: Date,
   to: Date
@@ -74,6 +56,20 @@ export async function apiGetDailyOrderReports(
   });
   const { data } = await apiClient.get<DailyOrdersReport[]>(
     `/orders/report/list?${params}`
+  );
+  return data;
+}
+
+export async function apiRegenerateOrderReports(
+  from: Date,
+  to: Date
+): Promise<DailyOrdersReport[]> {
+  const params = new URLSearchParams({
+    from: from.toISOString(),
+    to: to.toISOString(),
+  });
+  const { data } = await apiClient.post<DailyOrdersReport[]>(
+    `/orders/report?${params}`
   );
   return data;
 }

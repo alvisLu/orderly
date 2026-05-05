@@ -8,12 +8,13 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  RefreshCw,
 } from "lucide-react";
 import {
-  apiGenerateOrderReport,
-  apiGetOrderReportByDate,
+  apiGetDailyOrderReports,
+  apiRegenerateOrderReports,
 } from "@/app/api/orders/api";
-import type { OrdersReport } from "@/modules/orders/types";
+import type { DailyOrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,28 +31,28 @@ import { usePaymentOrder } from "../hooks/use-payment-order";
 
 export default function DailyReportPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [stats, setStats] = useState<OrdersReport | null>(null);
-  const [phase, setPhase] = useState<"loading" | "generating" | "ready">(
+  const [stats, setStats] = useState<DailyOrdersReport | null>(null);
+  const [phase, setPhase] = useState<"loading" | "recalculating" | "ready">(
     "loading"
   );
   const getPaymentRank = usePaymentOrder();
+
+  async function recalculate() {
+    setPhase("recalculating");
+    const d = dayjs.utc(date).toDate();
+    const [report] = await apiRegenerateOrderReports(d, d);
+    setStats(report);
+    setPhase("ready");
+  }
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setPhase("loading");
-      const existing = await apiGetOrderReportByDate(date);
+      const d = dayjs.utc(date).toDate();
+      const [report] = await apiGetDailyOrderReports(d, d);
       if (cancelled) return;
-      if (existing !== null) {
-        setStats(existing);
-        setPhase("ready");
-        return;
-      }
-      setStats(null);
-      setPhase("generating");
-      const generated = await apiGenerateOrderReport(date);
-      if (cancelled) return;
-      setStats(generated);
+      setStats(report);
       setPhase("ready");
     })();
     return () => {
@@ -144,9 +145,23 @@ export default function DailyReportPage() {
             </Button>
           </div>
         </div>
+
+        <div className="space-y-1">
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={recalculate}
+            disabled={phase !== "ready"}
+          >
+            <RefreshCw
+              className={cn(phase === "recalculating" && "animate-spin")}
+            />
+            重新計算
+          </Button>
+        </div>
       </div>
 
-      {phase === "loading" || phase === "generating" ? (
+      {phase === "loading" || phase === "recalculating" ? (
         <Card size="sm">
           <CardContent className="py-8 flex justify-center text-muted-foreground">
             <Spinner className="size-6" />
