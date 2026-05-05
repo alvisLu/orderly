@@ -117,6 +117,7 @@ export const navGroups: Record<string, NavGroup> = {
     sub: [
       { title: "日報表", url: "/reports/daily" },
       { title: "月報表", url: "/reports/monthly" },
+      { title: "支出報表", url: "/reports/expense" },
     ],
   },
 };
@@ -138,4 +139,5 @@ export const pathLabels: Record<string, string> = {
   "/reports": "報表管理",
   "/reports/daily": "日報表",
   "/reports/monthly": "月報表",
+  "/reports/expense": "支出報表",
 };
