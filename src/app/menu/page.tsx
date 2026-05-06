@@ -6,6 +6,8 @@ import { isStoreOpen } from "@/modules/stores/hours";
 import { MenuClient } from "./online";
 import { StoreClosed } from "./components/store-closed";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<{ t?: string }>;
 }
