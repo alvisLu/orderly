@@ -11,6 +11,8 @@ import {
   BookmarkX,
   LogOut,
   ChefHat,
+  Copy,
+  NotebookPen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
 import { CheckoutDialog } from "@/app/(dashboard)/orders/components/checkout-dialog";
+import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
+import { useNewOrdersStore } from "@/store/new-orders";
 import { Scroller } from "@/components/ui/scroller";
 import { Spinner } from "@/components/ui/spinner";
 import type { Order, LineItemOption } from "@/modules/orders/types";
@@ -39,6 +43,7 @@ import {
   OrderFulfillmentStatus,
 } from "@/generated/prisma/client";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const HEADER_BG: Record<OrderStatus, string> = {
   pending: "bg-accent",
@@ -322,12 +327,18 @@ function CardVisual({
 
         {/* Client note */}
         {order.userNote && (
-          <>
-            <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
-              <Label>備註:</Label>
-              {order.userNote}
-            </p>
-          </>
+          <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
+            <Label>客戶備註:</Label>
+            {order.userNote}
+          </p>
+        )}
+
+        {/* Staff note */}
+        {order.note && (
+          <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
+            <Label>備註:</Label>
+            {order.note}
+          </p>
         )}
 
         {/* Footer: total & leave */}
@@ -439,6 +450,10 @@ export function OrderCardPopup({
   const [voidOpen, setVoidOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [cloneOpen, setCloneOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteText, setNoteText] = useState(order.note ?? "");
+  const [isSavingNote, setIsSavingNote] = useState(false);
   const [isVoiding, setIsVoiding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -455,6 +470,20 @@ export function OrderCardPopup({
       toast.error("更新失敗");
     } finally {
       setIsLeaving(false);
+    }
+  }
+
+  async function handleNoteSave() {
+    setIsSavingNote(true);
+    try {
+      const updated = await apiUpdateOrder(order.id, { note: noteText });
+      onUpdated(updated);
+      setNoteOpen(false);
+      toast.success("已更新備註");
+    } catch {
+      toast.error("更新失敗");
+    } finally {
+      setIsSavingNote(false);
     }
   }
 
@@ -510,7 +539,7 @@ export function OrderCardPopup({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="!max-w-3xl">
           <DialogTitle>訂單操作</DialogTitle>
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-center">
+          <div className="flex flex-col sm:flex-row sm:justify-center">
             <Scroller className="w-full sm:w-[26rem] sm:shrink-0 max-h-[60vh] sm:max-h-[80vh] p-3">
               <InPopupContext.Provider value={true}>
                 <CardVisual
@@ -520,10 +549,30 @@ export function OrderCardPopup({
                 />
               </InPopupContext.Provider>
             </Scroller>
-            <div className="flex gap-2 sm:items-stretch">
-              <div className="flex flex-col flex-1 sm:flex-initial sm:w-32">
-                
-                
+            <div className="flex gap-2 sm:items-stretch p-3">
+              <div className="flex flex-col gap-2 flex-1 sm:flex-initial sm:w-32">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setCloneOpen(true);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Copy />
+                  複製訂單
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setNoteText(order.note ?? "");
+                    setNoteOpen(true);
+                  }}
+                >
+                  <NotebookPen />
+                  修改備註
+                </Button>
                 <Button
                   variant="destructive"
                   size="lg"
@@ -541,7 +590,7 @@ export function OrderCardPopup({
                   disabled={order.financialStatus !== "pending"}
                 >
                   <CircleDollarSign />
-                  {order.financialStatus === "paid" ? "已結帳" : "結帳"}
+                  結帳
                 </Button>
                 <Button
                   variant="outline"
@@ -648,6 +697,35 @@ export function OrderCardPopup({
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>修改備註</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            rows={4}
+            placeholder="輸入備註"
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setNoteOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleNoteSave} disabled={isSavingNote}>
+              {isSavingNote ? <Spinner /> : "儲存"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <CreateOrderDialog
+        open={cloneOpen}
+        onOpenChange={setCloneOpen}
+        initialOrder={order}
+        onCreated={(o) => useNewOrdersStore.getState().publish([o])}
+      />
     </>
   );
 }

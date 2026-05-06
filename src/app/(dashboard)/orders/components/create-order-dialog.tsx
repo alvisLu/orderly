@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Trash2,
@@ -289,10 +289,21 @@ interface CartItem {
 interface Props {
   onCreated?: (order: Order) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialOrder?: Order | null;
 }
 
-export function CreateOrderDialog({ onCreated, trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function CreateOrderDialog({
+  onCreated,
+  trigger,
+  open: openProp,
+  onOpenChange,
+  initialOrder,
+}: Props) {
+  const isControlled = openProp !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? openProp : internalOpen;
   const [products, setProducts] = useState<Product[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -326,7 +337,11 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
   );
 
   function handleOpen(v: boolean) {
-    setOpen(v);
+    if (isControlled) {
+      onOpenChange?.(v);
+    } else {
+      setInternalOpen(v);
+    }
     if (!v) {
       setCart([]);
       setDiscount(0);
@@ -337,6 +352,34 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
       setNote("");
     }
   }
+
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      seededRef.current = false;
+      return;
+    }
+    if (seededRef.current || !initialOrder || products.length === 0) return;
+    const seeded: CartItem[] = initialOrder.lineItems
+      .slice()
+      .sort((a, b) => a.rank - b.rank)
+      .map((li) => {
+        const product = products.find((p) => p.id === li.productId);
+        if (!product) return null;
+        return {
+          product,
+          quantity: li.quantity,
+          price: Number(li.price),
+          productOptions: (li.itemOptions as unknown as LineItemOption[]) ?? [],
+        };
+      })
+      .filter((c): c is CartItem => c !== null);
+    setCart(seeded);
+    setDiscount(Number(initialOrder.discount ?? 0));
+    setIsDining(initialOrder.isDining ?? true);
+    setNote(initialOrder.note ?? "");
+    seededRef.current = true;
+  }, [open, initialOrder, products]);
 
   function handleProductClick(product: Product) {
     if (product.productTypes.length > 0) {
@@ -500,9 +543,11 @@ export function CreateOrderDialog({ onCreated, trigger }: Props) {
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpen}>
-        <DialogTrigger asChild>
-          {trigger ?? <Button>新增訂單</Button>}
-        </DialogTrigger>
+        {!isControlled && (
+          <DialogTrigger asChild>
+            {trigger ?? <Button>新增訂單</Button>}
+          </DialogTrigger>
+        )}
         <DialogContent
           className="!w-full !h-full !max-w-none !max-h-none p-0 gap-0 overflow-hidden"
           onInteractOutside={(e) => e.preventDefault()}
