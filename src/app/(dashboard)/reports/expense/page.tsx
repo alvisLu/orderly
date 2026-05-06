@@ -2,28 +2,16 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
-import {
-  CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
 import { apiGetExpenses } from "@/app/api/expenses/api";
 import type { Expenses } from "@/modules/expenses/types";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Stat, StatLabel, StatValue } from "@/components/ui/stat";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import {
+  DateNavigator,
+  DateRangeField,
+} from "@/components/shared/date-fields";
 import { ExpenseDailyChart } from "../components/expense-daily-chart";
 import { ExpenseDailyTable } from "../components/expense-daily-table";
 import {
@@ -95,101 +83,21 @@ export default function ExpenseReportPage() {
       </div>
 
       <div className="flex flex-wrap items-end gap-2 mb-4">
-        <div className="space-y-1">
-          <Label className="text-xs">開始日期</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 w-40 justify-start font-normal",
-                  !startDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate || "選擇日期"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dayjs(startDate).toDate()}
-                defaultMonth={dayjs(startDate).toDate()}
-                onSelect={(d) => {
-                  if (!d) return;
-                  setStartDate(dayjs(d).format("YYYY-MM-DD"));
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateRangeField
+          clamp={false}
+          value={{ from: startDate, to: endDate }}
+          onChange={({ from, to }) => {
+            setStartDate(from);
+            setEndDate(to);
+          }}
+        />
 
-        <div className="space-y-1">
-          <Label className="text-xs">結束日期</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 w-40 justify-start font-normal",
-                  !endDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate || "選擇日期"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dayjs(endDate).toDate()}
-                defaultMonth={dayjs(endDate).toDate()}
-                onSelect={(d) => {
-                  if (!d) return;
-                  setEndDate(dayjs(d).format("YYYY-MM-DD"));
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-xs">快速選擇</Label>
-          <div className="flex gap-1">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyMonthOffset(-12)}
-            >
-              <ChevronsLeft />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyMonthOffset(-1)}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button size="lg" variant="outline" onClick={goToThisMonth}>
-              本月
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyMonthOffset(1)}
-            >
-              <ChevronRight />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyMonthOffset(12)}
-            >
-              <ChevronsRight />
-            </Button>
-          </div>
-        </div>
-
+        <DateNavigator
+          unit="month"
+          jump={12}
+          onOffset={applyMonthOffset}
+          onCurrent={goToThisMonth}
+        />
       </div>
 
       {isLoading ? (

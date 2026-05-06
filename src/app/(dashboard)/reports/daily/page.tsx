@@ -2,30 +2,20 @@
 
 import { useEffect, useState } from "react";
 import dayjs from "@/lib/dayjs";
-import {
-  CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  RefreshCw,
-} from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import {
   apiGetDailyOrderReports,
   apiRegenerateOrderReports,
 } from "@/app/api/orders/api";
 import type { DailyOrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import {
+  DateField,
+  DateNavigator,
+} from "@/components/shared/date-fields";
 import { GatewayStat } from "../components/gateway-stat";
 import { usePaymentOrder } from "../hooks/use-payment-order";
 
@@ -80,71 +70,14 @@ export default function DailyReportPage() {
       </div>
 
       <div className="flex flex-wrap items-end gap-2 mb-4">
-        <div className="space-y-1">
-          <Label className="text-xs">日期</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 w-40 justify-start font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date || "選擇日期"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dayjs(date).toDate()}
-                defaultMonth={dayjs(date).toDate()}
-                onSelect={(d) => {
-                  if (!d) return;
-                  setDate(dayjs(d).format("YYYY-MM-DD"));
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateField label="日期" value={date} onChange={setDate} />
 
-        <div className="space-y-1">
-          <Label className="text-xs">快速選擇</Label>
-          <div className="flex gap-1">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyDayOffset(-7)}
-            >
-              <ChevronsLeft />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyDayOffset(-1)}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button size="lg" variant="outline" onClick={goToToday}>
-              今天
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyDayOffset(1)}
-            >
-              <ChevronRight />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => applyDayOffset(7)}
-            >
-              <ChevronsRight />
-            </Button>
-          </div>
-        </div>
+        <DateNavigator
+          unit="day"
+          jump={7}
+          onOffset={applyDayOffset}
+          onCurrent={goToToday}
+        />
 
         <div className="space-y-1">
           <Button
