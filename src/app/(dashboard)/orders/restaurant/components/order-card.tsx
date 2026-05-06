@@ -189,22 +189,12 @@ export function OrderCard({ order, onUpdated, onDeleted }: Props) {
 
   async function handleVoidConfirm() {
     setIsVoiding(true);
-    const txns = (order.transactions as unknown as Transaction[] | null) ?? [];
-    const checkoutTotal = txns
-      .filter((t) => t.type === "checkout")
-      .reduce((sum, t) => sum + t.amount, 0);
     try {
       const updated = await apiUpdateOrder(order.id, {
         status: "cancelled",
         fulfillmentStatus: "returned",
         financialStatus: "refunded",
-        ...(checkoutTotal > 0 && {
-          transaction: {
-            type: "refund",
-            amount: -checkoutTotal,
-            gateway: { id: "refund", name: "作廢" },
-          },
-        }),
+        gateway: { id: "refund", name: "作廢" },
       });
       onUpdated(updated);
       setVoidOpen(false);

@@ -1,10 +1,6 @@
 "use client";
 
 import {
-  useRealtimeStatus,
-  type RealtimeStatus,
-} from "@/store/realtime-status";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -42,12 +38,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Status, StatusIndicator, StatusLabel } from "./ui/status";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { sidebarNav, type SidebarNavItem } from "@/config/nav";
 import { apiGetStore } from "@/app/api/stores/api";
 import { logout } from "@/app/(auth)/actions";
 import { useStoreInfo } from "@/store/store-info";
+import { useNewOrdersStore } from "@/store/new-orders";
+import { version } from "../../package.json";
 
 function NavMenuItem({ item }: { item: SidebarNavItem }) {
   if (item.sub) {
@@ -89,50 +86,6 @@ function NavMenuItem({ item }: { item: SidebarNavItem }) {
   );
 }
 
-const STATUS_CONFIG: Record<
-  RealtimeStatus,
-  {
-    label: string;
-    variant: "warning" | "success" | "error" | "info";
-  }
-> = {
-  connecting: {
-    label: "連線中",
-    variant: "info",
-  },
-  connected: {
-    label: "已連線",
-    variant: "success",
-  },
-  error: {
-    label: "連線錯誤",
-    variant: "warning",
-  },
-  closed: {
-    label: "已斷線",
-    variant: "error",
-  },
-};
-
-function RealtimeStatusItem() {
-  const { status, retryCount } = useRealtimeStatus();
-  const config = STATUS_CONFIG[status];
-  return (
-    <>
-      <SidebarGroupLabel>通知器</SidebarGroupLabel>
-      <Status variant={config.variant}>
-        <StatusIndicator />
-        <StatusLabel className="group-data-[collapsible=icon]:hidden">
-          {config.label}
-        </StatusLabel>
-      </Status>
-      <span className="group-data-[collapsible=icon]:hidden">
-        {retryCount > 0 && `重連 ${retryCount} 次`}
-      </span>
-    </>
-  );
-}
-
 export function AppSidebar() {
   const router = useRouter();
   const store = useStoreInfo((s) => s.store);
@@ -160,11 +113,9 @@ export function AppSidebar() {
                     <span className="font-semibold whitespace-nowrap">
                       {store?.name ?? "Orderly"}
                     </span>
-                    {!store?.name && (
-                      <span className="text-xs text-muted-foreground">
-                        POS 系統
-                      </span>
-                    )}
+                    <span className="text-xs text-muted-foreground">
+                      v{version}
+                    </span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -190,6 +141,9 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <CreateOrderDialog
+                onCreated={(order) =>
+                  useNewOrdersStore.getState().publish([order])
+                }
                 trigger={
                   <SidebarMenuButton>
                     <ShoppingBag />
@@ -218,9 +172,6 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="pointer-events-none">
-              <RealtimeStatusItem />
-            </SidebarMenuButton>
             <SidebarMenuButton asChild>
               <Link href="/">
                 <LayoutGrid />

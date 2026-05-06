@@ -17,7 +17,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Order, LineItemOption } from "@/modules/orders/types";
+import type {
+  Order,
+  LineItemOption,
+  OrderTransactionInput,
+} from "@/modules/orders/types";
 import {
   OrderStatusBadge,
   FulfillmentStatusBadge,
@@ -34,6 +38,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Spinner } from "@/components/ui/spinner";
+import Big from "big.js";
 
 interface Props {
   orderId: string | null;
@@ -148,6 +153,7 @@ export function OrderDetailSheet({
     (sum, item) => sum + Number(item.price) * item.quantity,
     0
   );
+  const txns = (order.transactions as OrderTransactionInput[]) ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -245,7 +251,10 @@ export function OrderDetailSheet({
               <div className="flex gap-2">
                 <FinancialStatusBadge status={financialStatus} />
                 <FulfillmentStatusBadge status={fulfillmentStatus} />
-                <OrderStatusBadge status={orderStatus} />
+                <OrderStatusBadge
+                  status={orderStatus}
+                  deletedAt={order.deletedAt}
+                />
               </div>
             </div>
 
@@ -359,13 +368,24 @@ export function OrderDetailSheet({
               {/* Transaction records */}
               <div className="border rounded-lg p-4">
                 <p className="text-sm font-medium mb-3">交易記錄</p>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${Number(order.total)}</span>
-                  <span>
-                    {order.financialStatus === "paid" ? "現金" : "未付款"}{" "}
-                    {dayjs(order.updatedAt).format("YYYY-MM-DD HH:mm")}
-                  </span>
-                </div>
+                {txns.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">尚無交易紀錄</p>
+                ) : (
+                  <div className="space-y-2">
+                    {txns.map((txn, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between text-sm text-muted-foreground"
+                      >
+                        <span>
+                          {txn.type === "refund" ? "-" : ""}$
+                          {Big(txn.amount).abs().toString()}
+                        </span>
+                        <span>{txn.gateway.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Table } from "@/modules/tables/types";
 import { CreateTableDialog } from "./components/create-table-dialog";
-import { TablesTable } from "./components/tables-table";
+import { TablesGrid } from "./components/tables-grid";
 
 export default function TablesPage() {
   const [tables, setTables] = useState<Table[]>([]);
@@ -34,9 +34,7 @@ export default function TablesPage() {
   }, [pageIndex, pageSize]);
 
   function handleUpdated(updated: Table) {
-    setTables((prev) =>
-      prev.map((t) => (t.id === updated.id ? updated : t))
-    );
+    setTables((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   }
 
   function handleCreated() {
@@ -52,7 +50,10 @@ export default function TablesPage() {
     try {
       await apiDeleteTable(deletingId);
       startLoading(async () => {
-        const res = await apiGetTables({ page: pageIndex + 1, limit: pageSize });
+        const res = await apiGetTables({
+          page: pageIndex + 1,
+          limit: pageSize,
+        });
         setTables(res.data);
         setTotal(res.total);
       });
@@ -70,7 +71,7 @@ export default function TablesPage() {
         <CreateTableDialog onCreated={handleCreated} />
       </div>
       <div className="flex-1 min-h-0">
-        <TablesTable
+        <TablesGrid
           data={tables}
           isLoading={isLoading}
           onUpdated={handleUpdated}

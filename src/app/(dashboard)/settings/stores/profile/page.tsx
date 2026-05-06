@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -11,14 +11,40 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Store } from "@/modules/stores/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
+import { ChevronDownIcon } from "lucide-react";
+import { onlineOrderingSchema, openingSchema } from "@/modules/stores/dto";
+import {
+  EMPTY_OPENING,
+  type Opening,
+  type Store,
+} from "@/modules/stores/types";
+import { OpeningEditor } from "./components/opening-editor";
 
 const storeFormSchema = z.object({
   name: z.string().min(1, "店名為必填"),
   phone: z.string().max(20).optional().or(z.literal("")),
   address: z.string().max(200).optional().or(z.literal("")),
   bannerURL: z.string().url("請輸入有效網址").optional().or(z.literal("")),
+  opening: openingSchema,
+  onlineOrdering: onlineOrderingSchema,
 });
+
+const ONLINE_ORDERING_LABELS: Record<
+  z.infer<typeof onlineOrderingSchema>,
+  string
+> = {
+  auto: "依照營業時間",
+  enabled: "啟用",
+  disabled: "禁用",
+};
 
 type StoreFormInput = z.input<typeof storeFormSchema>;
 type StoreFormValues = z.infer<typeof storeFormSchema>;
@@ -37,10 +63,12 @@ export default function StoreProfilePage() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isDirty },
     setValue,
   } = useForm<StoreFormInput, unknown, StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
+    defaultValues: { opening: EMPTY_OPENING, onlineOrdering: "auto" },
   });
 
   useEffect(() => {
@@ -54,6 +82,8 @@ export default function StoreProfilePage() {
           phone: data.phone ?? "",
           address: data.address ?? "",
           bannerURL: data.bannerURL ?? "",
+          opening: data.opening,
+          onlineOrdering: data.onlineOrdering,
         });
       } catch {
         toast.error("無法載入店家資料");
@@ -91,6 +121,14 @@ export default function StoreProfilePage() {
     });
   }
 
+  function onInvalid(errs: FieldErrors<StoreFormValues>) {
+    if (errs.opening) {
+      toast.error(
+        errs.opening.message ?? errs.opening.root?.message ?? "營業時間設定有誤"
+      );
+    }
+  }
+
   function onSubmit(values: StoreFormValues) {
     startSaving(async () => {
       try {
@@ -99,6 +137,8 @@ export default function StoreProfilePage() {
           phone: values.phone || null,
           address: values.address || null,
           bannerURL: values.bannerURL || null,
+          opening: values.opening,
+          onlineOrdering: values.onlineOrdering,
         });
         setStore(updated);
         setBannerPreview(updated.bannerURL);
@@ -107,6 +147,8 @@ export default function StoreProfilePage() {
           phone: updated.phone ?? "",
           address: updated.address ?? "",
           bannerURL: updated.bannerURL ?? "",
+          opening: updated.opening,
+          onlineOrdering: updated.onlineOrdering,
         });
         toast.success("店家資料已更新");
       } catch {
@@ -126,119 +168,187 @@ export default function StoreProfilePage() {
   return (
     <div className="p-6 h-full overflow-auto">
       <h1 className="text-xl font-semibold mb-6">店家資料</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">店名</Label>
-          <Input size="xl" id="name" {...register("name")} />
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="max-w-lg space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">店名</Label>
+              <Input size="xl" id="name" {...register("name")} />
+              {errors.name && (
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone">電話</Label>
-          <Input size="xl" id="phone" {...register("phone")} />
-          {errors.phone && (
-            <p className="text-sm text-destructive">{errors.phone.message}</p>
-          )}
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">電話</Label>
+              <Input size="xl" id="phone" {...register("phone")} />
+              {errors.phone && (
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="address">地址</Label>
-          <Input size="xl" id="address" {...register("address")} />
-          {errors.address && (
-            <p className="text-sm text-destructive">{errors.address.message}</p>
-          )}
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">地址</Label>
+              <Input size="xl" id="address" {...register("address")} />
+              {errors.address && (
+                <p className="text-sm text-destructive">
+                  {errors.address.message}
+                </p>
+              )}
+            </div>
 
-        <div className="space-y-3">
-          <Label>Banner 圖片</Label>
+            <div className="space-y-3">
+              <Label>Banner 圖片</Label>
 
-          {bannerPreview && (
-            <Image
-              src={bannerPreview}
-              alt="Banner preview"
-              width={448}
-              height={160}
-              unoptimized
-              className="w-full max-w-md h-40 object-cover rounded-md border"
-            />
-          )}
+              {bannerPreview && (
+                <Image
+                  src={bannerPreview}
+                  alt="Banner preview"
+                  width={448}
+                  height={160}
+                  unoptimized
+                  className="w-full max-w-md h-40 object-cover rounded-md border"
+                />
+              )}
 
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="xl"
-              disabled={isUploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploading ? "上傳中..." : "選擇檔案"}
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-            <Input
-              placeholder="或貼上圖片網址"
-              size="lg"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleUrlUpload();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="xl"
-              disabled={isUploading || !urlInput.trim()}
-              onClick={handleUrlUpload}
-            >
-              上傳
-            </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xl"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? "上傳中..." : "選擇檔案"}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <Input
+                  placeholder="或貼上圖片網址"
+                  size="lg"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleUrlUpload();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xl"
+                  disabled={isUploading || !urlInput.trim()}
+                  onClick={handleUrlUpload}
+                >
+                  上傳
+                </Button>
+              </div>
+
+              <input type="hidden" {...register("bannerURL")} />
+              {errors.bannerURL && (
+                <p className="text-sm text-destructive">
+                  {errors.bannerURL.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="onlineOrdering">線上點餐</Label>
+              <Controller
+                control={control}
+                name="onlineOrdering"
+                render={({ field }) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        id="onlineOrdering"
+                        className="w-full justify-between font-normal"
+                      >
+                        {ONLINE_ORDERING_LABELS[field.value]}
+                        <ChevronDownIcon className="ml-1 h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-full">
+                      <DropdownMenuRadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        {(
+                          Object.entries(ONLINE_ORDERING_LABELS) as [
+                            keyof typeof ONLINE_ORDERING_LABELS,
+                            string,
+                          ][]
+                        ).map(([value, label]) => (
+                          <DropdownMenuRadioItem key={value} value={value}>
+                            {label}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              />
+            </div>
+
+            {/* 取餐號碼 */}
+            <div className="flex items-center gap-3">
+              <Label>下一個取餐號碼: </Label>
+              <span className="text-2xl font-bold tabular-nums">
+                {store.orderCounter + 1}
+              </span>
+              <Button
+                variant="secondary"
+                disabled={isResetting || store.orderCounter === 0}
+                onClick={() => {
+                  startResetting(async () => {
+                    try {
+                      const updated = await apiUpdateStore({ orderCounter: 0 });
+                      setStore(updated);
+                      toast.success("取餐號碼已重置");
+                    } catch {
+                      toast.error("重置失敗");
+                    }
+                  });
+                }}
+              >
+                {isResetting ? "重置中..." : "重置"}
+              </Button>
+            </div>
           </div>
 
-          <input type="hidden" {...register("bannerURL")} />
-          {errors.bannerURL && (
-            <p className="text-sm text-destructive">
-              {errors.bannerURL.message}
+          <div className="space-y-2">
+            <Label>營業時間</Label>
+            <p className="text-xs text-muted-foreground">
+              未設定時段的日期視為公休
             </p>
-          )}
+            <Controller
+              control={control}
+              name="opening"
+              render={({ field }) => (
+                <OpeningEditor
+                  value={field.value as Opening}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </div>
         </div>
 
-        {/* 取餐號碼 */}
-        <div className="flex items-center gap-3">
-          <Label>下一個取餐號碼: </Label>
-          <span className="text-2xl font-bold tabular-nums">
-            {store.orderCounter + 1}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={isResetting || store.orderCounter === 0}
-            onClick={() => {
-              startResetting(async () => {
-                try {
-                  const updated = await apiUpdateStore({ orderCounter: 0 });
-                  setStore(updated);
-                  toast.success("取餐號碼已重置");
-                } catch {
-                  toast.error("重置失敗");
-                }
-              });
-            }}
-          >
-            {isResetting ? "重置中..." : "重置"}
-          </Button>
-        </div>
-
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2 max-w-2xl">
           <Button
             className="flex-1"
             size="xl"
@@ -250,6 +360,8 @@ export default function StoreProfilePage() {
                 phone: store.phone ?? "",
                 address: store.address ?? "",
                 bannerURL: store.bannerURL ?? "",
+                opening: store.opening,
+                onlineOrdering: store.onlineOrdering,
               })
             }
           >
@@ -261,7 +373,7 @@ export default function StoreProfilePage() {
             type="submit"
             disabled={!isDirty || isSaving}
           >
-            {isSaving ? "儲存中..." : "儲存"}
+            {isSaving ? <Spinner /> : "儲存"}
           </Button>
         </div>
       </form>

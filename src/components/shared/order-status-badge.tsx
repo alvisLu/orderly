@@ -1,6 +1,11 @@
 "use client";
 
-import { ReceiptText, CircleDollarSign, UtensilsCrossed } from "lucide-react";
+import {
+  ReceiptText,
+  CircleDollarSign,
+  UtensilsCrossed,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type {
   OrderStatus,
@@ -45,7 +50,21 @@ const fulfillmentMap: Record<
   returned: { label: "已退貨", variant: "destructive" },
 };
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+export function OrderStatusBadge({
+  status,
+  deletedAt,
+}: {
+  status: OrderStatus;
+  deletedAt?: Date | string | null;
+}) {
+  if (deletedAt) {
+    return (
+      <Badge variant="destructive">
+        <Trash2 className="w-4 h-4" />
+        已刪除
+      </Badge>
+    );
+  }
   const { label, variant } = statusMap[status] ?? {
     label: status,
     variant: "outline" as const,

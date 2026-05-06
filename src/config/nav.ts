@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   ClipboardList,
   ConciergeBell,
   Package,
@@ -42,6 +43,11 @@ export const sidebarNav: SidebarNav[] = [
     label: "支出",
     color: "bg-info",
     items: [{ title: "支出列表", url: "/expenses", icon: Receipt }],
+  },
+  {
+    label: "報表管理",
+    color: "bg-red",
+    items: [{ title: "報表", url: "/reports", icon: BarChart3 }],
   },
   {
     label: "設定",
@@ -104,6 +110,16 @@ export const navGroups: Record<string, NavGroup> = {
     icon: Receipt,
     sub: [{ title: "支出列表", url: "/expenses" }],
   },
+  "/reports": {
+    label: "報表管理",
+    color: "bg-red",
+    icon: BarChart3,
+    sub: [
+      { title: "日報表", url: "/reports/daily" },
+      { title: "月報表", url: "/reports/monthly" },
+      { title: "支出報表", url: "/reports/expense" },
+    ],
+  },
 };
 
 export const pathLabels: Record<string, string> = {
@@ -120,4 +136,8 @@ export const pathLabels: Record<string, string> = {
   "/settings/tables": "桌位管理",
   "/settings/payments": "付款管理",
   "/expenses": "支出管理",
+  "/reports": "報表管理",
+  "/reports/daily": "日報表",
+  "/reports/monthly": "月報表",
+  "/reports/expense": "支出報表",
 };

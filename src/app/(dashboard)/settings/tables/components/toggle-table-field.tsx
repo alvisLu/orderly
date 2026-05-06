@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { Switch } from "@/components/ui/switch";
 import { apiUpdateTable } from "@/app/api/tables/api";
 import type { Table } from "@/modules/tables/types";
@@ -9,10 +9,20 @@ interface Props {
   tableId: string;
   checked: boolean;
   onUpdated: (table: Table) => void;
+  onPendingChange?: (pending: boolean) => void;
 }
 
-export function ToggleTableField({ tableId, checked, onUpdated }: Props) {
+export function ToggleTableField({
+  tableId,
+  checked,
+  onUpdated,
+  onPendingChange,
+}: Props) {
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   function handleChange(value: boolean) {
     startTransition(async () => {

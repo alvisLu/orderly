@@ -20,6 +20,7 @@ export const updateExpenseDto = z.object({
 });
 
 export const expenseQueryDto = paginationDto.extend({
+  limit: z.coerce.number().int().positive().max(10000).default(20),
   sort: z.enum(["asc", "desc"]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

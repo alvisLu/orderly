@@ -18,7 +18,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-full flex-col items-center overflow-auto px-4 py-8">
       <h1 className="text-3xl font-bold">主選單</h1>
-      <div className="mt-8 grid w-full max-w-3xl grid-cols-3 gap-4">
+      <div className="mt-8 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
         {cards.map((card) => (
           <Link key={card.title} href={card.href}>
             <Stat className="cursor-pointer transition-colors hover:bg-accent">

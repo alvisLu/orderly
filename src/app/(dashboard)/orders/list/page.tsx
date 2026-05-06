@@ -1,22 +1,25 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { apiGetOrders } from "@/app/api/orders/api";
-import type { Order } from "@/modules/orders/types";
-import type { OrderStatus } from "@/generated/prisma/client";
+import dayjs from "@/lib/dayjs";
+import { apiGetOrders, apiGetOrdersReport } from "@/app/api/orders/api";
+import type { Order, OrdersReport } from "@/modules/orders/types";
+import { useNewOrdersStore } from "@/store/new-orders";
 import { OrdersTable } from "../components/orders-table";
+import { OrdersReportPanel } from "../components/orders-report";
 import { CreateOrderDialog } from "../components/create-order-dialog";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  DateNavigator,
+  DateRangeField,
+} from "@/components/shared/date-fields";
 
-const STATUS_TABS: { label: string; value: OrderStatus | undefined }[] = [
-  { label: "全部", value: undefined },
-  { label: "待處理", value: "pending" },
-  { label: "處理中", value: "processing" },
-  { label: "完成", value: "done" },
-  { label: "已取消", value: "cancelled" },
-];
+function dayRange(date: string) {
+  return { from: date, to: date };
+}
+
+const initialRange = dayRange(dayjs().format("YYYY-MM-DD"));
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -24,20 +27,66 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [range, setRange] = useState(initialRange);
+  const [stats, setStats] = useState<OrdersReport | null>(null);
+  const [isStatsLoading, startStatsLoading] = useTransition();
+
   useEffect(() => {
     startLoading(async () => {
       const res = await apiGetOrders({
-        status,
         page: pageIndex + 1,
         limit: pageSize,
         showDeleted,
+        from: dayjs.utc(range.from).toDate(),
+        to: dayjs.utc(range.to).endOf("day").toDate(),
       });
       setOrders(res.data);
       setTotal(res.total);
     });
-  }, [status, pageIndex, pageSize, showDeleted]);
+  }, [pageIndex, pageSize, showDeleted, range]);
+
+  useEffect(() => {
+    startStatsLoading(async () => {
+      const s = await apiGetOrdersReport({
+        showDeleted,
+        from: dayjs.utc(range.from).toDate(),
+        to: dayjs.utc(range.to).endOf("day").toDate(),
+      });
+      setStats(s);
+    });
+  }, [showDeleted, range]);
+
+  const newOrdersBatch = useNewOrdersStore((s) => s.batch);
+  const newOrdersVersion = useNewOrdersStore((s) => s.version);
+
+  useEffect(() => {
+    if (newOrdersBatch.length === 0) return;
+    const fromMs = dayjs.utc(range.from).valueOf();
+    const toMs = dayjs.utc(range.to).endOf("day").valueOf();
+    setOrders((prev) => {
+      const seen = new Set(prev.map((o) => o.id));
+      const additions = newOrdersBatch.filter((o) => {
+        if (seen.has(o.id)) return false;
+        const ts = new Date(o.createdAt).getTime();
+        return ts >= fromMs && ts <= toMs;
+      });
+      return additions.length > 0 ? [...additions, ...prev] : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newOrdersVersion]);
+
+  function applyDayOffset(offset: number) {
+    const base = range.from ? dayjs(range.from) : dayjs();
+    const target = base.add(offset, "day").format("YYYY-MM-DD");
+    setPageIndex(0);
+    setRange(dayRange(target));
+  }
+
+  function goToToday() {
+    setPageIndex(0);
+    setRange(dayRange(dayjs().format("YYYY-MM-DD")));
+  }
 
   function handleUpdated(updated: Order) {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
@@ -52,22 +101,27 @@ export default function OrdersPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">訂單列表</h1>
         <CreateOrderDialog
-          onCreated={(o) => setOrders((prev) => [o, ...prev])}
+          onCreated={(o) => useNewOrdersStore.getState().publish([o])}
         />
       </div>
 
-      <div className="flex gap-2 mb-4">
-        {STATUS_TABS.map((tab) => (
-          <Button
-            key={String(tab.value)}
-            variant={status === tab.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatus(tab.value)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-end gap-2 mb-4">
+        <DateRangeField
+          fromLabel="起始日期"
+          value={range}
+          onChange={(next) => {
+            setPageIndex(0);
+            setRange(next);
+          }}
+        />
+
+        <DateNavigator
+          unit="day"
+          onOffset={applyDayOffset}
+          onCurrent={goToToday}
+        />
+
+        <div className="flex items-center gap-2 h-9">
           <Checkbox
             id="showDeleted"
             checked={showDeleted}
@@ -82,6 +136,12 @@ export default function OrdersPage() {
           </Label>
         </div>
       </div>
+
+      <OrdersReportPanel
+        stats={stats}
+        isLoading={isStatsLoading}
+        showDeleted={showDeleted}
+      />
 
       <div className="flex-1 min-h-0">
         <OrdersTable
