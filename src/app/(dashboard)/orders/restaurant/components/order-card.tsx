@@ -10,6 +10,7 @@ import {
   Truck,
   BookmarkX,
   LogOut,
+  ChefHat,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -191,7 +192,14 @@ function CardVisual({
         onClick={handleAccept}
         disabled={isAccepting}
       >
-        {isAccepting ? <Spinner /> : "接單"}
+        {isAccepting ? (
+          <Spinner />
+        ) : (
+          <>
+            <ChefHat />
+            接單
+          </>
+        )}
       </Button>
     ) : order.financialStatus === "pending" ? (
       <Button
@@ -514,6 +522,8 @@ export function OrderCardPopup({
             </Scroller>
             <div className="flex gap-2 sm:items-stretch">
               <div className="flex flex-col flex-1 sm:flex-initial sm:w-32">
+                
+                
                 <Button
                   variant="destructive"
                   size="lg"
