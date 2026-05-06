@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -112,25 +113,34 @@ type Transaction = {
   type: string;
   amount: number;
   gateway: { name: string };
+  date?: string;
 };
 
 function TransactionList({ transactions }: { transactions: unknown }) {
   const txns = (transactions as Transaction[] | null) ?? [];
   if (txns.length === 0) return null;
   return (
-    <div className="space-y-1 pt-2">
-      {txns.map((tx, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between text-sm text-muted-foreground"
-        >
-          <span>
-            {tx.type === "checkout" ? "付款" : "退款"}: {tx.gateway.name}
-          </span>
-          <span>${tx.amount}</span>
-        </div>
-      ))}
-    </div>
+    <Card size="sm" className="shadow-lg ring-0">
+      <CardHeader>交易紀錄</CardHeader>
+      <CardContent className="space-y-1">
+        {txns.map((tx, i) => (
+          <div
+            key={i}
+            className="flex items-center text-sm text-muted-foreground"
+          >
+            <span className="flex-1">{tx.gateway.name}</span>
+            {tx.date && (
+              <span className="text-xs mr-2">
+                {dayjs(tx.date).format("YYYY-MM-DD HH:mm")}
+              </span>
+            )}
+            <span className="text-right shrink-0 min-w-[60px]">
+              ${tx.amount}
+            </span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -293,9 +303,14 @@ function CardVisual({
                 <div key={item.id} className="space-y-1 border-b">
                   <div className="flex items-start ">
                     {/* Name */}
-                    <span className="flex-1 text-lg font-medium leading-tight">
-                      {item.name}
-                    </span>
+                    <div className="flex-1 flex items-baseline justify-between gap-2 pr-2">
+                      <span className="text-lg font-medium leading-tight">
+                        {item.name}
+                      </span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {dayjs(item.createdAt).format("HH:mm")}
+                      </span>
+                    </div>
                     {/* Price & qty */}
                     <div className="text-right shrink-0 min-w-[65px]">
                       <div className="text-base font-semibold">
@@ -321,9 +336,6 @@ function CardVisual({
               );
             })}
         </div>
-
-        {/* Transactions */}
-        <TransactionList transactions={order.transactions} />
 
         {/* Client note */}
         {order.userNote && (
@@ -506,7 +518,7 @@ export function OrderCardPopup({
         status: "cancelled",
         fulfillmentStatus: "returned",
         financialStatus: "refunded",
-        gateway: { id: "refund", name: "作廢" },
+        gateway: { id: "refund", name: "退款" },
       });
       onUpdated(updated);
       setVoidOpen(false);
@@ -542,11 +554,15 @@ export function OrderCardPopup({
           <div className="flex flex-col sm:flex-row sm:justify-center">
             <Scroller className="w-full sm:w-[26rem] sm:shrink-0 max-h-[60vh] sm:max-h-[80vh] p-3">
               <InPopupContext.Provider value={true}>
-                <CardVisual
-                  order={order}
-                  onUpdated={onUpdated}
-                  onDeleted={onDeleted}
-                />
+                <div className="flex flex-col gap-4">
+                  <CardVisual
+                    order={order}
+                    onUpdated={onUpdated}
+                    onDeleted={onDeleted}
+                  />
+                  {/* Transactions */}
+                  <TransactionList transactions={order.transactions} />
+                </div>
               </InPopupContext.Provider>
             </Scroller>
             <div className="flex gap-2 sm:items-stretch p-3">
