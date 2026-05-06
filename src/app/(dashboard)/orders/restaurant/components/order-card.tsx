@@ -100,6 +100,8 @@ const FULFILLMENT_VARIANT: Record<
   returned: "destructive",
 };
 
+const InPopupContext = createContext(false);
+
 type Transaction = {
   type: string;
   amount: number;
@@ -135,6 +137,7 @@ function CardVisual({
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
 }) {
+  const inPopup = useContext(InPopupContext);
   const [popupOpen, setPopupOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -169,7 +172,9 @@ function CardVisual({
   }
 
   const onHeaderClick =
-    order.status === "pending" ? undefined : () => setPopupOpen(true);
+    inPopup || order.status === "pending"
+      ? undefined
+      : () => setPopupOpen(true);
 
   const headerBg = HEADER_BG[order.status];
   const headerText = HEADER_TEXT[order.status];
@@ -499,11 +504,13 @@ export function OrderCardPopup({
           <DialogTitle>訂單操作</DialogTitle>
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-center">
             <Scroller className="w-full sm:w-[26rem] sm:shrink-0 max-h-[60vh] sm:max-h-[80vh] p-3">
-              <CardVisual
-                order={order}
-                onUpdated={onUpdated}
-                onDeleted={onDeleted}
-              />
+              <InPopupContext.Provider value={true}>
+                <CardVisual
+                  order={order}
+                  onUpdated={onUpdated}
+                  onDeleted={onDeleted}
+                />
+              </InPopupContext.Provider>
             </Scroller>
             <div className="flex gap-2 sm:items-stretch">
               <div className="flex flex-col flex-1 sm:flex-initial sm:w-32">
