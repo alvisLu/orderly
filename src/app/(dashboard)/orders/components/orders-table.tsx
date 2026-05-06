@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { Eye } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DiningBadge } from "@/components/shared/dining-badge";
 import type { Order } from "@/modules/orders/types";
 import {
@@ -15,10 +14,12 @@ import {
   FulfillmentStatusBadge,
 } from "@/components/shared/order-status-badge";
 import { OrderDetailSheet } from "./order-detail-sheet";
+import { OrderCardPopup } from "@/app/(dashboard)/orders/restaurant/components/order-card";
 import Big from "big.js";
 
 function getColumns(
   onView: (order: Order) => void,
+  onViewCard: (order: Order) => void,
   onUpdated: (order: Order) => void
 ): ColumnDef<Order>[] {
   return [
@@ -43,10 +44,18 @@ function getColumns(
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onViewCard(row.original)}
+          >
+            <Search className="h-3.5 w-3.5" />
+          </Button>
           <span>{dayjs(row.original.createdAt).format("YYYYMMDD-HHmmss")}</span>
         </div>
       ),
-      size: 190,
+      size: 220,
     },
     {
       id: "total",
@@ -102,9 +111,7 @@ function getColumns(
     {
       id: "type",
       header: "類型",
-      cell: ({ row }) => (
-        <DiningBadge isDining={row.original.isDining} />
-      ),
+      cell: ({ row }) => <DiningBadge isDining={row.original.isDining} />,
     },
   ];
 }
@@ -124,16 +131,33 @@ export function OrdersTable({
 }) {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [cardOrder, setCardOrder] = useState<Order | null>(null);
+  const [cardOpen, setCardOpen] = useState(false);
 
   function handleView(order: Order) {
     setSelectedOrderId(order.id);
     setSheetOpen(true);
   }
 
+  function handleViewCard(order: Order) {
+    setCardOrder(order);
+    setCardOpen(true);
+  }
+
+  function handleCardUpdated(order: Order) {
+    setCardOrder(order);
+    onUpdated(order);
+  }
+
+  function handleCardDeleted(id: string) {
+    setCardOpen(false);
+    onDeleted(id);
+  }
+
   return (
     <>
       <DataTable
-        columns={getColumns(handleView, onUpdated)}
+        columns={getColumns(handleView, handleViewCard, onUpdated)}
         data={data}
         pagination
         isLoading={isLoading}
@@ -147,6 +171,16 @@ export function OrdersTable({
         onUpdated={onUpdated}
         onDeleted={onDeleted}
       />
+
+      {cardOrder && (
+        <OrderCardPopup
+          order={cardOrder}
+          open={cardOpen}
+          onOpenChange={setCardOpen}
+          onUpdated={handleCardUpdated}
+          onDeleted={handleCardDeleted}
+        />
+      )}
     </>
   );
 }
