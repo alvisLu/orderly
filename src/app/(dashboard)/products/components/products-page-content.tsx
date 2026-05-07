@@ -51,7 +51,7 @@ export function ProductsPageContent() {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">商品列表</h1>
         <CreateProductDialog
           categories={categories}

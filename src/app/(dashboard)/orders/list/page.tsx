@@ -10,10 +10,7 @@ import { OrdersReportPanel } from "../components/orders-report";
 import { CreateOrderDialog } from "../components/create-order-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  DateNavigator,
-  DateRangeField,
-} from "@/components/shared/date-fields";
+import { DateNavigator, DateRangeField } from "@/components/shared/date-fields";
 
 function dayRange(date: string) {
   return { from: date, to: date };
@@ -98,16 +95,15 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">訂單列表</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold mb-2">訂單列表</h1>
         <CreateOrderDialog
           onCreated={(o) => useNewOrdersStore.getState().publish([o])}
         />
       </div>
 
-      <div className="flex flex-wrap items-end gap-2 mb-4">
+      <div className="flex items-end gap-2 mb-4 overflow-x-auto whitespace-nowrap">
         <DateRangeField
-          fromLabel="起始日期"
           value={range}
           onChange={(next) => {
             setPageIndex(0);
@@ -121,7 +117,7 @@ export default function OrdersPage() {
           onCurrent={goToToday}
         />
 
-        <div className="flex items-center gap-2 h-9">
+        <div className="flex items-center gap-2 h-9 shrink-0">
           <Checkbox
             id="showDeleted"
             checked={showDeleted}

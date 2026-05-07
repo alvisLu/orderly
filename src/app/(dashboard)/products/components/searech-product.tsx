@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Scroller } from "@/components/ui/scroller";
 import type { Category } from "@/modules/categories/types";
 import {
   Select,
@@ -48,81 +49,83 @@ export function SearchProduct({ categories }: { categories: Category[] }) {
   const sortOrder = searchParams.get("sort_order") ?? "asc";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-4">
-      <Select
-        value={categoryId || "all"}
-        onValueChange={(value) =>
-          updateParam({ category_id: value === "all" ? undefined : value })
-        }
-      >
-        <SelectTrigger size="lg" className="w-36 truncate">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">全部目錄</SelectItem>
-          {categories.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Input
-        placeholder="搜尋商品名稱..."
-        defaultValue={search}
-        size="lg"
-        className="w-56"
-        onChange={(e) => {
-          const value = e.target.value;
-          const timeoutId = setTimeout(() => {
-            updateParam({ search: value });
-          }, 300);
-          return () => clearTimeout(timeoutId);
-        }}
-      />
-
-      <div className="flex items-center gap-2">
+    <Scroller orientation="horizontal" className="mb-4">
+      <div className="flex items-center gap-2 w-max">
         <Select
-          value={sortBy}
-          onValueChange={(value) => updateParam({ sort_by: value })}
+          value={categoryId || "all"}
+          onValueChange={(value) =>
+            updateParam({ category_id: value === "all" ? undefined : value })
+          }
         >
-          <SelectTrigger size="lg">
+          <SelectTrigger size="lg" className="w-36 shrink-0 truncate">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {SORT_BY_OPTIONS.map(({ value, label }) => (
-              <SelectItem key={value} value={value}>
-                {label}
+            <SelectItem value="all">全部目錄</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-10"
-          onClick={() =>
-            updateParam({ sort_order: sortOrder === "asc" ? "desc" : "asc" })
-          }
-        >
-          {sortOrder === "asc" ? (
-            <ArrowUpNarrowWide className="size-4" />
-          ) : (
-            <ArrowDownNarrowWide className="size-4" />
-          )}
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="is_favorite"
-          checked={isFavorite}
-          onCheckedChange={(checked) =>
-            updateParam({ is_favorite: checked ? "true" : undefined })
-          }
+        <Input
+          placeholder="搜尋商品名稱..."
+          defaultValue={search}
+          size="lg"
+          className="w-56 shrink-0"
+          onChange={(e) => {
+            const value = e.target.value;
+            const timeoutId = setTimeout(() => {
+              updateParam({ search: value });
+            }, 300);
+            return () => clearTimeout(timeoutId);
+          }}
         />
-        <Label htmlFor="is_favorite">我的最愛</Label>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Select
+            value={sortBy}
+            onValueChange={(value) => updateParam({ sort_by: value })}
+          >
+            <SelectTrigger size="lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_BY_OPTIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-10"
+            onClick={() =>
+              updateParam({ sort_order: sortOrder === "asc" ? "desc" : "asc" })
+            }
+          >
+            {sortOrder === "asc" ? (
+              <ArrowUpNarrowWide className="size-4" />
+            ) : (
+              <ArrowDownNarrowWide className="size-4" />
+            )}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 pr-2">
+          <Checkbox
+            id="is_favorite"
+            checked={isFavorite}
+            onCheckedChange={(checked) =>
+              updateParam({ is_favorite: checked ? "true" : undefined })
+            }
+          />
+          <Label htmlFor="is_favorite">我的最愛</Label>
+        </div>
       </div>
-    </div>
+    </Scroller>
   );
 }
