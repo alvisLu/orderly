@@ -100,3 +100,14 @@ export async function apiLeaveAllDining(): Promise<{ count: number }> {
   const { data } = await apiClient.post<{ count: number }>("/orders/leave-all");
   return data;
 }
+
+export async function apiMergeOrders(
+  primaryId: string,
+  secondaryIds: string[]
+): Promise<Order> {
+  const { data } = await apiClient.post<Order>("/orders/merge", {
+    primaryId,
+    secondaryIds,
+  });
+  return data;
+}

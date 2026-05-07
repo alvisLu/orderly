@@ -94,6 +94,16 @@ export class OrderAlreadyCheckedOutError extends HttpError {
   }
 }
 
+export class OrderNotMergeableError extends HttpError {
+  constructor() {
+    const status = 400;
+    const message = "訂單必須為未結帳且未出餐才可合併";
+    const code = "4002";
+    super(status, message, code);
+    this.name = "OrderNotMergeableError";
+  }
+}
+
 export class PaymentNotFoundError extends HttpError {
   constructor() {
     const status = 404;

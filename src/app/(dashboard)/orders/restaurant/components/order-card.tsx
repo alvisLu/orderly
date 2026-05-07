@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -107,7 +108,7 @@ const FULFILLMENT_VARIANT: Record<
   returned: "destructive",
 };
 
-const InPopupContext = createContext(false);
+export const InPopupContext = createContext(false);
 
 type Transaction = {
   type: string;
@@ -148,10 +149,14 @@ function CardVisual({
   order,
   onUpdated,
   onDeleted,
+  selected,
+  onToggleSelect,
 }: {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const inPopup = useContext(InPopupContext);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -199,36 +204,37 @@ function CardVisual({
   const fulfillmentVariant = FULFILLMENT_VARIANT[order.fulfillmentStatus];
   const financialVariant = FINANCIAL_VARIANT[order.financialStatus];
 
-  const footerAction =
-    order.status === "pending" ? (
-      <Button
-        size="lg"
-        variant="secondary"
-        onClick={handleAccept}
-        disabled={isAccepting}
-      >
-        {isAccepting ? (
-          <Spinner />
-        ) : (
-          <>
-            <ChefHat />
-            接單
-          </>
-        )}
-      </Button>
-    ) : order.financialStatus === "pending" ? (
-      <Button
-        size="lg"
-        variant="secondary"
-        onClick={(e) => {
-          e.stopPropagation();
-          setCheckoutOpen(true);
-        }}
-      >
-        <CircleDollarSign />
-        結帳
-      </Button>
-    ) : null;
+  const footerAction = inPopup
+    ? null
+    : order.status === "pending" ? (
+        <Button
+          size="lg"
+          variant="secondary"
+          onClick={handleAccept}
+          disabled={isAccepting}
+        >
+          {isAccepting ? (
+            <Spinner />
+          ) : (
+            <>
+              <ChefHat />
+              接單
+            </>
+          )}
+        </Button>
+      ) : order.financialStatus === "pending" ? (
+        <Button
+          size="lg"
+          variant="secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCheckoutOpen(true);
+          }}
+        >
+          <CircleDollarSign />
+          結帳
+        </Button>
+      ) : null;
 
   return (
     <div className="rounded-xl border-border overflow-hidden shadow-lg">
@@ -248,7 +254,7 @@ function CardVisual({
               }
             : undefined
         }
-        className={`${headerBg} ${headerText} px-4 py-2 h-12 flex items-center ${
+        className={`${headerBg} ${headerText} px-4 py-2 h-12 flex items-center justify-between ${
           onHeaderClick ? "cursor-pointer" : ""
         }`}
       >
@@ -256,6 +262,20 @@ function CardVisual({
           {order.source === "qrcode" ? "QR" : "店面"}
           {order.takeNumber && ` #${order.takeNumber}`}
         </span>
+        {!inPopup &&
+          onToggleSelect &&
+          order.financialStatus === "pending" &&
+          order.fulfillmentStatus === "pending" && (
+            <Checkbox
+              variant="outline"
+              size="lg"
+              checked={selected}
+              onClick={(e) => e.stopPropagation()}
+              onCheckedChange={() => onToggleSelect(order.id)}
+              aria-label="選擇訂單"
+              className="bg-background"
+            />
+          )}
       </div>
 
       {/* Content */}
@@ -287,9 +307,11 @@ function CardVisual({
               {created.format("MM/DD")}-{created.format("HH:mm")}
             </span>
           </div>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Printer className="h-5 w-5" />
-          </Button>
+          {!inPopup && (
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Printer className="h-5 w-5" />
+            </Button>
+          )}
         </div>
 
         {/* Line items */}
@@ -361,37 +383,43 @@ function CardVisual({
             </span>
             {footerAction}
           </div>
-          <Button
-            size="lg"
-            variant="destructive"
-            onClick={() => setLeaveOpen(true)}
-          >
-            <LogOut />
-          </Button>
+          {!inPopup && (
+            <Button
+              size="lg"
+              variant="destructive"
+              onClick={() => setLeaveOpen(true)}
+            >
+              <LogOut />
+            </Button>
+          )}
         </div>
       </div>
 
-      <CheckoutDialog
-        order={order}
-        open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
-        onUpdated={onUpdated}
-      />
+      {!inPopup && (
+        <>
+          <CheckoutDialog
+            order={order}
+            open={checkoutOpen}
+            onOpenChange={setCheckoutOpen}
+            onUpdated={onUpdated}
+          />
 
-      <LeaveConfirmDialog
-        open={leaveOpen}
-        onOpenChange={setLeaveOpen}
-        onConfirm={handleLeaveConfirm}
-        isLeaving={isLeaving}
-      />
+          <LeaveConfirmDialog
+            open={leaveOpen}
+            onOpenChange={setLeaveOpen}
+            onConfirm={handleLeaveConfirm}
+            isLeaving={isLeaving}
+          />
 
-      <OrderCardPopup
-        order={order}
-        open={popupOpen}
-        onOpenChange={setPopupOpen}
-        onUpdated={onUpdated}
-        onDeleted={onDeleted}
-      />
+          <OrderCardPopup
+            order={order}
+            open={popupOpen}
+            onOpenChange={setPopupOpen}
+            onUpdated={onUpdated}
+            onDeleted={onDeleted}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -435,11 +463,25 @@ interface Props {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function OrderCard({ order, onUpdated, onDeleted }: Props) {
+export function OrderCard({
+  order,
+  onUpdated,
+  onDeleted,
+  selected,
+  onToggleSelect,
+}: Props) {
   return (
-    <CardVisual order={order} onUpdated={onUpdated} onDeleted={onDeleted} />
+    <CardVisual
+      order={order}
+      onUpdated={onUpdated}
+      onDeleted={onDeleted}
+      selected={selected}
+      onToggleSelect={onToggleSelect}
+    />
   );
 }
 

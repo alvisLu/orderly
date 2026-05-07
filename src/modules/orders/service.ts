@@ -8,6 +8,7 @@ import {
   findOrdersByIds,
   generateOrderReportForDate,
   insertOrder,
+  mergeOrders as mergeOrdersRepo,
   updateOrder,
   clearAllDining,
   softDeleteOrder,
@@ -257,6 +258,13 @@ export async function editOrder(
 
 export async function leaveAllDining(): Promise<number> {
   return clearAllDining();
+}
+
+export async function mergeOrders(
+  primaryId: string,
+  secondaryIds: string[]
+): Promise<Order> {
+  return mergeOrdersRepo(primaryId, secondaryIds);
 }
 
 export async function removeOrder(id: string): Promise<void> {

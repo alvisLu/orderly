@@ -8,6 +8,8 @@ interface Props {
   orders: Order[];
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 function useColumnCount(containerRef: React.RefObject<HTMLDivElement | null>) {
@@ -38,7 +40,13 @@ function distributeToColumns(orders: Order[], colCount: number): Order[][] {
   return columns;
 }
 
-export function OrderColumns({ orders, onUpdated, onDeleted }: Props) {
+export function OrderColumns({
+  orders,
+  onUpdated,
+  onDeleted,
+  selectedIds,
+  onToggleSelect,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const colCount = useColumnCount(containerRef);
   const columns = distributeToColumns(orders, colCount);
@@ -53,6 +61,8 @@ export function OrderColumns({ orders, onUpdated, onDeleted }: Props) {
               order={order}
               onUpdated={onUpdated}
               onDeleted={onDeleted}
+              selected={selectedIds?.has(order.id)}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </div>

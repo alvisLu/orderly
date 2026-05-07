@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition, useRef } from "react";
+import { useEffect, useMemo, useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
 import { apiGetOrders, apiLeaveAllDining } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
 import { useNewOrdersStore } from "@/store/new-orders";
 import { OrderColumns } from "./components/order-columns";
+import { MergeOrdersDialog } from "./components/merge-orders-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Scroller } from "@/components/ui/scroller";
@@ -32,6 +33,22 @@ export default function RestaurantOrdersPage() {
   >(undefined);
   const pageRef = useRef(1);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mergeOpen, setMergeOpen] = useState(false);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectedOrders = useMemo(
+    () => orders.filter((o) => selectedIds.has(o.id)),
+    [orders, selectedIds]
+  );
 
   // Initial load & status change
   useEffect(() => {
@@ -116,6 +133,16 @@ export default function RestaurantOrdersPage() {
     setOrders((prev) => prev.filter((o) => o.id !== id));
   }
 
+  function handleMerged(primary: Order, secondaryIds: string[]) {
+    setOrders((prev) => {
+      const removed = new Set(secondaryIds);
+      return prev
+        .filter((o) => !removed.has(o.id))
+        .map((o) => (o.id === primary.id ? primary : o));
+    });
+    setSelectedIds(new Set());
+  }
+
   return (
     <div className="px-2 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4 px-2">
@@ -130,6 +157,14 @@ export default function RestaurantOrdersPage() {
           </Button>
         ))}
         <div className="flex-1" />
+        <Button
+          variant="default"
+          size="lg"
+          disabled={selectedOrders.length < 2}
+          onClick={() => setMergeOpen(true)}
+        >
+          合併 ({selectedOrders.length})
+        </Button>
         <Button
           variant="destructive"
           size="lg"
@@ -148,6 +183,13 @@ export default function RestaurantOrdersPage() {
         </Button>
       </div>
 
+      <MergeOrdersDialog
+        orders={selectedOrders}
+        open={mergeOpen}
+        onOpenChange={setMergeOpen}
+        onMerged={handleMerged}
+      />
+
       <Scroller className="flex-1 min-h-0 px-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -163,6 +205,8 @@ export default function RestaurantOrdersPage() {
               orders={orders}
               onUpdated={handleUpdated}
               onDeleted={handleDeleted}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
             />
             {/* Sentinel for infinite scroll */}
             {hasMore && (
