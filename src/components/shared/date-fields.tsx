@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import dayjs from "@/lib/dayjs";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -20,7 +19,6 @@ import {
 import { cn } from "@/lib/utils";
 
 type DateFieldProps = {
-  label: string;
   value: string;
   onChange: (next: string) => void;
   disabled?: (date: Date) => boolean;
@@ -29,7 +27,6 @@ type DateFieldProps = {
 };
 
 export function DateField({
-  label,
   value,
   onChange,
   disabled,
@@ -38,7 +35,6 @@ export function DateField({
 }: DateFieldProps) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -75,16 +71,12 @@ type DateRangeValue = { from: string; to: string };
 type DateRangeFieldProps = {
   value: DateRangeValue;
   onChange: (next: DateRangeValue) => void;
-  fromLabel?: string;
-  toLabel?: string;
   clamp?: boolean;
 };
 
 export function DateRangeField({
   value,
   onChange,
-  fromLabel = "開始日期",
-  toLabel = "結束日期",
   clamp = true,
 }: DateRangeFieldProps) {
   function handleFromChange(next: string) {
@@ -114,7 +106,6 @@ export function DateRangeField({
   return (
     <>
       <DateField
-        label={fromLabel}
         value={value.from}
         onChange={handleFromChange}
         disabled={
@@ -124,13 +115,11 @@ export function DateRangeField({
         }
       />
       <DateField
-        label={toLabel}
         value={value.to}
         onChange={handleToChange}
         disabled={
           clamp
-            ? (d) =>
-                !!value.from && dayjs(d).isBefore(dayjs(value.from), "day")
+            ? (d) => !!value.from && dayjs(d).isBefore(dayjs(value.from), "day")
             : undefined
         }
       />
@@ -143,7 +132,6 @@ type DateNavigatorProps = {
   onOffset: (offset: number) => void;
   onCurrent: () => void;
   jump?: number;
-  label?: string;
   currentLabel?: string;
 };
 
@@ -152,20 +140,14 @@ export function DateNavigator({
   onOffset,
   onCurrent,
   jump,
-  label = "快速選擇",
   currentLabel,
 }: DateNavigatorProps) {
   const todayLabel = currentLabel ?? (unit === "day" ? "今天" : "本月");
   return (
     <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
       <div className="flex gap-1">
         {jump !== undefined && (
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => onOffset(-jump)}
-          >
+          <Button size="lg" variant="outline" onClick={() => onOffset(-jump)}>
             <ChevronsLeft />
           </Button>
         )}
@@ -179,11 +161,7 @@ export function DateNavigator({
           <ChevronRight />
         </Button>
         {jump !== undefined && (
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => onOffset(jump)}
-          >
+          <Button size="lg" variant="outline" onClick={() => onOffset(jump)}>
             <ChevronsRight />
           </Button>
         )}
