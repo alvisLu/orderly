@@ -123,8 +123,11 @@ export async function getOrdersByIds(ids: string[]): Promise<Order[]> {
   return findOrdersByIds(ids);
 }
 
-export async function getOrder(id: string): Promise<Order> {
-  const order = await findOrderById(id);
+export async function getOrder(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order> {
+  const order = await findOrderById(id, options);
   if (!order) throw new OrderNotFoundError();
   return order;
 }

@@ -122,12 +122,14 @@ export function OrdersTable({
   onUpdated,
   onDeleted,
   serverPagination,
+  showDeleted,
 }: {
   data: Order[];
   isLoading?: boolean;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
   serverPagination?: ServerPagination;
+  showDeleted?: boolean;
 }) {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -170,6 +172,7 @@ export function OrdersTable({
         onOpenChange={setSheetOpen}
         onUpdated={onUpdated}
         onDeleted={onDeleted}
+        showDeleted={showDeleted}
       />
 
       {cardOrder && (
@@ -179,6 +182,7 @@ export function OrdersTable({
           onOpenChange={setCardOpen}
           onUpdated={handleCardUpdated}
           onDeleted={handleCardDeleted}
+          showDeleted={showDeleted}
         />
       )}
     </>

@@ -4,9 +4,11 @@ import { updateOrderDto } from "@/modules/orders/dto";
 
 type Params = { params: Promise<{ id: string }> };
 
-export const GET = authRouteHandler(async (_, { params }) => {
+export const GET = authRouteHandler(async (request, { params }) => {
   const { id } = await (params as Params["params"]);
-  const order = await getOrder(id);
+  const { searchParams } = new URL(request.url);
+  const showDeleted = searchParams.get("showDeleted") === "true";
+  const order = await getOrder(id, { showDeleted });
   return Response.json(order);
 });
 

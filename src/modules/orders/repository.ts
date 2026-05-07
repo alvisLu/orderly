@@ -56,10 +56,13 @@ export async function findAllOrders(
   }
 }
 
-export async function findOrderById(id: string): Promise<Order | null> {
+export async function findOrderById(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order | null> {
   try {
     return await prisma.order.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, ...(!options?.showDeleted && { deletedAt: null }) },
       include,
     });
   } catch (e) {

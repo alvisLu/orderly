@@ -74,8 +74,16 @@ export async function apiRegenerateOrderReports(
   return data;
 }
 
-export async function apiGetOrder(id: string): Promise<Order> {
-  const { data } = await apiClient.get<Order>(`/orders/${id}`);
+export async function apiGetOrder(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order> {
+  const params = new URLSearchParams();
+  if (options?.showDeleted) params.set("showDeleted", "true");
+  const qs = params.toString();
+  const { data } = await apiClient.get<Order>(
+    `/orders/${id}${qs ? `?${qs}` : ""}`
+  );
   return data;
 }
 

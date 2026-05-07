@@ -149,6 +149,7 @@ export default function OrdersPage() {
           isLoading={isLoading}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
+          showDeleted={showDeleted}
           serverPagination={{
             total,
             pageIndex,

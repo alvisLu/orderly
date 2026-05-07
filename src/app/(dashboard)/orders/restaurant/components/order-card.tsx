@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import dayjs from "dayjs";
 import {
   Printer,
@@ -32,7 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
+import { apiGetOrder, apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
 import { CheckoutDialog } from "@/app/(dashboard)/orders/components/checkout-dialog";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { useNewOrdersStore } from "@/store/new-orders";
@@ -204,37 +204,35 @@ function CardVisual({
   const fulfillmentVariant = FULFILLMENT_VARIANT[order.fulfillmentStatus];
   const financialVariant = FINANCIAL_VARIANT[order.financialStatus];
 
-  const footerAction = inPopup
-    ? null
-    : order.status === "pending" ? (
-        <Button
-          size="lg"
-          variant="secondary"
-          onClick={handleAccept}
-          disabled={isAccepting}
-        >
-          {isAccepting ? (
-            <Spinner />
-          ) : (
-            <>
-              <ChefHat />
-              接單
-            </>
-          )}
-        </Button>
-      ) : order.financialStatus === "pending" ? (
-        <Button
-          size="lg"
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            setCheckoutOpen(true);
-          }}
-        >
-          <CircleDollarSign />
-          結帳
-        </Button>
-      ) : null;
+  const footerAction = inPopup ? null : order.status === "pending" ? (
+    <Button
+      size="lg"
+      variant="secondary"
+      onClick={handleAccept}
+      disabled={isAccepting}
+    >
+      {isAccepting ? (
+        <Spinner />
+      ) : (
+        <>
+          <ChefHat />
+          接單
+        </>
+      )}
+    </Button>
+  ) : order.financialStatus === "pending" ? (
+    <Button
+      size="lg"
+      variant="secondary"
+      onClick={(e) => {
+        e.stopPropagation();
+        setCheckoutOpen(true);
+      }}
+    >
+      <CircleDollarSign />
+      結帳
+    </Button>
+  ) : null;
 
   return (
     <div className="rounded-xl border-border overflow-hidden shadow-lg">
@@ -491,6 +489,7 @@ interface PopupProps {
   onOpenChange: (open: boolean) => void;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  showDeleted?: boolean;
 }
 
 export function OrderCardPopup({
@@ -499,7 +498,9 @@ export function OrderCardPopup({
   onOpenChange,
   onUpdated,
   onDeleted,
+  showDeleted,
 }: PopupProps) {
+  const [data, setData] = useState<Order>(order);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -512,10 +513,19 @@ export function OrderCardPopup({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  useEffect(() => {
+    setData(order);
+  }, [order]);
+
+  useEffect(() => {
+    if (!open) return;
+    apiGetOrder(order.id, { showDeleted }).then(setData);
+  }, [open, order.id, showDeleted]);
+
   async function handleLeaveConfirm() {
     setIsLeaving(true);
     try {
-      const updated = await apiUpdateOrder(order.id, { isDining: false });
+      const updated = await apiUpdateOrder(data.id, { isDining: false });
       onUpdated(updated);
       setLeaveOpen(false);
       onOpenChange(false);
@@ -530,7 +540,7 @@ export function OrderCardPopup({
   async function handleNoteSave() {
     setIsSavingNote(true);
     try {
-      const updated = await apiUpdateOrder(order.id, { note: noteText });
+      const updated = await apiUpdateOrder(data.id, { note: noteText });
       onUpdated(updated);
       setNoteOpen(false);
       toast.success("已更新備註");
@@ -543,7 +553,7 @@ export function OrderCardPopup({
 
   async function handleFulfill() {
     try {
-      const updated = await apiUpdateOrder(order.id, {
+      const updated = await apiUpdateOrder(data.id, {
         fulfillmentStatus: "fulfilled",
       });
       onUpdated(updated);
@@ -556,11 +566,14 @@ export function OrderCardPopup({
   async function handleVoidConfirm() {
     setIsVoiding(true);
     try {
-      const updated = await apiUpdateOrder(order.id, {
+      const updated = await apiUpdateOrder(data.id, {
         status: "cancelled",
         fulfillmentStatus: "returned",
         financialStatus: "refunded",
-        gateway: { id: "refund", name: "退款" },
+        gateway: {
+          id: "refund",
+          name: data.transactions?.[0]?.gateway.name ?? "系統退款",
+        },
       });
       onUpdated(updated);
       setVoidOpen(false);
@@ -576,10 +589,10 @@ export function OrderCardPopup({
   async function handleDeleteConfirm() {
     setIsDeleting(true);
     try {
-      await apiDeleteOrder(order.id);
+      await apiDeleteOrder(data.id);
       setDeleteOpen(false);
       onOpenChange(false);
-      onDeleted(order.id);
+      onDeleted(data.id);
       toast.success("訂單已刪除");
     } catch {
       toast.error("刪除失敗");
@@ -598,12 +611,12 @@ export function OrderCardPopup({
               <InPopupContext.Provider value={true}>
                 <div className="flex flex-col gap-4">
                   <CardVisual
-                    order={order}
+                    order={data}
                     onUpdated={onUpdated}
                     onDeleted={onDeleted}
                   />
                   {/* Transactions */}
-                  <TransactionList transactions={order.transactions} />
+                  <TransactionList transactions={data.transactions} />
                 </div>
               </InPopupContext.Provider>
             </Scroller>
@@ -624,7 +637,7 @@ export function OrderCardPopup({
                   variant="outline"
                   size="lg"
                   onClick={() => {
-                    setNoteText(order.note ?? "");
+                    setNoteText(data.note ?? "");
                     setNoteOpen(true);
                   }}
                 >
@@ -645,7 +658,7 @@ export function OrderCardPopup({
                   variant="outline"
                   size="lg"
                   onClick={() => setCheckoutOpen(true)}
-                  disabled={order.financialStatus !== "pending"}
+                  disabled={data.financialStatus !== "pending"}
                 >
                   <CircleDollarSign />
                   結帳
@@ -654,7 +667,7 @@ export function OrderCardPopup({
                   variant="outline"
                   size="lg"
                   onClick={handleFulfill}
-                  disabled={order.fulfillmentStatus !== "pending"}
+                  disabled={data.fulfillmentStatus !== "pending"}
                 >
                   <Truck />
                   出餐
@@ -668,7 +681,7 @@ export function OrderCardPopup({
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
                       onClick={() => setVoidOpen(true)}
-                      disabled={order.status === "cancelled"}
+                      disabled={data.status === "cancelled"}
                       className="text-destructive"
                     >
                       <BookmarkX />
@@ -690,7 +703,7 @@ export function OrderCardPopup({
       </Dialog>
 
       <CheckoutDialog
-        order={order}
+        order={data}
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
         onUpdated={onUpdated}
@@ -781,7 +794,7 @@ export function OrderCardPopup({
       <CreateOrderDialog
         open={cloneOpen}
         onOpenChange={setCloneOpen}
-        initialOrder={order}
+        initialOrder={data}
         onCreated={(o) => useNewOrdersStore.getState().publish([o])}
       />
     </>
