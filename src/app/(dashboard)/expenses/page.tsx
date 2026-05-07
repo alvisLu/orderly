@@ -135,7 +135,6 @@ export default function ExpensesPage() {
         />
 
         <div className="space-y-1">
-          <Label className="text-xs">月份</Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-9 w-20 justify-between">
