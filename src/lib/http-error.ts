@@ -143,3 +143,13 @@ export class ExpenseNotFoundError extends HttpError {
     this.name = "ExpenseNotFoundError";
   }
 }
+
+export class MoneyCountNotFoundError extends HttpError {
+  constructor() {
+    const status = 404;
+    const message = "找不到現金盤點紀錄";
+    const code = "9000";
+    super(status, message, code);
+    this.name = "MoneyCountNotFoundError";
+  }
+}
