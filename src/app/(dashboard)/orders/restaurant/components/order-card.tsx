@@ -572,7 +572,9 @@ export function OrderCardPopup({
         financialStatus: "refunded",
         gateway: {
           id: "refund",
-          name: data.transactions?.[0]?.gateway.name ?? "系統退款",
+          name:
+            (data.transactions as Transaction[] | null)?.[0]?.gateway.name ??
+            "系統退款",
         },
       });
       onUpdated(updated);
