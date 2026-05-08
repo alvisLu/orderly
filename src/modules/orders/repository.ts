@@ -1,8 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { DatabaseError } from "@/lib/http-error";
+import {
+  DatabaseError,
+  OrderNotFoundError,
+  OrderNotMergeableError,
+} from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
   DailyOrdersReport,
+  LineItemOption,
   Order,
   OrderQuery,
   OrdersReport,
@@ -51,10 +56,13 @@ export async function findAllOrders(
   }
 }
 
-export async function findOrderById(id: string): Promise<Order | null> {
+export async function findOrderById(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order | null> {
   try {
     return await prisma.order.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, ...(!options?.showDeleted && { deletedAt: null }) },
       include,
     });
   } catch (e) {
@@ -347,6 +355,88 @@ export async function generateOrderReportForDate(
     });
     return { ...report, date: dayjs.utc(from).format("YYYY-MM-DD") };
   } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
+export async function mergeOrders(
+  primaryId: string,
+  secondaryIds: string[]
+): Promise<Order> {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const allIds = [primaryId, ...secondaryIds];
+      const orders = await tx.order.findMany({
+        where: { id: { in: allIds }, deletedAt: null },
+        include,
+      });
+      if (orders.length !== allIds.length) throw new OrderNotFoundError();
+
+      const primary = orders.find((o) => o.id === primaryId);
+      if (!primary) throw new OrderNotFoundError();
+      const secondaries = orders.filter((o) => o.id !== primaryId);
+
+      const allMergeable = orders.every(
+        (o) =>
+          o.financialStatus === "pending" && o.fulfillmentStatus === "pending"
+      );
+      if (!allMergeable) throw new OrderNotMergeableError();
+
+      let nextRank =
+        primary.lineItems.reduce((m, i) => Math.max(m, i.rank), 0) + 1;
+      for (const sec of secondaries) {
+        const sortedItems = [...sec.lineItems].sort((a, b) => a.rank - b.rank);
+        for (const item of sortedItems) {
+          await tx.lineItem.update({
+            where: { id: item.id },
+            data: { orderId: primaryId, rank: nextRank++ },
+          });
+        }
+      }
+
+      const now = new Date();
+      for (const sec of secondaries) {
+        await tx.order.update({
+          where: { id: sec.id },
+          data: {
+            total: 0,
+            note: `合併訂單: ${primaryId}`,
+            isDining: false,
+            status: "cancelled",
+            deletedAt: now,
+          },
+        });
+      }
+
+      const refreshed = await tx.order.findFirstOrThrow({
+        where: { id: primaryId },
+        include,
+      });
+
+      const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
+        const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+        const optsTotal = opts.reduce(
+          (s, o) => s.plus(Big(o.price).times(o.quantity)),
+          Big(0)
+        );
+        return sum
+          .plus(Big(item.price.toString()).times(item.quantity))
+          .plus(optsTotal);
+      }, Big(0));
+      const newTotal = itemsTotal
+        .minus(Big(refreshed.discount.toString()))
+        .toNumber();
+
+      return tx.order.update({
+        where: { id: primaryId },
+        data: { total: newTotal },
+        include,
+      });
+    });
+  } catch (e) {
+    if (e instanceof OrderNotFoundError || e instanceof OrderNotMergeableError) {
+      throw e;
+    }
     throw new DatabaseError(String(e));
   }
 }

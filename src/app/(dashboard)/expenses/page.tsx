@@ -15,10 +15,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  DateNavigator,
-  DateRangeField,
-} from "@/components/shared/date-fields";
+import { DateNavigator, DateRangeField } from "@/components/shared/date-fields";
 import {
   Dialog,
   DialogClose,
@@ -119,14 +116,11 @@ export default function ExpensesPage() {
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">支出列表</h1>
-        <CreateExpenseDialog
-          onCreated={() => setRefreshKey((k) => k + 1)}
-        />
+        <CreateExpenseDialog onCreated={() => setRefreshKey((k) => k + 1)} />
       </div>
 
-      <div className="flex flex-wrap items-end gap-2 mb-4">
+      <div className="flex flex-nowrap items-end gap-2 mb-4 overflow-x-auto">
         <DateRangeField
-          fromLabel="起始日期"
           value={range}
           onChange={(next) => {
             setPageIndex(0);
@@ -141,7 +135,6 @@ export default function ExpensesPage() {
         />
 
         <div className="space-y-1">
-          <Label className="text-xs">月份</Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-9 w-20 justify-between">
@@ -149,10 +142,7 @@ export default function ExpensesPage() {
                 <ChevronDownIcon className="ml-1 h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="min-w-20 w-20"
-            >
+            <DropdownMenuContent align="start" className="min-w-20 w-20">
               <DropdownMenuRadioGroup
                 value={String(selectedMonth)}
                 onValueChange={(val) => handleMonthChange(Number(val))}

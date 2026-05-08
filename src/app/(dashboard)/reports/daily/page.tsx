@@ -70,7 +70,7 @@ export default function DailyReportPage() {
       </div>
 
       <div className="flex flex-wrap items-end gap-2 mb-4">
-        <DateField label="日期" value={date} onChange={setDate} />
+        <DateField value={date} onChange={setDate} />
 
         <DateNavigator
           unit="day"

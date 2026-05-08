@@ -72,3 +72,8 @@ export const dailyOrderReportsQueryDto = z.object({
 export const orderPollQueryDto = z.object({
   from: z.coerce.date(),
 });
+
+export const mergeOrdersDto = z.object({
+  primaryId: z.string().uuid(),
+  secondaryIds: z.array(z.string().uuid()).min(1),
+});

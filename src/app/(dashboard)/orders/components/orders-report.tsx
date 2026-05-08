@@ -52,24 +52,28 @@ export function OrdersReportPanel({ stats, isLoading, showDeleted }: Props) {
     <div className="flex flex-col gap-3 mb-4">
       <Card size="sm">
         <CardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline">{stats.count} 筆</Button>
-            <Button variant="outline">總額: {formatNumber(stats.total)}</Button>
-            <Button variant="secondary">
+          <div className="flex gap-2 overflow-x-auto whitespace-nowrap">
+            <Button variant="outline" className="shrink-0">
+              {stats.count} 筆
+            </Button>
+            <Button variant="outline" className="shrink-0">
+              總額: {formatNumber(stats.total)}
+            </Button>
+            <Button variant="secondary" className="shrink-0">
               已完成 {formatNumber(stats.doneTotal)}
             </Button>
 
             {showDeleted && (
-              <Button variant="destructive">
+              <Button variant="destructive" className="shrink-0">
                 已取消 {formatNumber(stats.cancelledTotal)}
               </Button>
             )}
-            <Button variant="default">
+            <Button variant="default" className="shrink-0">
               未完成 {formatNumber(stats.unfinishedTotal)}
             </Button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto whitespace-nowrap [&>*]:shrink-0">
             <StatCell label="已收款" value={formatNumber(stats.paidTotal)} />
             <StatCell label="處理中" value={`${stats.processingCount} 筆`} />
             <StatCell label="折扣" value={formatNumber(stats.discount)} />
@@ -80,7 +84,7 @@ export function OrdersReportPanel({ stats, isLoading, showDeleted }: Props) {
           </div>
 
           {stats.byGateway.length > 0 && (
-            <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <div className="flex gap-x-6 gap-y-3 overflow-x-auto whitespace-nowrap [&>*]:shrink-0">
               {stats.byGateway.map((g) => (
                 <StatCell
                   key={g.name}

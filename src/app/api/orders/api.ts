@@ -74,8 +74,16 @@ export async function apiRegenerateOrderReports(
   return data;
 }
 
-export async function apiGetOrder(id: string): Promise<Order> {
-  const { data } = await apiClient.get<Order>(`/orders/${id}`);
+export async function apiGetOrder(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order> {
+  const params = new URLSearchParams();
+  if (options?.showDeleted) params.set("showDeleted", "true");
+  const qs = params.toString();
+  const { data } = await apiClient.get<Order>(
+    `/orders/${id}${qs ? `?${qs}` : ""}`
+  );
   return data;
 }
 
@@ -98,5 +106,16 @@ export async function apiDeleteOrder(id: string): Promise<void> {
 
 export async function apiLeaveAllDining(): Promise<{ count: number }> {
   const { data } = await apiClient.post<{ count: number }>("/orders/leave-all");
+  return data;
+}
+
+export async function apiMergeOrders(
+  primaryId: string,
+  secondaryIds: string[]
+): Promise<Order> {
+  const { data } = await apiClient.post<Order>("/orders/merge", {
+    primaryId,
+    secondaryIds,
+  });
   return data;
 }
