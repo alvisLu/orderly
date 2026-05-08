@@ -1,7 +1,9 @@
 import {
   BarChart3,
   ClipboardList,
+  Coins,
   ConciergeBell,
+  CreditCard,
   Package,
   Receipt,
   Store,
@@ -43,6 +45,13 @@ export const sidebarNav: SidebarNav[] = [
     label: "支出",
     color: "bg-info",
     items: [{ title: "支出列表", url: "/expenses", icon: Receipt }],
+  },
+  {
+    label: "交易管理",
+    color: "bg-info",
+    items: [
+      { title: "點錢紀錄", url: "/transactions/money-counts", icon: Coins },
+    ],
   },
   {
     label: "報表管理",
@@ -100,13 +109,22 @@ export const navGroups: Record<string, NavGroup> = {
     icon: Store,
     sub: [
       { title: "店家資料", url: "/settings/stores/profile" },
-      { title: "桌位管理", url: "/settings/tables" },
+      { title: "桌位設定", url: "/settings/tables" },
+    ],
+  },
+
+  "/transactions": {
+    label: "交易管理",
+    color: "bg-info",
+    icon: CreditCard,
+    sub: [
+      { title: "點錢紀錄", url: "/transactions/money-counts" },
       { title: "付款管理", url: "/settings/payments" },
     ],
   },
   "/expenses": {
     label: "支出管理",
-    color: "bg-info",
+    color: "bg-red",
     icon: Receipt,
     sub: [{ title: "支出列表", url: "/expenses" }],
   },
@@ -136,6 +154,8 @@ export const pathLabels: Record<string, string> = {
   "/settings/tables": "桌位管理",
   "/settings/payments": "付款管理",
   "/expenses": "支出管理",
+  "/transactions": "交易管理",
+  "/transactions/money-counts": "點錢紀錄",
   "/reports": "報表管理",
   "/reports/daily": "日報表",
   "/reports/monthly": "月報表",

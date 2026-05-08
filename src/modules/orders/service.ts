@@ -8,6 +8,7 @@ import {
   findOrdersByIds,
   generateOrderReportForDate,
   insertOrder,
+  mergeOrders as mergeOrdersRepo,
   updateOrder,
   clearAllDining,
   softDeleteOrder,
@@ -122,8 +123,11 @@ export async function getOrdersByIds(ids: string[]): Promise<Order[]> {
   return findOrdersByIds(ids);
 }
 
-export async function getOrder(id: string): Promise<Order> {
-  const order = await findOrderById(id);
+export async function getOrder(
+  id: string,
+  options?: { showDeleted?: boolean }
+): Promise<Order> {
+  const order = await findOrderById(id, options);
   if (!order) throw new OrderNotFoundError();
   return order;
 }
@@ -257,6 +261,13 @@ export async function editOrder(
 
 export async function leaveAllDining(): Promise<number> {
   return clearAllDining();
+}
+
+export async function mergeOrders(
+  primaryId: string,
+  secondaryIds: string[]
+): Promise<Order> {
+  return mergeOrdersRepo(primaryId, secondaryIds);
 }
 
 export async function removeOrder(id: string): Promise<void> {

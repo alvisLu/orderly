@@ -46,6 +46,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onUpdated?: (order: Order) => void;
   onDeleted?: (id: string) => void;
+  showDeleted?: boolean;
 }
 
 export function OrderDetailSheet({
@@ -54,6 +55,7 @@ export function OrderDetailSheet({
   onOpenChange,
   onUpdated,
   onDeleted,
+  showDeleted,
 }: Props) {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoadingOrder, setIsLoadingOrder] = useState(false);
@@ -74,7 +76,7 @@ export function OrderDetailSheet({
     }
     setOrder(null);
     setIsLoadingOrder(true);
-    apiGetOrder(orderId)
+    apiGetOrder(orderId, { showDeleted })
       .then((o) => {
         setOrder(o);
         setUserNote(o.userNote ?? "");
@@ -84,12 +86,12 @@ export function OrderDetailSheet({
         setOrderStatus(o.status);
       })
       .finally(() => setIsLoadingOrder(false));
-  }, [orderId]);
+  }, [orderId, showDeleted]);
 
   async function refreshOrder() {
     if (!order) return;
     setIsLoadingOrder(true);
-    const o = await apiGetOrder(order.id);
+    const o = await apiGetOrder(order.id, { showDeleted });
     setOrder(o);
     setUserNote(o.userNote ?? "");
     setInternalNote(o.note ?? "");
