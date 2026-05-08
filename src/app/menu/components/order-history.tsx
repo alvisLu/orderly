@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, startTransition } from "react";
-import { ArrowLeft, Clock } from "lucide-react";
+import { useState, useEffect, useCallback, startTransition } from "react";
+import { ArrowLeft, Clock, RefreshCw } from "lucide-react";
 import dayjs from "dayjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -16,23 +16,32 @@ import { Label } from "@/components/ui/label";
 
 export function OrderHistory({ onBack }: { onBack: () => void }) {
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const fetchOrders = useCallback(async () => {
     const ids = getMyOrderIds();
     if (ids.length === 0) {
       startTransition(() => setOrders([]));
       return;
     }
-    let cancelled = false;
-    fetch(`/api/menu/orders?ids=${ids.join(",")}`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (!cancelled) setOrders(data);
-      });
-    return () => {
-      cancelled = true;
-    };
+    const res = await fetch(`/api/menu/orders?ids=${ids.join(",")}`);
+    const data = res.ok ? await res.json() : [];
+    setOrders(data);
   }, []);
+
+  useEffect(() => {
+    void fetchOrders();
+  }, [fetchOrders]);
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await fetchOrders();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const loading = orders === null;
 
@@ -44,6 +53,17 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <p className="text-xl font-semibold flex-1">我的訂單</p>
+        <Button
+          variant="outline"
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+          aria-label="重新整理"
+        >
+          <RefreshCw
+            className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
+          />
+          重新整理
+        </Button>
       </div>
 
       {/* Order list */}
