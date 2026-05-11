@@ -95,6 +95,7 @@ const FINANCIAL_VARIANT: Record<
 
 const FULFILLMENT_LABEL: Record<OrderFulfillmentStatus, string> = {
   pending: "待出",
+  partiallyFulfilled: "部分",
   fulfilled: "已出",
   returned: "退貨",
 };
@@ -104,6 +105,7 @@ const FULFILLMENT_VARIANT: Record<
   "default" | "secondary" | "destructive" | "outline"
 > = {
   pending: "outline",
+  partiallyFulfilled: "outline",
   fulfilled: "secondary",
   returned: "destructive",
 };
@@ -669,7 +671,10 @@ export function OrderCardPopup({
                   variant="outline"
                   size="lg"
                   onClick={handleFulfill}
-                  disabled={data.fulfillmentStatus !== "pending"}
+                  disabled={
+                    data.fulfillmentStatus !== "pending" &&
+                    data.fulfillmentStatus !== "partiallyFulfilled"
+                  }
                 >
                   <Truck />
                   出餐

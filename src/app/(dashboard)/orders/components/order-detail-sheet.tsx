@@ -186,6 +186,11 @@ export function OrderDetailSheet({
                       已出餐
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      onClick={() => setFulfillmentStatus("partiallyFulfilled")}
+                    >
+                      部分出餐
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => setFulfillmentStatus("returned")}
                     >
                       已退貨

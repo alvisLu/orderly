@@ -34,14 +34,18 @@ export const createOrderDto = z.object({
   tableName: z.string().optional(),
   source: z.enum(["store", "qrcode", "online"]),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
-  fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
+  fulfillmentStatus: z
+    .enum(["pending", "partiallyFulfilled", "fulfilled", "returned"])
+    .optional(),
   gateway: gatewayDto.optional(),
 });
 
 export const updateOrderDto = z.object({
   status: z.enum(["pending", "processing", "done", "cancelled"]).optional(),
   financialStatus: z.enum(["pending", "paid", "refunded"]).optional(),
-  fulfillmentStatus: z.enum(["pending", "fulfilled", "returned"]).optional(),
+  fulfillmentStatus: z
+    .enum(["pending", "partiallyFulfilled", "fulfilled", "returned"])
+    .optional(),
   note: z.string().optional(),
   isDining: z.boolean().optional(),
   userPhone: z.string().optional(),
