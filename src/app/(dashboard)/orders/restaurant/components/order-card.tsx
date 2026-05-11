@@ -13,6 +13,7 @@ import {
   ChefHat,
   Copy,
   NotebookPen,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { apiGetOrder, apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
+import {
+  apiGetOrder,
+  apiUpdateOrder,
+  apiDeleteOrder,
+} from "@/app/api/orders/api";
 import { CheckoutDialog } from "@/app/(dashboard)/orders/components/checkout-dialog";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { useNewOrdersStore } from "@/store/new-orders";
@@ -300,9 +305,6 @@ function CardVisual({
         {/* Info row: person count, date, print */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="border border-border rounded px-2 py-0.5 text-lg font-bold">
-              {order.lineItems.reduce((s, i) => s + i.quantity, 0)}人
-            </span>
             <span className="text-muted-foreground text-base">
               {created.format("MM/DD")}-{created.format("HH:mm")}
             </span>
@@ -508,6 +510,7 @@ export function OrderCardPopup({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [appendOpen, setAppendOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState(order.note ?? "");
   const [isSavingNote, setIsSavingNote] = useState(false);
@@ -687,6 +690,16 @@ export function OrderCardPopup({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
+                      onClick={() => {
+                        setAppendOpen(true);
+                        onOpenChange(false);
+                      }}
+                      disabled={data.financialStatus !== "pending"}
+                    >
+                      <Plus />
+                      追加商品
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => setVoidOpen(true)}
                       disabled={data.status === "cancelled"}
                       className="text-destructive"
@@ -803,6 +816,16 @@ export function OrderCardPopup({
         onOpenChange={setCloneOpen}
         initialOrder={data}
         onCreated={(o) => useNewOrdersStore.getState().publish([o])}
+      />
+
+      <CreateOrderDialog
+        open={appendOpen}
+        onOpenChange={setAppendOpen}
+        appendToOrder={data}
+        onCreated={(o) => {
+          setData(o);
+          onUpdated(o);
+        }}
       />
     </>
   );

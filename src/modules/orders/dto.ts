@@ -81,3 +81,7 @@ export const mergeOrdersDto = z.object({
   primaryId: z.string().uuid(),
   secondaryIds: z.array(z.string().uuid()).min(1),
 });
+
+export const appendOrderItemsDto = z.object({
+  items: z.array(createOrderItemDto).min(1),
+});

@@ -1,6 +1,7 @@
 import Big from "big.js";
 import dayjs from "@/lib/dayjs";
 import {
+  appendOrderLineItems,
   findAllOrders,
   findOrderById,
   findOrderReportsInRange,
@@ -15,6 +16,7 @@ import {
 } from "./repository";
 import type {
   CreateOrderInput,
+  CreateOrderItemInput,
   DailyOrdersReport,
   Order,
   OrderQuery,
@@ -268,6 +270,13 @@ export async function mergeOrders(
   secondaryIds: string[]
 ): Promise<Order> {
   return mergeOrdersRepo(primaryId, secondaryIds);
+}
+
+export async function appendOrderItems(
+  id: string,
+  items: CreateOrderItemInput[]
+): Promise<Order> {
+  return appendOrderLineItems(id, items);
 }
 
 export async function removeOrder(id: string): Promise<void> {

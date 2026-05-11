@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import {
   DatabaseError,
+  OrderNotAppendableError,
   OrderNotFoundError,
   OrderNotMergeableError,
 } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  CreateOrderItemInput,
   DailyOrdersReport,
   LineItemOption,
   Order,
@@ -435,6 +437,79 @@ export async function mergeOrders(
     });
   } catch (e) {
     if (e instanceof OrderNotFoundError || e instanceof OrderNotMergeableError) {
+      throw e;
+    }
+    throw new DatabaseError(String(e));
+  }
+}
+
+export async function appendOrderLineItems(
+  orderId: string,
+  items: CreateOrderItemInput[]
+): Promise<Order> {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, deletedAt: null },
+        include,
+      });
+      if (!order) throw new OrderNotFoundError();
+      if (order.financialStatus !== "pending") {
+        throw new OrderNotAppendableError();
+      }
+
+      const maxRank = order.lineItems.reduce(
+        (m, i) => Math.max(m, i.rank),
+        -1
+      );
+
+      for (let i = 0; i < items.length; i++) {
+        const { productOptions, ...rest } = items[i];
+        await tx.lineItem.create({
+          data: {
+            ...rest,
+            rank: maxRank + 1 + i,
+            itemOptions: productOptions,
+            orderId,
+          },
+        });
+      }
+
+      const refreshed = await tx.order.findFirstOrThrow({
+        where: { id: orderId },
+        include,
+      });
+
+      const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
+        const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+        const optsTotal = opts.reduce(
+          (s, o) => s.plus(Big(o.price).times(o.quantity)),
+          Big(0)
+        );
+        return sum
+          .plus(Big(item.price.toString()).times(item.quantity))
+          .plus(optsTotal);
+      }, Big(0));
+      const newTotal = itemsTotal
+        .minus(Big(refreshed.discount.toString()))
+        .toNumber();
+
+      const fulfillmentStatus =
+        refreshed.fulfillmentStatus === "fulfilled"
+          ? "partiallyFulfilled"
+          : refreshed.fulfillmentStatus;
+
+      return tx.order.update({
+        where: { id: orderId },
+        data: { total: newTotal, fulfillmentStatus },
+        include,
+      });
+    });
+  } catch (e) {
+    if (
+      e instanceof OrderNotFoundError ||
+      e instanceof OrderNotAppendableError
+    ) {
       throw e;
     }
     throw new DatabaseError(String(e));

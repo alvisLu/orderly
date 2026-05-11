@@ -1,6 +1,7 @@
 import apiClient from "@/lib/api-client";
 import type {
   CreateOrderInput,
+  CreateOrderItemInput,
   DailyOrdersReport,
   Order,
   OrderQuery,
@@ -106,6 +107,14 @@ export async function apiDeleteOrder(id: string): Promise<void> {
 
 export async function apiLeaveAllDining(): Promise<{ count: number }> {
   const { data } = await apiClient.post<{ count: number }>("/orders/leave-all");
+  return data;
+}
+
+export async function apiAppendOrderItems(
+  id: string,
+  items: CreateOrderItemInput[]
+): Promise<Order> {
+  const { data } = await apiClient.post<Order>(`/orders/${id}/items`, { items });
   return data;
 }
 

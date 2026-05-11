@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiGetProducts } from "@/app/api/products/api";
-import { apiCreateOrder } from "@/app/api/orders/api";
+import { apiAppendOrderItems, apiCreateOrder } from "@/app/api/orders/api";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import type { Product } from "@/modules/products/types";
 import type {
   Order,
@@ -292,6 +293,7 @@ interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialOrder?: Order | null;
+  appendToOrder?: Order | null;
 }
 
 export function CreateOrderDialog({
@@ -300,7 +302,9 @@ export function CreateOrderDialog({
   open: openProp,
   onOpenChange,
   initialOrder,
+  appendToOrder,
 }: Props) {
+  const isAppend = !!appendToOrder;
   const isControlled = openProp !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? openProp : internalOpen;
@@ -359,7 +363,8 @@ export function CreateOrderDialog({
       seededRef.current = false;
       return;
     }
-    if (seededRef.current || !initialOrder || products.length === 0) return;
+    if (seededRef.current || isAppend || !initialOrder || products.length === 0)
+      return;
     const seeded: CartItem[] = initialOrder.lineItems
       .slice()
       .sort((a, b) => a.rank - b.rank)
@@ -492,7 +497,8 @@ export function CreateOrderDialog({
     }, Big(0))
     .toNumber();
 
-  const total = Big(subtotal).minus(discount).toNumber();
+  const existingTotal = isAppend ? Number(appendToOrder?.total ?? 0) : 0;
+  const total = Big(subtotal).plus(existingTotal).minus(discount).toNumber();
 
   function buildOrderPayload(opts?: {
     selectedPayment?: Payment | null;
@@ -533,11 +539,22 @@ export function CreateOrderDialog({
       return;
     }
     setIsSubmitting(true);
-    const order = await apiCreateOrder(buildOrderPayload());
-    toast.success("訂單已建立");
-    handleOpen(false);
-    onCreated?.(order);
-    setIsSubmitting(false);
+    try {
+      if (isAppend && appendToOrder) {
+        const items = buildOrderPayload().items;
+        const order = await apiAppendOrderItems(appendToOrder.id, items);
+        toast.success("已追加商品");
+        handleOpen(false);
+        onCreated?.(order);
+      } else {
+        const order = await apiCreateOrder(buildOrderPayload());
+        toast.success("訂單已建立");
+        handleOpen(false);
+        onCreated?.(order);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -572,6 +589,60 @@ export function CreateOrderDialog({
               </div>
               {/* Cart items */}
               <Scroller className="flex-1 px-4 py-3 space-y-3">
+                {isAppend &&
+                  appendToOrder &&
+                  appendToOrder.lineItems.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        原有品項
+                      </p>
+                      {appendToOrder.lineItems
+                        .slice()
+                        .sort((a, b) => a.rank - b.rank)
+                        .map((li) => {
+                          const opts =
+                            (li.itemOptions as unknown as LineItemOption[]) ??
+                            [];
+                          return (
+                            <div
+                              key={li.id}
+                              className="flex items-center gap-2 rounded px-2 py-2 bg-muted/50 opacity-70"
+                            >
+                              <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                <p className="text-base font-medium line-clamp-1">
+                                  {li.name}
+                                </p>
+                                {opts.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {opts.map((o, i) => (
+                                      <Badge
+                                        key={i}
+                                        variant="outline"
+                                        size="sm"
+                                      >
+                                        {`${o.name}${o.price > 0 ? ` +${o.price}` : ""}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-center shrink-0 text-sm">
+                                <span className="text-muted-foreground">
+                                  {`×${li.quantity}`}
+                                </span>
+                                <span className="font-semibold">
+                                  ${Number(li.price) * li.quantity}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      <Separator />
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        新增品項
+                      </p>
+                    </div>
+                  )}
                 {cart.length === 0 ? (
                   <p className="text-base text-muted-foreground text-center py-8">
                     點擊商品加入購物車
@@ -625,17 +696,15 @@ export function CreateOrderDialog({
 
               {/* Summary */}
               <div className="border-t px-4 py-4 space-y-3">
-                <div className="flex justify-between text-base">
-                  <Button size="lg" variant="outline">
-                    小計
-                  </Button>
-                  <span>${subtotal}</span>
-                </div>
-
-                <div className="flex justify-between text-base">
-                  <CalcDiscount subtotal={subtotal} setDiscount={setDiscount} />
-                  <span>${discount}</span>
-                </div>
+                {!isAppend && (
+                  <div className="flex justify-between text-base">
+                    <CalcDiscount
+                      subtotal={subtotal}
+                      setDiscount={setDiscount}
+                    />
+                    <span>${discount}</span>
+                  </div>
+                )}
                 <Separator />
 
                 <div className="flex justify-between font-semibold">
@@ -662,21 +731,29 @@ export function CreateOrderDialog({
                   >
                     取消
                   </Button>
-                  <Checkout
-                    className="col-span-2"
-                    disabled={cart.length === 0}
-                    buildPayload={buildOrderPayload}
-                    total={total}
-                    onCreated={onCreated}
-                    onClose={handleClose}
-                  />
+                  {!isAppend && (
+                    <Checkout
+                      className="col-span-2"
+                      disabled={cart.length === 0}
+                      buildPayload={buildOrderPayload}
+                      total={total}
+                      onCreated={onCreated}
+                      onClose={handleClose}
+                    />
+                  )}
                   <Button
                     size="xl"
-                    className="col-span-2"
+                    className={isAppend ? "col-span-4" : "col-span-2"}
                     onClick={handleSubmit}
                     disabled={isSubmitting || cart.length === 0}
                   >
-                    {isSubmitting ? "建立中..." : "稍後結帳"}
+                    {isSubmitting ? (
+                      <Spinner />
+                    ) : isAppend ? (
+                      "確認追加"
+                    ) : (
+                      "稍後結帳"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -685,7 +762,9 @@ export function CreateOrderDialog({
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <div className="flex items-center gap-3 px-6 py-3 border-b">
                 <DialogTitle className="text-lg font-semibold">
-                  新增訂單
+                  {isAppend
+                    ? `追加商品${appendToOrder?.takeNumber ? ` #${appendToOrder.takeNumber}` : ""}`
+                    : "新增訂單"}
                 </DialogTitle>
                 <Input
                   size="lg"
