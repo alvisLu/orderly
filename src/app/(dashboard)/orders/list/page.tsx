@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
 import { apiGetOrders, apiGetOrdersReport } from "@/app/api/orders/api";
 import type { Order, OrdersReport } from "@/modules/orders/types";
@@ -43,7 +43,7 @@ export default function OrdersPage() {
     });
   }, [pageIndex, pageSize, showDeleted, range]);
 
-  useEffect(() => {
+  const reloadStats = useCallback(() => {
     startStatsLoading(async () => {
       const s = await apiGetOrdersReport({
         showDeleted,
@@ -54,6 +54,10 @@ export default function OrdersPage() {
     });
   }, [showDeleted, range]);
 
+  useEffect(() => {
+    reloadStats();
+  }, [reloadStats]);
+
   const newOrdersBatch = useNewOrdersStore((s) => s.batch);
   const newOrdersVersion = useNewOrdersStore((s) => s.version);
 
@@ -61,6 +65,7 @@ export default function OrdersPage() {
     if (newOrdersBatch.length === 0) return;
     const fromMs = dayjs.utc(range.from).valueOf();
     const toMs = dayjs.utc(range.to).endOf("day").valueOf();
+    let hasAdditions = false;
     setOrders((prev) => {
       const seen = new Set(prev.map((o) => o.id));
       const additions = newOrdersBatch.filter((o) => {
@@ -68,8 +73,11 @@ export default function OrdersPage() {
         const ts = new Date(o.createdAt).getTime();
         return ts >= fromMs && ts <= toMs;
       });
-      return additions.length > 0 ? [...additions, ...prev] : prev;
+      if (additions.length === 0) return prev;
+      hasAdditions = true;
+      return [...additions, ...prev];
     });
+    if (hasAdditions) reloadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newOrdersVersion]);
 
@@ -87,10 +95,12 @@ export default function OrdersPage() {
 
   function handleUpdated(updated: Order) {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+    reloadStats();
   }
 
   function handleDeleted(id: string) {
     setOrders((prev) => prev.filter((o) => o.id !== id));
+    reloadStats();
   }
 
   return (
