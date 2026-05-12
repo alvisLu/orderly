@@ -269,8 +269,7 @@ function CardVisual({
         </span>
         {!inPopup &&
           onToggleSelect &&
-          order.financialStatus === "pending" &&
-          order.fulfillmentStatus === "pending" && (
+          order.financialStatus !== "paid" && (
             <Checkbox
               variant="outline"
               size="lg"
