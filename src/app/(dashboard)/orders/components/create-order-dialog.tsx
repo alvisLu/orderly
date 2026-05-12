@@ -44,6 +44,7 @@ import { Payment } from "@/generated/prisma/client";
 import { apiGetPayments } from "@/app/api/payments/api";
 interface CalcDiscountProps {
   subtotal: number;
+  discount: number;
   setDiscount: (discount: number) => void;
 }
 
@@ -54,12 +55,20 @@ const DISCOUNT_TYPE: Record<DiscountType, string> = {
   percentage: "百分比折扣",
 };
 
-function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
-  const [discountPrice, setDiscountPrice] = useState(0);
+function CalcDiscount({ subtotal, discount, setDiscount }: CalcDiscountProps) {
+  const [discountPrice, setDiscountPrice] = useState(discount);
   const [open, setOpen] = useState(false);
   const [calcType, setCalcType] = useState<"fixedAmount" | "percentage">(
     "fixedAmount"
   );
+
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      setDiscountPrice(discount);
+      setCalcType("fixedAmount");
+    }
+    setOpen(next);
+  }
 
   function handleCalcChange(val: string) {
     setDiscountPrice(Number(val));
@@ -72,12 +81,10 @@ function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
         : Big(discountPrice).div(100).times(subtotal).toNumber()
     );
 
-    setDiscountPrice(0);
-    setCalcType("fixedAmount");
     setOpen(false);
   }
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="lg">折扣</Button>
       </DialogTrigger>
@@ -700,6 +707,7 @@ export function CreateOrderDialog({
                   <div className="flex justify-between text-base">
                     <CalcDiscount
                       subtotal={subtotal}
+                      discount={discount}
                       setDiscount={setDiscount}
                     />
                     <span>${discount}</span>
