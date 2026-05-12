@@ -107,10 +107,10 @@ const FULFILLMENT_LABEL: Record<OrderFulfillmentStatus, string> = {
 
 const FULFILLMENT_VARIANT: Record<
   OrderFulfillmentStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  "default" | "secondary" | "destructive" | "outline" | "warning"
 > = {
   pending: "outline",
-  partiallyFulfilled: "outline",
+  partiallyFulfilled: "warning",
   fulfilled: "secondary",
   returned: "destructive",
 };

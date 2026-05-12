@@ -26,7 +26,16 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, isDining, sort = "desc", page, limit, showDeleted, from, to } = query;
+  const {
+    status,
+    isDining,
+    sort = "desc",
+    page,
+    limit,
+    showDeleted,
+    from,
+    to,
+  } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
@@ -179,10 +188,7 @@ function aggregateOrdersReport(rows: OrderForAggregation[]): OrdersReport {
       doneTotal = doneTotal.plus(orderTotal);
     }
     if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
-    if (
-      (o.status === "pending" || o.status === "processing") &&
-      !isCancelled
-    ) {
+    if ((o.status === "pending" || o.status === "processing") && !isCancelled) {
       unfinishedTotal = unfinishedTotal.plus(orderTotal);
     }
     if (o.status === "processing" && !isCancelled) processingCount += 1;
@@ -383,10 +389,7 @@ export async function mergeOrders(
       if (!primary) throw new OrderNotFoundError();
       const secondaries = orders.filter((o) => o.id !== primaryId);
 
-      const allMergeable = orders.every(
-        (o) =>
-          o.financialStatus === "pending" && o.fulfillmentStatus === "pending"
-      );
+      const allMergeable = orders.every((o) => o.financialStatus === "pending");
       if (!allMergeable) throw new OrderNotMergeableError();
 
       let nextRank =
@@ -434,14 +437,29 @@ export async function mergeOrders(
         .minus(Big(refreshed.discount.toString()))
         .toNumber();
 
+      const totalQty = refreshed.lineItems.reduce((s, i) => s + i.quantity, 0);
+      const totalFulfilled = refreshed.lineItems.reduce(
+        (s, i) => s + i.fulfilledQuantity,
+        0
+      );
+      const fulfillmentStatus =
+        totalFulfilled === 0
+          ? "pending"
+          : totalFulfilled >= totalQty
+            ? "fulfilled"
+            : "partiallyFulfilled";
+
       return tx.order.update({
         where: { id: primaryId },
-        data: { total: newTotal },
+        data: { total: newTotal, fulfillmentStatus },
         include,
       });
     });
   } catch (e) {
-    if (e instanceof OrderNotFoundError || e instanceof OrderNotMergeableError) {
+    if (
+      e instanceof OrderNotFoundError ||
+      e instanceof OrderNotMergeableError
+    ) {
       throw e;
     }
     throw new DatabaseError(String(e));
@@ -463,10 +481,7 @@ export async function appendOrderLineItems(
         throw new OrderNotAppendableError();
       }
 
-      const maxRank = order.lineItems.reduce(
-        (m, i) => Math.max(m, i.rank),
-        -1
-      );
+      const maxRank = order.lineItems.reduce((m, i) => Math.max(m, i.rank), -1);
 
       for (let i = 0; i < items.length; i++) {
         const { productOptions, ...rest } = items[i];
