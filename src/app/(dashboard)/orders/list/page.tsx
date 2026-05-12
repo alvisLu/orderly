@@ -65,7 +65,6 @@ export default function OrdersPage() {
     if (newOrdersBatch.length === 0) return;
     const fromMs = dayjs.utc(range.from).valueOf();
     const toMs = dayjs.utc(range.to).endOf("day").valueOf();
-    let hasAdditions = false;
     setOrders((prev) => {
       const seen = new Set(prev.map((o) => o.id));
       const additions = newOrdersBatch.filter((o) => {
@@ -73,11 +72,9 @@ export default function OrdersPage() {
         const ts = new Date(o.createdAt).getTime();
         return ts >= fromMs && ts <= toMs;
       });
-      if (additions.length === 0) return prev;
-      hasAdditions = true;
-      return [...additions, ...prev];
+      return additions.length > 0 ? [...additions, ...prev] : prev;
     });
-    if (hasAdditions) reloadStats();
+    reloadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newOrdersVersion]);
 
