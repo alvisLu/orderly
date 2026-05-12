@@ -267,19 +267,17 @@ function CardVisual({
           {order.source === "qrcode" ? "QR" : "店面"}
           {order.takeNumber && ` #${order.takeNumber}`}
         </span>
-        {!inPopup &&
-          onToggleSelect &&
-          order.financialStatus !== "paid" && (
-            <Checkbox
-              variant="outline"
-              size="lg"
-              checked={selected}
-              onClick={(e) => e.stopPropagation()}
-              onCheckedChange={() => onToggleSelect(order.id)}
-              aria-label="選擇訂單"
-              className="bg-background"
-            />
-          )}
+        {!inPopup && onToggleSelect && order.financialStatus !== "paid" && (
+          <Checkbox
+            variant="outline"
+            size="lg"
+            checked={selected}
+            onClick={(e) => e.stopPropagation()}
+            onCheckedChange={() => onToggleSelect(order.id)}
+            aria-label="選擇訂單"
+            className="bg-background"
+          />
+        )}
       </div>
 
       {/* Content */}
@@ -326,21 +324,21 @@ function CardVisual({
                 <div key={item.id} className="space-y-1 border-b">
                   <div className="flex items-start ">
                     {/* Name */}
-                    <div className="flex-1 flex items-baseline justify-between gap-2 pr-2">
-                      <span className="text-lg font-medium leading-tight">
+                    <div className="flex-1 flex items-baseline gap-2 pr-2">
+                      <span className="flex-1 text-lg font-medium leading-tight">
                         {item.name}
                       </span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span className="w-10 text-xs font-normal text-muted-foreground text-right tabular-nums">
                         {dayjs(item.createdAt).format("HH:mm")}
+                      </span>
+                      <span className="w-10 text-sm font-normal text-muted-foreground text-right tabular-nums">
+                        {item.quantity}/{item.quantity}
                       </span>
                     </div>
                     {/* Price & qty */}
-                    <div className="text-right shrink-0 min-w-[65px]">
+                    <div className="text-right shrink-0 min-w-[65px] pb-1">
                       <div className="text-base font-semibold">
                         ${Number(item.price) * item.quantity}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.quantity}/{item.quantity}
                       </div>
                     </div>
                   </div>
@@ -358,6 +356,15 @@ function CardVisual({
                 </div>
               );
             })}
+
+          {Number(order.discount) > 0 && (
+            <div className="flex items-center justify-between text-base">
+              <span className="font-medium">折扣</span>
+              <span className="font-semibold text-destructive min-w-[65px] text-right">
+                -${Number(order.discount)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Client note */}
