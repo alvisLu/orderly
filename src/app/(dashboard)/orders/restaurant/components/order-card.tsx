@@ -332,7 +332,7 @@ function CardVisual({
                         {dayjs(item.createdAt).format("HH:mm")}
                       </span>
                       <span className="w-10 text-sm font-normal text-muted-foreground text-right tabular-nums">
-                        {item.quantity}/{item.quantity}
+                        {item.fulfilledQuantity}/{item.quantity}
                       </span>
                     </div>
                     {/* Price & qty */}

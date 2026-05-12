@@ -97,7 +97,12 @@ export async function updateOrder(
   input: Prisma.OrderUpdateInput
 ): Promise<Order | null> {
   try {
-    return await prisma.order.update({ where: { id }, data: input, include });
+    return await prisma.$transaction(async (tx) => {
+      if (input.fulfillmentStatus === "fulfilled") {
+        await tx.$executeRaw`UPDATE "line_items" SET "fulfilled_quantity" = "quantity" WHERE "order_id" = ${id}::uuid`;
+      }
+      return tx.order.update({ where: { id }, data: input, include });
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }
