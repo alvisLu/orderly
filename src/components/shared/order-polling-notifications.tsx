@@ -43,7 +43,7 @@ export function OrderPollingNotifications() {
         for (const o of fresh) {
           if (!o.source || o.source === "store") continue;
           const label = SOURCE_LABEL[o.source] ?? "新訂單";
-          toast.error(
+          toast.info(
             `${label} 新訂單, 取號: ${o.takeNumber}, 桌號: ${o.tableName}`,
             {
               duration: 8000,
