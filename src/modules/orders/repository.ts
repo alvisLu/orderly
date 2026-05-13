@@ -540,7 +540,7 @@ export async function softDeleteOrder(id: string): Promise<void> {
   try {
     await prisma.order.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { status: "cancelled", deletedAt: new Date() },
     });
   } catch (e) {
     throw new DatabaseError(String(e));

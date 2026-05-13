@@ -267,7 +267,7 @@ function CardVisual({
           {order.source === "qrcode" ? "QR" : "店面"}
           {order.takeNumber && ` #${order.takeNumber}`}
         </span>
-        {!inPopup && onToggleSelect && order.financialStatus !== "paid" && (
+        {!inPopup && onToggleSelect && order.financialStatus === "pending" && (
           <Checkbox
             variant="outline"
             size="lg"
