@@ -496,11 +496,11 @@ export function CreateOrderDialog({
 
   const subtotal = cart
     .reduce((sum, item) => {
-      const optionsTotal = item.productOptions.reduce(
+      const optionsPrice = item.productOptions.reduce(
         (s, o) => s.plus(Big(o.price).times(o.quantity)),
         Big(0)
       );
-      return sum.plus(Big(item.price).times(item.quantity)).plus(optionsTotal);
+      return sum.plus(Big(item.price).plus(optionsPrice).times(item.quantity));
     }, Big(0))
     .toNumber();
 
@@ -655,49 +655,61 @@ export function CreateOrderDialog({
                     點擊商品加入購物車
                   </p>
                 ) : (
-                  cart.map((item, idx) => (
-                    <div key={item.product.id} className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="flex-1 min-w-0  text-left bg-accent rounded transition-colors px-2"
-                          onClick={() => handleCartItemEdit(cart.indexOf(item))}
-                        >
-                          <div className="flex items-center justify-between px-1 py-2">
-                            <div className="flex flex-col gap-1 min-w-0">
-                              <p className="text-xl font-medium line-clamp-1">
-                                {item.product.name}
-                              </p>
-                              {item.productOptions.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {item.productOptions.map((option, i) => (
-                                    <Badge key={i} variant="secondary">
-                                      {`${option.name} ${option.price > 0 ? `+${option.price}` : ""}`}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
+                  cart.map((item, idx) => {
+                    const optionsPrice = item.productOptions.reduce(
+                      (s, o) => s + o.price * o.quantity,
+                      0
+                    );
+                    const unitPrice = item.price + optionsPrice;
+                    return (
+                      <div
+                        key={item.product.id}
+                        className="flex flex-col gap-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="flex-1 min-w-0  text-left bg-accent rounded transition-colors px-2"
+                            onClick={() =>
+                              handleCartItemEdit(cart.indexOf(item))
+                            }
+                          >
+                            <div className="flex items-center justify-between px-1 py-2">
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <p className="text-xl font-medium line-clamp-1">
+                                  {item.product.name}
+                                </p>
+                                {item.productOptions.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.productOptions.map((option, i) => (
+                                      <Badge key={i} variant="secondary">
+                                        {`${option.name} ${option.price > 0 ? `+${option.price}` : ""}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-center justify-between shrink-0 text-base">
+                                <span className="text-muted-foreground">
+                                  {`×${item.quantity}`}
+                                </span>
+                                <span className="font-semibold">
+                                  ${unitPrice}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex flex-col items-center justify-between shrink-0 text-base">
-                              <span className="text-muted-foreground">
-                                {`×${item.quantity}`}
-                              </span>
-                              <span className="font-semibold">
-                                ${item.price * item.quantity}
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeCartItem(idx)}
-                        >
-                          <Trash2 />
-                        </Button>
+                          </button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeCartItem(idx)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </Scroller>
 
