@@ -156,12 +156,14 @@ function CardVisual({
   order,
   onUpdated,
   onDeleted,
+  onRefresh,
   selected,
   onToggleSelect,
 }: {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }) {
@@ -178,6 +180,7 @@ function CardVisual({
       const updated = await apiUpdateOrder(order.id, { status: "processing" });
       onUpdated(updated);
       toast.success("已接單");
+      onRefresh?.();
     } catch {
       toast.error("接單失敗");
     } finally {
@@ -192,6 +195,7 @@ function CardVisual({
       onUpdated(updated);
       setLeaveOpen(false);
       toast.success("已離場");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -409,7 +413,10 @@ function CardVisual({
             order={order}
             open={checkoutOpen}
             onOpenChange={setCheckoutOpen}
-            onUpdated={onUpdated}
+            onUpdated={(o) => {
+              onUpdated(o);
+              onRefresh?.();
+            }}
           />
 
           <LeaveConfirmDialog
@@ -425,6 +432,7 @@ function CardVisual({
             onOpenChange={setPopupOpen}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
+            onRefresh={onRefresh}
           />
         </>
       )}
@@ -471,6 +479,7 @@ interface Props {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }
@@ -479,6 +488,7 @@ export function OrderCard({
   order,
   onUpdated,
   onDeleted,
+  onRefresh,
   selected,
   onToggleSelect,
 }: Props) {
@@ -487,6 +497,7 @@ export function OrderCard({
       order={order}
       onUpdated={onUpdated}
       onDeleted={onDeleted}
+      onRefresh={onRefresh}
       selected={selected}
       onToggleSelect={onToggleSelect}
     />
@@ -499,6 +510,7 @@ interface PopupProps {
   onOpenChange: (open: boolean) => void;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   showDeleted?: boolean;
 }
 
@@ -508,6 +520,7 @@ export function OrderCardPopup({
   onOpenChange,
   onUpdated,
   onDeleted,
+  onRefresh,
   showDeleted,
 }: PopupProps) {
   const [data, setData] = useState<Order>(order);
@@ -541,6 +554,7 @@ export function OrderCardPopup({
       setLeaveOpen(false);
       onOpenChange(false);
       toast.success("已離場");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -553,8 +567,10 @@ export function OrderCardPopup({
     try {
       const updated = await apiUpdateOrder(data.id, { note: noteText });
       onUpdated(updated);
+      setData(updated);
       setNoteOpen(false);
       toast.success("已更新備註");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -568,7 +584,9 @@ export function OrderCardPopup({
         fulfillmentStatus: "fulfilled",
       });
       onUpdated(updated);
+      setData(updated);
       toast.success("已出餐");
+      onRefresh?.();
     } catch {
       toast.error("出餐失敗");
     }
@@ -592,6 +610,7 @@ export function OrderCardPopup({
       setVoidOpen(false);
       onOpenChange(false);
       toast.success("訂單已作廢");
+      onRefresh?.();
     } catch {
       toast.error("作廢失敗");
     } finally {
@@ -607,6 +626,7 @@ export function OrderCardPopup({
       onOpenChange(false);
       onDeleted(data.id);
       toast.success("訂單已刪除");
+      onRefresh?.();
     } catch {
       toast.error("刪除失敗");
     } finally {
@@ -732,7 +752,11 @@ export function OrderCardPopup({
         order={data}
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
-        onUpdated={onUpdated}
+        onUpdated={(o) => {
+          onUpdated(o);
+          setData(o);
+          onRefresh?.();
+        }}
       />
 
       <LeaveConfirmDialog
@@ -821,7 +845,10 @@ export function OrderCardPopup({
         open={cloneOpen}
         onOpenChange={setCloneOpen}
         initialOrder={data}
-        onCreated={(o) => useNewOrdersStore.getState().publish([o])}
+        onCreated={(o) => {
+          useNewOrdersStore.getState().publish([o]);
+          onRefresh?.();
+        }}
       />
 
       <CreateOrderDialog
@@ -831,6 +858,7 @@ export function OrderCardPopup({
         onCreated={(o) => {
           setData(o);
           onUpdated(o);
+          onRefresh?.();
         }}
       />
     </>

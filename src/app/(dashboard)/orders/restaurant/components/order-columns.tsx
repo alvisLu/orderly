@@ -8,6 +8,7 @@ interface Props {
   orders: Order[];
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
 }
@@ -44,6 +45,7 @@ export function OrderColumns({
   orders,
   onUpdated,
   onDeleted,
+  onRefresh,
   selectedIds,
   onToggleSelect,
 }: Props) {
@@ -61,6 +63,7 @@ export function OrderColumns({
               order={order}
               onUpdated={onUpdated}
               onDeleted={onDeleted}
+              onRefresh={onRefresh}
               selected={selectedIds?.has(order.id)}
               onToggleSelect={onToggleSelect}
             />
