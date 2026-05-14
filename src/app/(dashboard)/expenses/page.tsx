@@ -121,6 +121,7 @@ export default function ExpensesPage() {
 
       <div className="flex flex-nowrap items-end gap-2 mb-4 overflow-x-auto">
         <DateRangeField
+          clamp={false}
           value={range}
           onChange={(next) => {
             setPageIndex(0);

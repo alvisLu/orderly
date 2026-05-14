@@ -112,6 +112,7 @@ export default function OrdersPage() {
       <div className="flex items-end gap-2 mb-4 overflow-x-auto whitespace-nowrap">
         <DateRangeField
           value={range}
+          clamp={false}
           onChange={(next) => {
             setPageIndex(0);
             setRange(next);
