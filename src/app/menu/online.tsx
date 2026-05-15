@@ -42,6 +42,7 @@ interface CartItem {
 interface CategoryGroup {
   id: string;
   name: string;
+  rank: number;
   products: Product[];
 }
 
@@ -76,16 +77,17 @@ export function MenuClient({
   const [noteEditOpen, setNoteEditOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
-  // Group products by category
+  // Group products by category, ordered by category rank (uncategorized last)
   const groups: CategoryGroup[] = (() => {
     const map = new Map<string, CategoryGroup>();
     for (const p of products) {
       const id = p.category?.id ?? UNCATEGORIZED_ID;
       const name = p.category?.name ?? "其他";
-      if (!map.has(id)) map.set(id, { id, name, products: [] });
+      const rank = p.category?.rank ?? Number.POSITIVE_INFINITY;
+      if (!map.has(id)) map.set(id, { id, name, rank, products: [] });
       map.get(id)!.products.push(p);
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => a.rank - b.rank);
   })();
 
   function updateCartQuantity(idx: number, delta: number) {

@@ -345,7 +345,7 @@ export function CreateOrderDialog({
         .filter((c): c is NonNullable<typeof c> => c !== null)
         .map((c) => [c.id, c])
     ).values()
-  );
+  ).sort((a, b) => a.rank - b.rank);
 
   function handleOpen(v: boolean) {
     if (isControlled) {
