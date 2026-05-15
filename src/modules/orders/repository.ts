@@ -418,23 +418,23 @@ export async function mergeOrders(
         });
       }
 
-      const addedTotal = secondaries
-        .flatMap((s) => s.lineItems)
-        .reduce((sum, item) => {
-          const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
-          const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
-          return sum.plus(
-            Big(item.price.toString()).plus(optsPrice).times(item.quantity)
-          );
-        }, Big(0));
-      const newTotal = Big(primary.total.toString())
-        .plus(addedTotal)
-        .toNumber();
+      const newDiscount = Big(primary.discount.toString()).plus(
+        secondaries.reduce((s, o) => s.plus(o.discount.toString()), Big(0))
+      );
 
       const refreshed = await tx.order.findFirstOrThrow({
         where: { id: primaryId },
         include,
       });
+
+      const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
+        const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+        const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
+        return sum.plus(
+          Big(item.price.toString()).plus(optsPrice).times(item.quantity)
+        );
+      }, Big(0));
+      const newTotal = itemsTotal.minus(newDiscount).toNumber();
 
       const totalQty = refreshed.lineItems.reduce((s, i) => s + i.quantity, 0);
       const totalFulfilled = refreshed.lineItems.reduce(
@@ -450,7 +450,11 @@ export async function mergeOrders(
 
       return tx.order.update({
         where: { id: primaryId },
-        data: { total: newTotal, fulfillmentStatus },
+        data: {
+          total: newTotal,
+          discount: newDiscount.toNumber(),
+          fulfillmentStatus,
+        },
         include,
       });
     });
