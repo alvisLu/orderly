@@ -7,8 +7,13 @@ import { Eye, Search } from "lucide-react";
 import { DataTable, ServerPagination } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DiningBadge } from "@/components/shared/dining-badge";
-import type { Order } from "@/modules/orders/types";
+import type { Order, OrderTransactionInput } from "@/modules/orders/types";
 import {
   OrderStatusBadge,
   FinancialStatusBadge,
@@ -76,9 +81,24 @@ function getColumns(
       size: 220,
     },
     {
-      id: "total",
-      header: "金額",
-      cell: ({ row }) => `$${Number(row.original.total)}`,
+      id: "payment",
+      header: "交易方式",
+      cell: ({ row }) => {
+        const txns =
+          (row.original.transactions as unknown as
+            | OrderTransactionInput[]
+            | null) ?? [];
+        if (txns.length === 0) return null;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {txns.map((t, i) => (
+              <Badge variant="third" size="sm" key={`${t.gateway.id}-${i}`}>
+                {t.gateway.name} ${Number(t.amount)}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
     },
     {
       id: "discount",
@@ -95,11 +115,25 @@ function getColumns(
             ),
           Big(0)
         );
-        const discount = Big(Number(row.original.discount)).plus(
-          lineItemDiscount
-        );
+        const orderDiscount = Big(Number(row.original.discount));
+        const discount = orderDiscount.plus(lineItemDiscount);
 
-        return discount.gt(0) ? `-$${discount.toNumber()}` : "$0";
+        if (!discount.gt(0)) return "$0";
+
+        const text = `-$${discount.toNumber()}`;
+        if (!lineItemDiscount.gt(0)) return text;
+
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="underline cursor-help">{text}</span>
+            </TooltipTrigger>
+            <TooltipContent className="flex-col items-start gap-0.5">
+              <p>商品折扣 ${lineItemDiscount.toNumber()}</p>
+              <p>訂單折扣 ${orderDiscount.toNumber()}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
       },
     },
     {
