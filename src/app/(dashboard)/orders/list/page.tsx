@@ -101,7 +101,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="p-6 h-full flex flex-col">
+    <div className="p-6 flex flex-col">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold mb-2">訂單列表</h1>
         <CreateOrderDialog

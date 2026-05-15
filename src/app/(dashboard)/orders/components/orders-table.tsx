@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { Eye, Search } from "lucide-react";
 import { DataTable, ServerPagination } from "@/components/shared/data-table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DiningBadge } from "@/components/shared/dining-badge";
 import type { Order } from "@/modules/orders/types";
@@ -30,6 +31,23 @@ function getColumns(
         <span className="text-muted-foreground">{row.index + 1}</span>
       ),
       size: 40,
+    },
+    {
+      id: "takeNumber",
+      header: "取餐號",
+      cell: ({ row }) => `#${row.original.takeNumber}`,
+      size: 70,
+    },
+    {
+      id: "tableName",
+      header: "桌位",
+      cell: ({ row }) =>
+        row.original.tableName ? (
+          <Badge size="sm" variant="outline">
+            {row.original.tableName}
+          </Badge>
+        ) : null,
+      size: 60,
     },
     {
       id: "createdAt",
