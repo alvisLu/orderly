@@ -450,7 +450,6 @@ export function CreateOrderDialog({
       items.map((item) => ({
         name: item.name,
         price: item.price,
-        quantity: 1,
         productTypeName: typeNameMap[typeId] ?? "",
       }))
     );
@@ -497,7 +496,7 @@ export function CreateOrderDialog({
   const subtotal = cart
     .reduce((sum, item) => {
       const optionsPrice = item.productOptions.reduce(
-        (s, o) => s.plus(Big(o.price).times(o.quantity)),
+        (s, o) => s.plus(o.price),
         Big(0)
       );
       return sum.plus(Big(item.price).plus(optionsPrice).times(item.quantity));
@@ -610,6 +609,12 @@ export function CreateOrderDialog({
                           const opts =
                             (li.itemOptions as unknown as LineItemOption[]) ??
                             [];
+                          const optsPrice = opts.reduce(
+                            (s, o) => s + o.price,
+                            0
+                          );
+                          const lineTotal =
+                            (Number(li.price) + optsPrice) * li.quantity;
                           return (
                             <div
                               key={li.id}
@@ -638,7 +643,7 @@ export function CreateOrderDialog({
                                   {`×${li.quantity}`}
                                 </span>
                                 <span className="font-semibold">
-                                  ${Number(li.price) * li.quantity}
+                                  ${lineTotal}
                                 </span>
                               </div>
                             </div>
@@ -657,7 +662,7 @@ export function CreateOrderDialog({
                 ) : (
                   cart.map((item, idx) => {
                     const optionsPrice = item.productOptions.reduce(
-                      (s, o) => s + o.price * o.quantity,
+                      (s, o) => s + o.price,
                       0
                     );
                     const unitPrice = item.price + optionsPrice;
@@ -715,7 +720,12 @@ export function CreateOrderDialog({
 
               {/* Summary */}
               <div className="border-t px-4 py-4 space-y-3">
-                {!isAppend && (
+                {isAppend && Number(appendToOrder?.discount ?? 0) > 0 ? (
+                  <div className="flex justify-between text-base text-muted-foreground">
+                    <span>原折扣</span>
+                    <span>${Number(appendToOrder?.discount ?? 0)}</span>
+                  </div>
+                ) : (
                   <div className="flex justify-between text-base">
                     <CalcDiscount
                       subtotal={subtotal}

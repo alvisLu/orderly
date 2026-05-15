@@ -107,6 +107,12 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                   {order.lineItems.map((item) => {
                     const options = (item.itemOptions ??
                       []) as unknown as LineItemOption[];
+                    const optionsPrice = options.reduce(
+                      (s, o) => s + o.price,
+                      0
+                    );
+                    const lineTotal =
+                      (Number(item.price) + optionsPrice) * item.quantity;
                     return (
                       <div
                         key={item.id}
@@ -119,12 +125,16 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                           </span>
                           {options.length > 0 && (
                             <p className="text-sm text-muted-foreground">
-                              {options.map((o) => o.name).join("、")}
+                              {options.map((o) => (
+                                <Badge key={o.name} variant="outline">
+                                  {`${o.name}${o.price ? ` +$${o.price}` : ""}`}
+                                </Badge>
+                              ))}
                             </p>
                           )}
                         </div>
                         <span className="shrink-0 font-medium">
-                          ${Number(item.price) * item.quantity}
+                          ${lineTotal}
                         </span>
                       </div>
                     );

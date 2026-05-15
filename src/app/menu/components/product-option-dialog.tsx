@@ -27,7 +27,6 @@ function buildOptions(
     return items.map((item) => ({
       name: item.name,
       price: item.price,
-      quantity: 1,
       productTypeName: typeEntry?.productType.name ?? "",
     }));
   });

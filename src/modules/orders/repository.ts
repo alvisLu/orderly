@@ -418,24 +418,23 @@ export async function mergeOrders(
         });
       }
 
+      const addedTotal = secondaries
+        .flatMap((s) => s.lineItems)
+        .reduce((sum, item) => {
+          const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+          const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
+          return sum.plus(
+            Big(item.price.toString()).plus(optsPrice).times(item.quantity)
+          );
+        }, Big(0));
+      const newTotal = Big(primary.total.toString())
+        .plus(addedTotal)
+        .toNumber();
+
       const refreshed = await tx.order.findFirstOrThrow({
         where: { id: primaryId },
         include,
       });
-
-      const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
-        const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
-        const optsTotal = opts.reduce(
-          (s, o) => s.plus(Big(o.price).times(o.quantity)),
-          Big(0)
-        );
-        return sum
-          .plus(Big(item.price.toString()).times(item.quantity))
-          .plus(optsTotal);
-      }, Big(0));
-      const newTotal = itemsTotal
-        .minus(Big(refreshed.discount.toString()))
-        .toNumber();
 
       const totalQty = refreshed.lineItems.reduce((s, i) => s + i.quantity, 0);
       const totalFulfilled = refreshed.lineItems.reduce(
@@ -502,13 +501,10 @@ export async function appendOrderLineItems(
 
       const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
         const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
-        const optsTotal = opts.reduce(
-          (s, o) => s.plus(Big(o.price).times(o.quantity)),
-          Big(0)
+        const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
+        return sum.plus(
+          Big(item.price.toString()).plus(optsPrice).times(item.quantity)
         );
-        return sum
-          .plus(Big(item.price.toString()).times(item.quantity))
-          .plus(optsTotal);
       }, Big(0));
       const newTotal = itemsTotal
         .minus(Big(refreshed.discount.toString()))

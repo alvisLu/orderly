@@ -98,9 +98,9 @@ export async function getDailyOrderReports(
   const todayUtc = dayjs.utc().startOf("day");
 
   const existing = new Map(
-    (
-      await findOrderReportsInRange(startUtc.toDate(), endUtc.toDate())
-    ).map((r) => [r.date, r])
+    (await findOrderReportsInRange(startUtc.toDate(), endUtc.toDate())).map(
+      (r) => [r.date, r]
+    )
   );
 
   const reports: DailyOrdersReport[] = [];
@@ -139,11 +139,11 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
 
   const total = items
     .reduce((sum, item) => {
-      const optionsTotal = item.productOptions.reduce(
-        (s, o) => s.plus(Big(o.price).times(o.quantity)),
+      const optionsPrice = item.productOptions.reduce(
+        (s, o) => s.plus(o.price),
         Big(0)
       );
-      return sum.plus(Big(item.price).times(item.quantity)).plus(optionsTotal);
+      return sum.plus(Big(item.price).plus(optionsPrice).times(item.quantity));
     }, Big(0))
     .minus(discount)
     .toNumber();

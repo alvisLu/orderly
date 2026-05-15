@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import dayjs from "dayjs";
+import Big from "big.js";
 import {
   Printer,
   Utensils,
@@ -342,7 +343,14 @@ function CardVisual({
                     {/* Price & qty */}
                     <div className="text-right shrink-0 min-w-[65px] pb-1">
                       <div className="text-base font-semibold">
-                        ${Number(item.price) * item.quantity}
+                        $
+                        {options
+                          .reduce(
+                            (s, o) => s.plus(o.price),
+                            new Big(item.price.toString())
+                          )
+                          .times(item.quantity)
+                          .toNumber()}
                       </div>
                     </div>
                   </div>
@@ -352,7 +360,8 @@ function CardVisual({
                     <div className="flex flex-wrap gap-1 pb-3">
                       {options.map((opt, i) => (
                         <Badge key={i} variant="outline" size="sm">
-                          {opt.name}${opt.price}
+                          {opt.name}
+                          {opt.price ? ` +$${opt.price}` : ""}
                         </Badge>
                       ))}
                     </div>

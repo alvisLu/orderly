@@ -4,7 +4,6 @@ import { paginationDto } from "@/lib/dto";
 const lineItemOptionDto = z.object({
   name: z.string().min(1),
   price: z.number().nonnegative(),
-  quantity: z.number().int().positive(),
   productTypeName: z.string().min(1),
 });
 
