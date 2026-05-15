@@ -126,7 +126,7 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                           {options.length > 0 && (
                             <p className="text-sm text-muted-foreground">
                               {options.map((o) => (
-                                <Badge key={o.name} variant="outline">
+                                <Badge key={o.name} variant="secondary">
                                   {`${o.name}${o.price ? ` +$${o.price}` : ""}`}
                                 </Badge>
                               ))}

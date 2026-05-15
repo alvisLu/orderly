@@ -5,6 +5,7 @@ import Image from "next/image";
 import Big from "big.js";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -72,6 +73,8 @@ export function MenuClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordered, setOrdered] = useState(false);
   const [viewOrders, setViewOrders] = useState(false);
+  const [noteEditOpen, setNoteEditOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
 
   // Group products by category
   const groups: CategoryGroup[] = (() => {
@@ -305,12 +308,12 @@ export function MenuClient({
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-xl">{item.product.name}</p>
                       {item.productOptions.length > 0 && (
-                        <div className="text-base text-muted-foreground mt-0.5">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {item.productOptions.map((o) => (
-                            <p key={o.name}>
-                              {o.productTypeName}：{o.name}
+                            <Badge key={o.name} variant="secondary">
+                              {o.name}
                               {o.price > 0 && ` +$${o.price}`}
-                            </p>
+                            </Badge>
                           ))}
                         </div>
                       )}
@@ -353,13 +356,23 @@ export function MenuClient({
           </div>
 
           <div className="space-y-3 pt-3 border-t">
-            <Textarea
-              placeholder="備註（例：不加冰、少糖）"
-              value={userNote}
-              onChange={(e) => setUserNote(e.target.value)}
-              rows={2}
-              className="text-base resize-none"
-            />
+            <div
+              className="cursor-pointer"
+              onClick={() => {
+                setNoteDraft(userNote);
+                setNoteEditOpen(true);
+              }}
+            >
+              <Textarea
+                readOnly
+                tabIndex={-1}
+                inputMode="none"
+                placeholder="備註（例：不加冰、少糖）"
+                value={userNote}
+                rows={3}
+                className="text-base resize-none"
+              />
+            </div>
             <div className="flex justify-between font-bold text-2xl">
               <span>合計</span>
               <span>${subtotal}</span>
@@ -383,6 +396,43 @@ export function MenuClient({
                 {isSubmitting ? "送出中..." : "送出訂單"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Note edit dialog */}
+      <Dialog open={noteEditOpen} onOpenChange={setNoteEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-2xl">備註</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            autoFocus
+            placeholder="例：不加冰、少糖"
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            rows={4}
+            className="text-base resize-none"
+          />
+          <div className="flex flex-row gap-2">
+            <Button
+              size="xl"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setNoteEditOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              size="xl"
+              className="flex-1"
+              onClick={() => {
+                setUserNote(noteDraft);
+                setNoteEditOpen(false);
+              }}
+            >
+              確認
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
