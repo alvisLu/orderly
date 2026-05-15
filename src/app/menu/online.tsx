@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Big from "big.js";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -33,20 +35,15 @@ const UNCATEGORIZED_ID = "uncategorized";
 interface CartItem {
   product: Product;
   quantity: number;
+  price: number;
   productOptions: LineItemOption[];
 }
 
 interface CategoryGroup {
   id: string;
   name: string;
+  rank: number;
   products: Product[];
-}
-
-function itemUnitPrice(product: Product, options: LineItemOption[]): number {
-  return (
-    Number(product.price) +
-    options.reduce((s, o) => s + o.price * o.quantity, 0)
-  );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -77,17 +74,20 @@ export function MenuClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordered, setOrdered] = useState(false);
   const [viewOrders, setViewOrders] = useState(false);
+  const [noteEditOpen, setNoteEditOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
 
-  // Group products by category
+  // Group products by category, ordered by category rank (uncategorized last)
   const groups: CategoryGroup[] = (() => {
     const map = new Map<string, CategoryGroup>();
     for (const p of products) {
       const id = p.category?.id ?? UNCATEGORIZED_ID;
       const name = p.category?.name ?? "其他";
-      if (!map.has(id)) map.set(id, { id, name, products: [] });
+      const rank = p.category?.rank ?? Number.POSITIVE_INFINITY;
+      if (!map.has(id)) map.set(id, { id, name, rank, products: [] });
       map.get(id)!.products.push(p);
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => a.rank - b.rank);
   })();
 
   function updateCartQuantity(idx: number, delta: number) {
@@ -100,11 +100,15 @@ export function MenuClient({
     );
   }
 
-  const subtotal = cart.reduce(
-    (s, item) =>
-      s + itemUnitPrice(item.product, item.productOptions) * item.quantity,
-    0
-  );
+  const subtotal = cart
+    .reduce((sum, item) => {
+      const optionsPrice = item.productOptions.reduce(
+        (s, o) => s.plus(o.price),
+        Big(0)
+      );
+      return sum.plus(Big(item.price).plus(optionsPrice).times(item.quantity));
+    }, Big(0))
+    .toNumber();
 
   const totalQuantity = cart.reduce((s, item) => s + item.quantity, 0);
 
@@ -116,7 +120,7 @@ export function MenuClient({
         rank: idx,
         productId: item.product.id,
         quantity: item.quantity,
-        price: itemUnitPrice(item.product, item.productOptions),
+        price: item.price,
         originalPrice: Number(item.product.price),
         name: item.product.name,
         cost: Number(item.product.cost),
@@ -292,70 +296,85 @@ export function MenuClient({
                 尚無商品
               </p>
             ) : (
-              cart.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 py-3 border-b last:border-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-xl">{item.product.name}</p>
-                    {item.productOptions.length > 0 && (
-                      <div className="text-base text-muted-foreground mt-0.5">
-                        {item.productOptions.map((o) => (
-                          <p key={o.name}>
-                            {o.productTypeName}：{o.name}
-                            {o.price > 0 && ` +$${o.price}`}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => updateCartQuantity(idx, -1)}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="text-base font-medium w-6 text-center">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => updateCartQuantity(idx, 1)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <span className="text-lg font-semibold shrink-0">
-                    $
-                    {itemUnitPrice(item.product, item.productOptions) *
-                      item.quantity}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    onClick={() =>
-                      setCart((prev) => prev.filter((_, i) => i !== idx))
-                    }
+              cart.map((item, idx) => {
+                const optionsPrice = item.productOptions.reduce(
+                  (s, o) => s + o.price,
+                  0
+                );
+                const unitPrice = item.price + optionsPrice;
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 py-3 border-b last:border-0"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xl">{item.product.name}</p>
+                      {item.productOptions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.productOptions.map((o) => (
+                            <Badge key={o.name} variant="secondary">
+                              {o.name}
+                              {o.price > 0 && ` +$${o.price}`}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => updateCartQuantity(idx, -1)}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="text-base font-medium w-6 text-center">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => updateCartQuantity(idx, 1)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <span className="text-lg font-semibold shrink-0">
+                      ${unitPrice * item.quantity}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() =>
+                        setCart((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })
             )}
           </div>
 
           <div className="space-y-3 pt-3 border-t">
-            <Textarea
-              placeholder="備註（例：不加冰、少糖）"
-              value={userNote}
-              onChange={(e) => setUserNote(e.target.value)}
-              rows={2}
-              className="text-base resize-none"
-            />
+            <div
+              className="cursor-pointer"
+              onClick={() => {
+                setNoteDraft(userNote);
+                setNoteEditOpen(true);
+              }}
+            >
+              <Textarea
+                readOnly
+                tabIndex={-1}
+                inputMode="none"
+                placeholder="備註（例：不加冰、少糖）"
+                value={userNote}
+                rows={3}
+                className="text-base resize-none"
+              />
+            </div>
             <div className="flex justify-between font-bold text-2xl">
               <span>合計</span>
               <span>${subtotal}</span>
@@ -383,6 +402,43 @@ export function MenuClient({
         </DialogContent>
       </Dialog>
 
+      {/* Note edit dialog */}
+      <Dialog open={noteEditOpen} onOpenChange={setNoteEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-2xl">備註</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            autoFocus
+            placeholder="例：不加冰、少糖"
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            rows={4}
+            className="text-base resize-none"
+          />
+          <div className="flex flex-row gap-2">
+            <Button
+              size="xl"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setNoteEditOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              size="xl"
+              className="flex-1"
+              onClick={() => {
+                setUserNote(noteDraft);
+                setNoteEditOpen(false);
+              }}
+            >
+              確認
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Product option dialog */}
       <ProductOptionDialog
         product={configProduct}
@@ -393,6 +449,7 @@ export function MenuClient({
               {
                 product: configProduct,
                 quantity: qty,
+                price: Number(configProduct.price),
                 productOptions: options,
               },
             ]);

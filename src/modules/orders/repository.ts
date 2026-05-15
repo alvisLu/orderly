@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import {
   DatabaseError,
+  OrderNotAppendableError,
   OrderNotFoundError,
   OrderNotMergeableError,
 } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  CreateOrderItemInput,
   DailyOrdersReport,
   LineItemOption,
   Order,
@@ -24,7 +26,16 @@ const include = {
 export async function findAllOrders(
   query: OrderQuery
 ): Promise<PaginatedOrders> {
-  const { status, isDining, sort = "desc", page, limit, showDeleted, from, to } = query;
+  const {
+    status,
+    isDining,
+    sort = "desc",
+    page,
+    limit,
+    showDeleted,
+    from,
+    to,
+  } = query;
   const skip = Big(page - 1)
     .times(limit)
     .toNumber();
@@ -95,7 +106,12 @@ export async function updateOrder(
   input: Prisma.OrderUpdateInput
 ): Promise<Order | null> {
   try {
-    return await prisma.order.update({ where: { id }, data: input, include });
+    return await prisma.$transaction(async (tx) => {
+      if (input.fulfillmentStatus === "fulfilled") {
+        await tx.$executeRaw`UPDATE "line_items" SET "fulfilled_quantity" = "quantity" WHERE "order_id" = ${id}::uuid`;
+      }
+      return tx.order.update({ where: { id }, data: input, include });
+    });
   } catch (e) {
     throw new DatabaseError(String(e));
   }
@@ -172,10 +188,7 @@ function aggregateOrdersReport(rows: OrderForAggregation[]): OrdersReport {
       doneTotal = doneTotal.plus(orderTotal);
     }
     if (isCancelled) cancelledTotal = cancelledTotal.plus(orderTotal);
-    if (
-      (o.status === "pending" || o.status === "processing") &&
-      !isCancelled
-    ) {
+    if ((o.status === "pending" || o.status === "processing") && !isCancelled) {
       unfinishedTotal = unfinishedTotal.plus(orderTotal);
     }
     if (o.status === "processing" && !isCancelled) processingCount += 1;
@@ -376,10 +389,7 @@ export async function mergeOrders(
       if (!primary) throw new OrderNotFoundError();
       const secondaries = orders.filter((o) => o.id !== primaryId);
 
-      const allMergeable = orders.every(
-        (o) =>
-          o.financialStatus === "pending" && o.fulfillmentStatus === "pending"
-      );
+      const allMergeable = orders.every((o) => o.financialStatus === "pending");
       if (!allMergeable) throw new OrderNotMergeableError();
 
       let nextRank =
@@ -408,6 +418,10 @@ export async function mergeOrders(
         });
       }
 
+      const newDiscount = Big(primary.discount.toString()).plus(
+        secondaries.reduce((s, o) => s.plus(o.discount.toString()), Big(0))
+      );
+
       const refreshed = await tx.order.findFirstOrThrow({
         where: { id: primaryId },
         include,
@@ -415,26 +429,107 @@ export async function mergeOrders(
 
       const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
         const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
-        const optsTotal = opts.reduce(
-          (s, o) => s.plus(Big(o.price).times(o.quantity)),
-          Big(0)
+        const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
+        return sum.plus(
+          Big(item.price.toString()).plus(optsPrice).times(item.quantity)
         );
-        return sum
-          .plus(Big(item.price.toString()).times(item.quantity))
-          .plus(optsTotal);
+      }, Big(0));
+      const newTotal = itemsTotal.minus(newDiscount).toNumber();
+
+      const totalQty = refreshed.lineItems.reduce((s, i) => s + i.quantity, 0);
+      const totalFulfilled = refreshed.lineItems.reduce(
+        (s, i) => s + i.fulfilledQuantity,
+        0
+      );
+      const fulfillmentStatus =
+        totalFulfilled === 0
+          ? "pending"
+          : totalFulfilled >= totalQty
+            ? "fulfilled"
+            : "partiallyFulfilled";
+
+      return tx.order.update({
+        where: { id: primaryId },
+        data: {
+          total: newTotal,
+          discount: newDiscount.toNumber(),
+          fulfillmentStatus,
+        },
+        include,
+      });
+    });
+  } catch (e) {
+    if (
+      e instanceof OrderNotFoundError ||
+      e instanceof OrderNotMergeableError
+    ) {
+      throw e;
+    }
+    throw new DatabaseError(String(e));
+  }
+}
+
+export async function appendOrderLineItems(
+  orderId: string,
+  items: CreateOrderItemInput[]
+): Promise<Order> {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, deletedAt: null },
+        include,
+      });
+      if (!order) throw new OrderNotFoundError();
+      if (order.financialStatus !== "pending") {
+        throw new OrderNotAppendableError();
+      }
+
+      const maxRank = order.lineItems.reduce((m, i) => Math.max(m, i.rank), -1);
+
+      for (let i = 0; i < items.length; i++) {
+        const { productOptions, ...rest } = items[i];
+        await tx.lineItem.create({
+          data: {
+            ...rest,
+            rank: maxRank + 1 + i,
+            itemOptions: productOptions,
+            orderId,
+          },
+        });
+      }
+
+      const refreshed = await tx.order.findFirstOrThrow({
+        where: { id: orderId },
+        include,
+      });
+
+      const itemsTotal = refreshed.lineItems.reduce((sum, item) => {
+        const opts = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+        const optsPrice = opts.reduce((s, o) => s.plus(o.price), Big(0));
+        return sum.plus(
+          Big(item.price.toString()).plus(optsPrice).times(item.quantity)
+        );
       }, Big(0));
       const newTotal = itemsTotal
         .minus(Big(refreshed.discount.toString()))
         .toNumber();
 
+      const fulfillmentStatus =
+        refreshed.fulfillmentStatus === "fulfilled"
+          ? "partiallyFulfilled"
+          : refreshed.fulfillmentStatus;
+
       return tx.order.update({
-        where: { id: primaryId },
-        data: { total: newTotal },
+        where: { id: orderId },
+        data: { total: newTotal, fulfillmentStatus },
         include,
       });
     });
   } catch (e) {
-    if (e instanceof OrderNotFoundError || e instanceof OrderNotMergeableError) {
+    if (
+      e instanceof OrderNotFoundError ||
+      e instanceof OrderNotAppendableError
+    ) {
       throw e;
     }
     throw new DatabaseError(String(e));
@@ -445,7 +540,7 @@ export async function softDeleteOrder(id: string): Promise<void> {
   try {
     await prisma.order.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { status: "cancelled", deletedAt: new Date() },
     });
   } catch (e) {
     throw new DatabaseError(String(e));

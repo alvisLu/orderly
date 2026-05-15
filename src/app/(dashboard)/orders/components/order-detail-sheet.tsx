@@ -151,10 +151,11 @@ export function OrderDetailSheet({
     );
   }
 
-  const subtotal = order.lineItems.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
+  const subtotal = order.lineItems.reduce((sum, item) => {
+    const options = (item.itemOptions as unknown as LineItemOption[]) ?? [];
+    const optionsPrice = options.reduce((s, o) => s + o.price, 0);
+    return sum + (Number(item.price) + optionsPrice) * item.quantity;
+  }, 0);
   const txns = (order.transactions as OrderTransactionInput[]) ?? [];
 
   return (
@@ -184,6 +185,11 @@ export function OrderDetailSheet({
                       onClick={() => setFulfillmentStatus("fulfilled")}
                     >
                       已出餐
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setFulfillmentStatus("partiallyFulfilled")}
+                    >
+                      部分出餐
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setFulfillmentStatus("returned")}
@@ -285,7 +291,12 @@ export function OrderDetailSheet({
                     .map((item) => {
                       const options =
                         item.itemOptions as unknown as LineItemOption[];
-                      const itemTotal = Number(item.price) * item.quantity;
+                      const optionsPrice = options.reduce(
+                        (s, o) => s + o.price,
+                        0
+                      );
+                      const itemTotal =
+                        (Number(item.price) + optionsPrice) * item.quantity;
                       return (
                         <div key={item.id} className="flex gap-3">
                           <div className="w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0">

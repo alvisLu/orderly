@@ -104,6 +104,16 @@ export class OrderNotMergeableError extends HttpError {
   }
 }
 
+export class OrderNotAppendableError extends HttpError {
+  constructor() {
+    const status = 400;
+    const message = "訂單必須為未結帳才可追加商品";
+    const code = "4003";
+    super(status, message, code);
+    this.name = "OrderNotAppendableError";
+  }
+}
+
 export class PaymentNotFoundError extends HttpError {
   constructor() {
     const status = 404;

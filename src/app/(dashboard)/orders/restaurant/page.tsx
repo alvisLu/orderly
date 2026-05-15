@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  useRef,
+} from "react";
 import { toast } from "sonner";
 import { apiGetOrders, apiLeaveAllDining } from "@/app/api/orders/api";
 import type { Order } from "@/modules/orders/types";
@@ -50,21 +57,23 @@ export default function RestaurantOrdersPage() {
     [orders, selectedIds]
   );
 
+  const loadOrders = useCallback(async () => {
+    pageRef.current = 1;
+    const res = await apiGetOrders({
+      status,
+      isDining: true,
+      sort: "asc",
+      page: 1,
+      limit: PAGE_SIZE,
+    });
+    setOrders(res.data);
+    setHasMore(res.data.length >= PAGE_SIZE);
+  }, [status]);
+
   // Initial load & status change
   useEffect(() => {
-    pageRef.current = 1;
-    startLoading(async () => {
-      const res = await apiGetOrders({
-        status,
-        isDining: true,
-        sort: "asc",
-        page: 1,
-        limit: PAGE_SIZE,
-      });
-      setOrders(res.data);
-      setHasMore(res.data.length >= PAGE_SIZE);
-    });
-  }, [status]);
+    startLoading(() => loadOrders());
+  }, [loadOrders]);
 
   // Load more
   function loadMore() {
@@ -205,6 +214,7 @@ export default function RestaurantOrdersPage() {
               orders={orders}
               onUpdated={handleUpdated}
               onDeleted={handleDeleted}
+              onRefresh={loadOrders}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
             />

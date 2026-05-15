@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(psql \"postgresql://postgres.lpylqhfmlgodfduovocn:WAwK9rMSvzbTY7bC@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres\" -c \"SELECT id, total, status, financial_status, transactions FROM orders WHERE created_at >= '2025-08-01' AND created_at < '2025-08-02' AND financial_status = 'refunded';\")",
+      "Bash(psql \"postgresql://postgres.lpylqhfmlgodfduovocn:WAwK9rMSvzbTY7bC@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres\" -c \"SELECT id, total, status, \\\\\"financialStatus\\\\\", transactions FROM orders WHERE created_at >= '2025-08-01' AND created_at < '2025-08-02' AND \\\\\"financialStatus\\\\\" = 'refunded';\")",
+      "Bash(psql \"postgresql://postgres.lpylqhfmlgodfduovocn:WAwK9rMSvzbTY7bC@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres\" -c \"SELECT id, total, status, \\\\\"financialStatus\\\\\", transactions FROM orders WHERE created_at >= '2025-08-01' AND created_at < '2025-08-02' AND transactions::text LIKE '%refund%';\")",
+      "Bash(psql \"postgresql://postgres.lpylqhfmlgodfduovocn:WAwK9rMSvzbTY7bC@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres\" -c \"SELECT count\\(*\\), \\\\\"financialStatus\\\\\" FROM orders WHERE created_at >= '2025-08-01' AND created_at < '2025-08-02' GROUP BY \\\\\"financialStatus\\\\\";\")",
+      "Bash(git -C /Users/alvis/git/orderly mv src/app/api/orders/stats/route.ts src/app/api/orders/report/route.ts)",
+      "Bash(git -C /Users/alvis/git/orderly mv \"src/app/\\(dashboard\\)/orders/components/order-stats.tsx\" \"src/app/\\(dashboard\\)/orders/components/orders-report.tsx\")",
+      "Bash(git -C /Users/alvis/git/orderly status --short)",
+      "Bash(git -C /Users/alvis/git/orderly ls-files src/app/api/orders/stats/)",
+      "Bash(git -C /Users/alvis/git/orderly log --oneline -3 -- src/app/api/orders/stats/daily/)",
+      "Bash(git -C /Users/alvis/git/orderly diff src/modules/orders/types.ts)",
+      "Bash(mkdir -p /Users/alvis/git/orderly/src/app/api/orders/report/list)",
+      "Bash(rm -rf /Users/alvis/git/orderly/src/app/api/orders/report/\\\\[date\\\\])",
+      "Bash(git stash *)",
+      "Bash(npx --no-install prisma migrate status)",
+      "Bash(bash -n /Users/alvis/git/orderly/scripts/clone-supabase.sh)",
+      "Bash(/Users/alvis/git/orderly/scripts/clone-supabase.sh --help)",
+      "Bash(git restore *)",
+      "Bash(rm -rf \"src/app/api/orders/[id]/clone\")",
+      "Bash(git -C /Users/alvis/git/orderly status prisma/)",
+      "Bash(lsof -ti:3000)",
+      "Bash(npx tsx *)"
+    ],
+    "additionalDirectories": [
+      "/Users/alvis/git/orderly/src/app/api/orders/report",
+      "/Users/alvis/git/orderly/src/app/api/orders/report/[date]"
+    ]
+  }
+}

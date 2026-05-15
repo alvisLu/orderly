@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiGetProducts } from "@/app/api/products/api";
-import { apiCreateOrder } from "@/app/api/orders/api";
+import { apiAppendOrderItems, apiCreateOrder } from "@/app/api/orders/api";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import type { Product } from "@/modules/products/types";
 import type {
   Order,
@@ -43,6 +44,7 @@ import { Payment } from "@/generated/prisma/client";
 import { apiGetPayments } from "@/app/api/payments/api";
 interface CalcDiscountProps {
   subtotal: number;
+  discount: number;
   setDiscount: (discount: number) => void;
 }
 
@@ -53,12 +55,20 @@ const DISCOUNT_TYPE: Record<DiscountType, string> = {
   percentage: "百分比折扣",
 };
 
-function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
-  const [discountPrice, setDiscountPrice] = useState(0);
+function CalcDiscount({ subtotal, discount, setDiscount }: CalcDiscountProps) {
+  const [discountPrice, setDiscountPrice] = useState(discount);
   const [open, setOpen] = useState(false);
   const [calcType, setCalcType] = useState<"fixedAmount" | "percentage">(
     "fixedAmount"
   );
+
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      setDiscountPrice(discount);
+      setCalcType("fixedAmount");
+    }
+    setOpen(next);
+  }
 
   function handleCalcChange(val: string) {
     setDiscountPrice(Number(val));
@@ -71,12 +81,10 @@ function CalcDiscount({ subtotal, setDiscount }: CalcDiscountProps) {
         : Big(discountPrice).div(100).times(subtotal).toNumber()
     );
 
-    setDiscountPrice(0);
-    setCalcType("fixedAmount");
     setOpen(false);
   }
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="lg">折扣</Button>
       </DialogTrigger>
@@ -292,6 +300,7 @@ interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialOrder?: Order | null;
+  appendToOrder?: Order | null;
 }
 
 export function CreateOrderDialog({
@@ -300,7 +309,9 @@ export function CreateOrderDialog({
   open: openProp,
   onOpenChange,
   initialOrder,
+  appendToOrder,
 }: Props) {
+  const isAppend = !!appendToOrder;
   const isControlled = openProp !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? openProp : internalOpen;
@@ -334,7 +345,7 @@ export function CreateOrderDialog({
         .filter((c): c is NonNullable<typeof c> => c !== null)
         .map((c) => [c.id, c])
     ).values()
-  );
+  ).sort((a, b) => a.rank - b.rank);
 
   function handleOpen(v: boolean) {
     if (isControlled) {
@@ -359,7 +370,8 @@ export function CreateOrderDialog({
       seededRef.current = false;
       return;
     }
-    if (seededRef.current || !initialOrder || products.length === 0) return;
+    if (seededRef.current || isAppend || !initialOrder || products.length === 0)
+      return;
     const seeded: CartItem[] = initialOrder.lineItems
       .slice()
       .sort((a, b) => a.rank - b.rank)
@@ -438,7 +450,6 @@ export function CreateOrderDialog({
       items.map((item) => ({
         name: item.name,
         price: item.price,
-        quantity: 1,
         productTypeName: typeNameMap[typeId] ?? "",
       }))
     );
@@ -484,15 +495,16 @@ export function CreateOrderDialog({
 
   const subtotal = cart
     .reduce((sum, item) => {
-      const optionsTotal = item.productOptions.reduce(
-        (s, o) => s.plus(Big(o.price).times(o.quantity)),
+      const optionsPrice = item.productOptions.reduce(
+        (s, o) => s.plus(o.price),
         Big(0)
       );
-      return sum.plus(Big(item.price).times(item.quantity)).plus(optionsTotal);
+      return sum.plus(Big(item.price).plus(optionsPrice).times(item.quantity));
     }, Big(0))
     .toNumber();
 
-  const total = Big(subtotal).minus(discount).toNumber();
+  const existingTotal = isAppend ? Number(appendToOrder?.total ?? 0) : 0;
+  const total = Big(subtotal).plus(existingTotal).minus(discount).toNumber();
 
   function buildOrderPayload(opts?: {
     selectedPayment?: Payment | null;
@@ -533,11 +545,22 @@ export function CreateOrderDialog({
       return;
     }
     setIsSubmitting(true);
-    const order = await apiCreateOrder(buildOrderPayload());
-    toast.success("訂單已建立");
-    handleOpen(false);
-    onCreated?.(order);
-    setIsSubmitting(false);
+    try {
+      if (isAppend && appendToOrder) {
+        const items = buildOrderPayload().items;
+        const order = await apiAppendOrderItems(appendToOrder.id, items);
+        toast.success("已追加商品");
+        handleOpen(false);
+        onCreated?.(order);
+      } else {
+        const order = await apiCreateOrder(buildOrderPayload());
+        toast.success("訂單已建立");
+        handleOpen(false);
+        onCreated?.(order);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -572,70 +595,146 @@ export function CreateOrderDialog({
               </div>
               {/* Cart items */}
               <Scroller className="flex-1 px-4 py-3 space-y-3">
+                {isAppend &&
+                  appendToOrder &&
+                  appendToOrder.lineItems.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        原有品項
+                      </p>
+                      {appendToOrder.lineItems
+                        .slice()
+                        .sort((a, b) => a.rank - b.rank)
+                        .map((li) => {
+                          const opts =
+                            (li.itemOptions as unknown as LineItemOption[]) ??
+                            [];
+                          const optsPrice = opts.reduce(
+                            (s, o) => s + o.price,
+                            0
+                          );
+                          const lineTotal =
+                            (Number(li.price) + optsPrice) * li.quantity;
+                          return (
+                            <div
+                              key={li.id}
+                              className="flex items-center gap-2 rounded px-2 py-2 bg-muted/50 opacity-70"
+                            >
+                              <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                <p className="text-base font-medium line-clamp-1">
+                                  {li.name}
+                                </p>
+                                {opts.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {opts.map((o, i) => (
+                                      <Badge
+                                        key={i}
+                                        variant="outline"
+                                        size="sm"
+                                      >
+                                        {`${o.name}${o.price > 0 ? ` +${o.price}` : ""}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-center shrink-0 text-sm">
+                                <span className="text-muted-foreground">
+                                  {`×${li.quantity}`}
+                                </span>
+                                <span className="font-semibold">
+                                  ${lineTotal}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      <Separator />
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        新增品項
+                      </p>
+                    </div>
+                  )}
                 {cart.length === 0 ? (
                   <p className="text-base text-muted-foreground text-center py-8">
                     點擊商品加入購物車
                   </p>
                 ) : (
-                  cart.map((item, idx) => (
-                    <div key={item.product.id} className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="flex-1 min-w-0  text-left bg-accent rounded transition-colors px-2"
-                          onClick={() => handleCartItemEdit(cart.indexOf(item))}
-                        >
-                          <div className="flex items-center justify-between px-1 py-2">
-                            <div className="flex flex-col gap-1 min-w-0">
-                              <p className="text-xl font-medium line-clamp-1">
-                                {item.product.name}
-                              </p>
-                              {item.productOptions.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {item.productOptions.map((option, i) => (
-                                    <Badge key={i} variant="secondary">
-                                      {`${option.name} ${option.price > 0 ? `+${option.price}` : ""}`}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
+                  cart.map((item, idx) => {
+                    const optionsPrice = item.productOptions.reduce(
+                      (s, o) => s + o.price,
+                      0
+                    );
+                    const unitPrice = item.price + optionsPrice;
+                    return (
+                      <div
+                        key={item.product.id}
+                        className="flex flex-col gap-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="flex-1 min-w-0  text-left bg-accent rounded transition-colors px-2"
+                            onClick={() =>
+                              handleCartItemEdit(cart.indexOf(item))
+                            }
+                          >
+                            <div className="flex items-center justify-between px-1 py-2">
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <p className="text-xl font-medium line-clamp-1">
+                                  {item.product.name}
+                                </p>
+                                {item.productOptions.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.productOptions.map((option, i) => (
+                                      <Badge key={i} variant="secondary">
+                                        {`${option.name} ${option.price > 0 ? `+${option.price}` : ""}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-center justify-between shrink-0 text-base">
+                                <span className="text-muted-foreground">
+                                  {`×${item.quantity}`}
+                                </span>
+                                <span className="font-semibold">
+                                  ${unitPrice}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex flex-col items-center justify-between shrink-0 text-base">
-                              <span className="text-muted-foreground">
-                                {`×${item.quantity}`}
-                              </span>
-                              <span className="font-semibold">
-                                ${item.price * item.quantity}
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeCartItem(idx)}
-                        >
-                          <Trash2 />
-                        </Button>
+                          </button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeCartItem(idx)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </Scroller>
 
               {/* Summary */}
               <div className="border-t px-4 py-4 space-y-3">
-                <div className="flex justify-between text-base">
-                  <Button size="lg" variant="outline">
-                    小計
-                  </Button>
-                  <span>${subtotal}</span>
-                </div>
-
-                <div className="flex justify-between text-base">
-                  <CalcDiscount subtotal={subtotal} setDiscount={setDiscount} />
-                  <span>${discount}</span>
-                </div>
+                {isAppend && Number(appendToOrder?.discount ?? 0) > 0 ? (
+                  <div className="flex justify-between text-base text-muted-foreground">
+                    <span>原折扣</span>
+                    <span>${Number(appendToOrder?.discount ?? 0)}</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-base">
+                    <CalcDiscount
+                      subtotal={subtotal}
+                      discount={discount}
+                      setDiscount={setDiscount}
+                    />
+                    <span>${discount}</span>
+                  </div>
+                )}
                 <Separator />
 
                 <div className="flex justify-between font-semibold">
@@ -662,21 +761,29 @@ export function CreateOrderDialog({
                   >
                     取消
                   </Button>
-                  <Checkout
-                    className="col-span-2"
-                    disabled={cart.length === 0}
-                    buildPayload={buildOrderPayload}
-                    total={total}
-                    onCreated={onCreated}
-                    onClose={handleClose}
-                  />
+                  {!isAppend && (
+                    <Checkout
+                      className="col-span-2"
+                      disabled={cart.length === 0}
+                      buildPayload={buildOrderPayload}
+                      total={total}
+                      onCreated={onCreated}
+                      onClose={handleClose}
+                    />
+                  )}
                   <Button
                     size="xl"
-                    className="col-span-2"
+                    className={isAppend ? "col-span-4" : "col-span-2"}
                     onClick={handleSubmit}
                     disabled={isSubmitting || cart.length === 0}
                   >
-                    {isSubmitting ? "建立中..." : "稍後結帳"}
+                    {isSubmitting ? (
+                      <Spinner />
+                    ) : isAppend ? (
+                      "確認追加"
+                    ) : (
+                      "稍後結帳"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -685,7 +792,9 @@ export function CreateOrderDialog({
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <div className="flex items-center gap-3 px-6 py-3 border-b">
                 <DialogTitle className="text-lg font-semibold">
-                  新增訂單
+                  {isAppend
+                    ? `追加商品${appendToOrder?.takeNumber ? ` #${appendToOrder.takeNumber}` : ""}`
+                    : "新增訂單"}
                 </DialogTitle>
                 <Input
                   size="lg"

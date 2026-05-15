@@ -5,6 +5,7 @@ model LineItem {
   cost          Decimal  @db.Decimal(10, 2)
   name          String   @db.VarChar(255)
   quantity      Int      @default(1)
+  fulfilledQuantity Int  @default(0) @map("fulfilled_quantity")
   rank          Int      @default(0)
   orderId       String   @map("order_id") @db.Uuid
   productId     String?  @map("product_id") @db.Uuid

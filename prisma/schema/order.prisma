@@ -13,6 +13,7 @@ enum OrderFinancialStatus {
 
 enum OrderFulfillmentStatus {
   pending
+  partiallyFulfilled
   fulfilled
   returned
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
 import { apiGetOrders, apiGetOrdersReport } from "@/app/api/orders/api";
 import type { Order, OrdersReport } from "@/modules/orders/types";
@@ -43,7 +43,7 @@ export default function OrdersPage() {
     });
   }, [pageIndex, pageSize, showDeleted, range]);
 
-  useEffect(() => {
+  const reloadStats = useCallback(() => {
     startStatsLoading(async () => {
       const s = await apiGetOrdersReport({
         showDeleted,
@@ -53,6 +53,10 @@ export default function OrdersPage() {
       setStats(s);
     });
   }, [showDeleted, range]);
+
+  useEffect(() => {
+    reloadStats();
+  }, [reloadStats]);
 
   const newOrdersBatch = useNewOrdersStore((s) => s.batch);
   const newOrdersVersion = useNewOrdersStore((s) => s.version);
@@ -70,6 +74,7 @@ export default function OrdersPage() {
       });
       return additions.length > 0 ? [...additions, ...prev] : prev;
     });
+    reloadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newOrdersVersion]);
 
@@ -87,14 +92,16 @@ export default function OrdersPage() {
 
   function handleUpdated(updated: Order) {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+    reloadStats();
   }
 
   function handleDeleted(id: string) {
     setOrders((prev) => prev.filter((o) => o.id !== id));
+    reloadStats();
   }
 
   return (
-    <div className="p-6 h-full flex flex-col">
+    <div className="p-6 flex flex-col">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold mb-2">訂單列表</h1>
         <CreateOrderDialog
@@ -105,6 +112,7 @@ export default function OrdersPage() {
       <div className="flex items-end gap-2 mb-4 overflow-x-auto whitespace-nowrap">
         <DateRangeField
           value={range}
+          clamp={false}
           onChange={(next) => {
             setPageIndex(0);
             setRange(next);

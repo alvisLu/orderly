@@ -14,7 +14,6 @@ export type Order = Prisma.OrderGetPayload<{
 export type LineItemOption = {
   name: string;
   price: number;
-  quantity: number;
   productTypeName: string;
 };
 

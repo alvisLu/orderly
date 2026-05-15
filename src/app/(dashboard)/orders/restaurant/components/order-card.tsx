@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import dayjs from "dayjs";
+import Big from "big.js";
 import {
   Printer,
   Utensils,
@@ -13,6 +14,7 @@ import {
   ChefHat,
   Copy,
   NotebookPen,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +34,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { apiGetOrder, apiUpdateOrder, apiDeleteOrder } from "@/app/api/orders/api";
+import {
+  apiGetOrder,
+  apiUpdateOrder,
+  apiDeleteOrder,
+} from "@/app/api/orders/api";
 import { CheckoutDialog } from "@/app/(dashboard)/orders/components/checkout-dialog";
 import { CreateOrderDialog } from "@/app/(dashboard)/orders/components/create-order-dialog";
 import { useNewOrdersStore } from "@/store/new-orders";
@@ -95,15 +101,17 @@ const FINANCIAL_VARIANT: Record<
 
 const FULFILLMENT_LABEL: Record<OrderFulfillmentStatus, string> = {
   pending: "待出",
+  partiallyFulfilled: "部分",
   fulfilled: "已出",
   returned: "退貨",
 };
 
 const FULFILLMENT_VARIANT: Record<
   OrderFulfillmentStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  "default" | "secondary" | "destructive" | "outline" | "warning"
 > = {
   pending: "outline",
+  partiallyFulfilled: "warning",
   fulfilled: "secondary",
   returned: "destructive",
 };
@@ -149,12 +157,14 @@ function CardVisual({
   order,
   onUpdated,
   onDeleted,
+  onRefresh,
   selected,
   onToggleSelect,
 }: {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }) {
@@ -171,6 +181,7 @@ function CardVisual({
       const updated = await apiUpdateOrder(order.id, { status: "processing" });
       onUpdated(updated);
       toast.success("已接單");
+      onRefresh?.();
     } catch {
       toast.error("接單失敗");
     } finally {
@@ -185,6 +196,7 @@ function CardVisual({
       onUpdated(updated);
       setLeaveOpen(false);
       toast.success("已離場");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -260,20 +272,17 @@ function CardVisual({
           {order.source === "qrcode" ? "QR" : "店面"}
           {order.takeNumber && ` #${order.takeNumber}`}
         </span>
-        {!inPopup &&
-          onToggleSelect &&
-          order.financialStatus === "pending" &&
-          order.fulfillmentStatus === "pending" && (
-            <Checkbox
-              variant="outline"
-              size="lg"
-              checked={selected}
-              onClick={(e) => e.stopPropagation()}
-              onCheckedChange={() => onToggleSelect(order.id)}
-              aria-label="選擇訂單"
-              className="bg-background"
-            />
-          )}
+        {!inPopup && onToggleSelect && order.financialStatus === "pending" && (
+          <Checkbox
+            variant="outline"
+            size="lg"
+            checked={selected}
+            onClick={(e) => e.stopPropagation()}
+            onCheckedChange={() => onToggleSelect(order.id)}
+            aria-label="選擇訂單"
+            className="bg-background"
+          />
+        )}
       </div>
 
       {/* Content */}
@@ -298,9 +307,6 @@ function CardVisual({
         {/* Info row: person count, date, print */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="border border-border rounded px-2 py-0.5 text-lg font-bold">
-              {order.lineItems.reduce((s, i) => s + i.quantity, 0)}人
-            </span>
             <span className="text-muted-foreground text-base">
               {created.format("MM/DD")}-{created.format("HH:mm")}
             </span>
@@ -323,21 +329,28 @@ function CardVisual({
                 <div key={item.id} className="space-y-1 border-b">
                   <div className="flex items-start ">
                     {/* Name */}
-                    <div className="flex-1 flex items-baseline justify-between gap-2 pr-2">
-                      <span className="text-lg font-medium leading-tight">
+                    <div className="flex-1 flex items-baseline gap-2 pr-2">
+                      <span className="flex-1 text-lg font-medium leading-tight">
                         {item.name}
                       </span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span className="w-10 text-xs font-normal text-muted-foreground text-right tabular-nums">
                         {dayjs(item.createdAt).format("HH:mm")}
+                      </span>
+                      <span className="w-10 text-sm font-normal text-muted-foreground text-right tabular-nums">
+                        {item.fulfilledQuantity}/{item.quantity}
                       </span>
                     </div>
                     {/* Price & qty */}
-                    <div className="text-right shrink-0 min-w-[65px]">
+                    <div className="text-right shrink-0 min-w-[65px] pb-1">
                       <div className="text-base font-semibold">
-                        ${Number(item.price) * item.quantity}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.quantity}/{item.quantity}
+                        $
+                        {options
+                          .reduce(
+                            (s, o) => s.plus(o.price),
+                            new Big(item.price.toString())
+                          )
+                          .times(item.quantity)
+                          .toNumber()}
                       </div>
                     </div>
                   </div>
@@ -347,7 +360,8 @@ function CardVisual({
                     <div className="flex flex-wrap gap-1 pb-3">
                       {options.map((opt, i) => (
                         <Badge key={i} variant="outline" size="sm">
-                          {opt.name}${opt.price}
+                          {opt.name}
+                          {opt.price ? ` +$${opt.price}` : ""}
                         </Badge>
                       ))}
                     </div>
@@ -355,6 +369,15 @@ function CardVisual({
                 </div>
               );
             })}
+
+          {Number(order.discount) > 0 && (
+            <div className="flex items-center justify-between text-base">
+              <span className="font-medium">折扣</span>
+              <span className="font-semibold text-destructive min-w-[65px] text-right">
+                -${Number(order.discount)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Client note */}
@@ -399,7 +422,10 @@ function CardVisual({
             order={order}
             open={checkoutOpen}
             onOpenChange={setCheckoutOpen}
-            onUpdated={onUpdated}
+            onUpdated={(o) => {
+              onUpdated(o);
+              onRefresh?.();
+            }}
           />
 
           <LeaveConfirmDialog
@@ -415,6 +441,7 @@ function CardVisual({
             onOpenChange={setPopupOpen}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
+            onRefresh={onRefresh}
           />
         </>
       )}
@@ -461,6 +488,7 @@ interface Props {
   order: Order;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }
@@ -469,6 +497,7 @@ export function OrderCard({
   order,
   onUpdated,
   onDeleted,
+  onRefresh,
   selected,
   onToggleSelect,
 }: Props) {
@@ -477,6 +506,7 @@ export function OrderCard({
       order={order}
       onUpdated={onUpdated}
       onDeleted={onDeleted}
+      onRefresh={onRefresh}
       selected={selected}
       onToggleSelect={onToggleSelect}
     />
@@ -489,6 +519,7 @@ interface PopupProps {
   onOpenChange: (open: boolean) => void;
   onUpdated: (order: Order) => void;
   onDeleted: (id: string) => void;
+  onRefresh?: () => void | Promise<void>;
   showDeleted?: boolean;
 }
 
@@ -498,6 +529,7 @@ export function OrderCardPopup({
   onOpenChange,
   onUpdated,
   onDeleted,
+  onRefresh,
   showDeleted,
 }: PopupProps) {
   const [data, setData] = useState<Order>(order);
@@ -506,6 +538,7 @@ export function OrderCardPopup({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [appendOpen, setAppendOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState(order.note ?? "");
   const [isSavingNote, setIsSavingNote] = useState(false);
@@ -530,6 +563,7 @@ export function OrderCardPopup({
       setLeaveOpen(false);
       onOpenChange(false);
       toast.success("已離場");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -542,8 +576,10 @@ export function OrderCardPopup({
     try {
       const updated = await apiUpdateOrder(data.id, { note: noteText });
       onUpdated(updated);
+      setData(updated);
       setNoteOpen(false);
       toast.success("已更新備註");
+      onRefresh?.();
     } catch {
       toast.error("更新失敗");
     } finally {
@@ -557,7 +593,9 @@ export function OrderCardPopup({
         fulfillmentStatus: "fulfilled",
       });
       onUpdated(updated);
+      setData(updated);
       toast.success("已出餐");
+      onRefresh?.();
     } catch {
       toast.error("出餐失敗");
     }
@@ -581,6 +619,7 @@ export function OrderCardPopup({
       setVoidOpen(false);
       onOpenChange(false);
       toast.success("訂單已作廢");
+      onRefresh?.();
     } catch {
       toast.error("作廢失敗");
     } finally {
@@ -596,6 +635,7 @@ export function OrderCardPopup({
       onOpenChange(false);
       onDeleted(data.id);
       toast.success("訂單已刪除");
+      onRefresh?.();
     } catch {
       toast.error("刪除失敗");
     } finally {
@@ -669,7 +709,10 @@ export function OrderCardPopup({
                   variant="outline"
                   size="lg"
                   onClick={handleFulfill}
-                  disabled={data.fulfillmentStatus !== "pending"}
+                  disabled={
+                    data.fulfillmentStatus !== "pending" &&
+                    data.fulfillmentStatus !== "partiallyFulfilled"
+                  }
                 >
                   <Truck />
                   出餐
@@ -681,6 +724,16 @@ export function OrderCardPopup({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAppendOpen(true);
+                        onOpenChange(false);
+                      }}
+                      disabled={data.financialStatus !== "pending"}
+                    >
+                      <Plus />
+                      追加商品
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setVoidOpen(true)}
                       disabled={data.status === "cancelled"}
@@ -708,7 +761,11 @@ export function OrderCardPopup({
         order={data}
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
-        onUpdated={onUpdated}
+        onUpdated={(o) => {
+          onUpdated(o);
+          setData(o);
+          onRefresh?.();
+        }}
       />
 
       <LeaveConfirmDialog
@@ -797,7 +854,21 @@ export function OrderCardPopup({
         open={cloneOpen}
         onOpenChange={setCloneOpen}
         initialOrder={data}
-        onCreated={(o) => useNewOrdersStore.getState().publish([o])}
+        onCreated={(o) => {
+          useNewOrdersStore.getState().publish([o]);
+          onRefresh?.();
+        }}
+      />
+
+      <CreateOrderDialog
+        open={appendOpen}
+        onOpenChange={setAppendOpen}
+        appendToOrder={data}
+        onCreated={(o) => {
+          setData(o);
+          onUpdated(o);
+          onRefresh?.();
+        }}
       />
     </>
   );

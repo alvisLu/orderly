@@ -41,6 +41,7 @@ const fulfillmentMap: Record<
   }
 > = {
   pending: { label: "待出餐", variant: "default" },
+  partiallyFulfilled: { label: "部分出餐", variant: "outline" },
   fulfilled: { label: "已出餐", variant: "secondary" },
   returned: { label: "已退貨", variant: "destructive" },
 };
