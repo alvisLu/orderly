@@ -60,7 +60,7 @@ export default function ExpenseReportPage() {
   const summary = useMemo(() => {
     if (!expenses) return null;
     const totalSpent = expenses.reduce((s, e) => s + Number(e.price), 0);
-    return { totalSpent };
+    return { totalSpent, count: expenses.length };
   }, [expenses]);
 
   function setMonth(target: dayjs.Dayjs) {
@@ -122,10 +122,14 @@ export default function ExpenseReportPage() {
           {summary && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
               <Stat>
-                <StatLabel>總支出</StatLabel>
+                <StatLabel>合計</StatLabel>
                 <StatValue className="text-lg text-destructive">
                   -{Math.round(summary.totalSpent).toLocaleString()}
                 </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>筆數合計</StatLabel>
+                <StatValue className="text-lg">{summary.count}</StatValue>
               </Stat>
             </div>
           )}

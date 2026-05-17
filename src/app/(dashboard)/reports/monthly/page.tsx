@@ -63,15 +63,27 @@ export default function MonthlyReportPage() {
 
   const summary = useMemo(() => {
     if (!reports) return null;
-    const days = reports.map((r) => ({
-      net: r.byGateway.reduce((s, g) => s + (g.totalIn - g.totalOut), 0),
-      hasIncome: r.byGateway.some((g) => g.totalIn > 0),
-    }));
+    let totalIn = 0;
+    let totalOut = 0;
+    const days = reports.map((r) => {
+      let dayIn = 0;
+      let dayOut = 0;
+      for (const g of r.byGateway) {
+        dayIn += g.totalIn;
+        dayOut += g.totalOut;
+      }
+      totalIn += dayIn;
+      totalOut += dayOut;
+      return { net: dayIn - dayOut, hasIncome: dayIn > 0 };
+    });
     const working = days.filter((d) => d.hasIncome);
     const totalNet = working.reduce((s, d) => s + d.net, 0);
     const dailyAverage = working.length > 0 ? totalNet / working.length : 0;
     const aboveAverageDays = working.filter((d) => d.net > dailyAverage).length;
     return {
+      totalIn,
+      totalOut,
+      net: totalIn - totalOut,
       workingDays: working.length,
       dailyAverage,
       aboveAverageDays,
@@ -152,7 +164,25 @@ export default function MonthlyReportPage() {
             ))}
           </div>
           {summary && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-6">
+              <Stat>
+                <StatLabel>收入合計</StatLabel>
+                <StatValue className="text-lg text-green-600 dark:text-green-400">
+                  +{Math.round(summary.totalIn).toLocaleString()}
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>退款合計</StatLabel>
+                <StatValue className="text-lg text-destructive">
+                  -{Math.round(summary.totalOut).toLocaleString()}
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>合計</StatLabel>
+                <StatValue className="text-lg">
+                  {Math.round(summary.net).toLocaleString()}
+                </StatValue>
+              </Stat>
               <Stat>
                 <StatLabel>工作日</StatLabel>
                 <StatValue className="text-lg">

@@ -52,6 +52,12 @@ export function DateField({
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
+            captionLayout="dropdown"
+            startMonth={dayjs().subtract(5, "year").startOf("year").toDate()}
+            endMonth={dayjs().endOf("year").toDate()}
+            formatters={{
+              formatMonthDropdown: (date) => `${date.getMonth() + 1}月`,
+            }}
             selected={value ? dayjs(value).toDate() : undefined}
             defaultMonth={value ? dayjs(value).toDate() : undefined}
             onSelect={(d) => {
