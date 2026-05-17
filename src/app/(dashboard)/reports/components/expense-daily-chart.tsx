@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -23,6 +22,37 @@ const PALETTE = [
 ];
 
 const UNCATEGORIZED = "未分類";
+
+function LegendWithAmount({
+  payload,
+}: {
+  payload?: ReadonlyArray<{
+    color?: string;
+    payload?: { name?: string; value?: number };
+  }>;
+}) {
+  if (!payload?.length) return null;
+  return (
+    <div className="flex flex-col gap-1 pt-3 text-xs">
+      {payload.map((item, i) => {
+        const name = item.payload?.name ?? "";
+        const value = item.payload?.value ?? 0;
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <div
+              className="h-2 w-2 shrink-0 rounded-[2px]"
+              style={{ backgroundColor: item.color }}
+            />
+            <span className="flex-1 truncate">{name}</span>
+            <span className="font-mono tabular-nums text-destructive">
+              -{Math.round(value).toLocaleString()}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function ExpenseDailyChart({
   expenses,
@@ -83,7 +113,7 @@ export function ExpenseDailyChart({
                 innerRadius={60}
                 strokeWidth={2}
               />
-              <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+              <ChartLegend content={<LegendWithAmount />} />
             </PieChart>
           </ChartContainer>
         )}
