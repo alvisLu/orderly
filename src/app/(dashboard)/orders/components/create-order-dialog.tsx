@@ -28,12 +28,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Scroller } from "@/components/ui/scroller";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Product } from "@/modules/products/types";
 import type {
   Order,
   LineItemOption,
   CreateOrderInput,
 } from "@/modules/orders/types";
+import type { Table } from "@/modules/tables/types";
 import {
   ProductConfigSheet,
   type ProductConfigResult,
@@ -42,6 +50,7 @@ import { Calculator } from "@/components/shared/calculator";
 import Big from "big.js";
 import { Payment } from "@/generated/prisma/client";
 import { apiGetPayments } from "@/app/api/payments/api";
+import { apiGetTables } from "@/app/api/tables/api";
 interface CalcDiscountProps {
   subtotal: number;
   discount: number;
@@ -316,6 +325,8 @@ export function CreateOrderDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? openProp : internalOpen;
   const [products, setProducts] = useState<Product[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [tableName, setTableName] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -336,6 +347,9 @@ export function CreateOrderDialog({
   useEffect(() => {
     if (!open) return;
     apiGetProducts({ limit: 100, page: 1 }).then((r) => setProducts(r.data));
+    apiGetTables({ limit: 100, page: 1 }).then((r) =>
+      setTables(r.data.filter((t) => t.isActive))
+    );
   }, [open]);
 
   const categories = Array.from(
@@ -361,6 +375,7 @@ export function CreateOrderDialog({
       setCategoryId(null);
       setIsSubmitting(false);
       setNote("");
+      setTableName("");
     }
   }
 
@@ -390,6 +405,7 @@ export function CreateOrderDialog({
     setDiscount(Number(initialOrder.discount ?? 0));
     setIsDining(initialOrder.isDining ?? true);
     setNote(initialOrder.note ?? "");
+    setTableName(initialOrder.tableName ?? "");
     seededRef.current = true;
   }, [open, initialOrder, products]);
 
@@ -528,6 +544,7 @@ export function CreateOrderDialog({
       discount,
       isDining,
       note: note || undefined,
+      tableName: tableName || undefined,
       source: "store",
       gateway,
       financialStatus: opts?.selectedPayment ? "paid" : undefined,
@@ -587,9 +604,28 @@ export function CreateOrderDialog({
                     {cart.reduce((s, i) => s + i.quantity, 0)}
                   </Badge>
                 )}
+
                 <span className="font-semibold text-base">項</span>
 
-                <Button size="xl" className="ml-auto">
+                <Select
+                  value={tableName || "__none__"}
+                  onValueChange={(v) => setTableName(v === "__none__" ? "" : v)}
+                  disabled={isAppend}
+                >
+                  <SelectTrigger size="lg" className="ml-auto">
+                    <SelectValue placeholder="桌號" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">無桌號</SelectItem>
+                    {tables.map((t) => (
+                      <SelectItem key={t.id} value={t.name}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button size="xl">
                   <Trash2 /> 清空
                 </Button>
               </div>

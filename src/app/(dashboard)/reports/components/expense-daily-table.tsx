@@ -8,6 +8,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -65,6 +66,23 @@ export function ExpenseDailyTable({
                   </TableRow>
                 ))}
               </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-medium">合計</TableCell>
+                  <TableCell />
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
+                    {expenses.length} 筆
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-destructive">
+                    -
+                    {Math.round(
+                      expenses.reduce((s, e) => s + Number(e.price), 0)
+                    ).toLocaleString()}
+                  </TableCell>
+                  <TableCell />
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
             </Table>
           </div>
         )}

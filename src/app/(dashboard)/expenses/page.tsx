@@ -2,20 +2,10 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import dayjs from "@/lib/dayjs";
-import { ChevronDownIcon } from "lucide-react";
 import { toast } from "sonner";
 import { apiDeleteExpense, apiGetExpenses } from "@/app/api/expenses/api";
 import type { Expenses } from "@/modules/expenses/types";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DateNavigator, DateRangeField } from "@/components/shared/date-fields";
 import {
   Dialog,
   DialogClose,
@@ -26,8 +16,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CreateExpenseDialog } from "./components/create-expense-dialog";
+import { DateRangeFilterBar } from "./components/date-range-filter-bar";
 import { EditExpenseDialog } from "./components/edit-expense-dialog";
 import { ExpensesTable } from "./components/expenses-table";
+import { MonthPicker } from "./components/month-picker";
+import { SortDirectionPicker } from "./components/sort-direction-picker";
 
 function monthRange(year: number, month: number /* 1-12 */) {
   const start = dayjs(`${year}-${String(month).padStart(2, "0")}-01`);
@@ -45,6 +38,7 @@ export default function ExpensesPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [range, setRange] = useState(initialRange);
+  const [sort, setSort] = useState<"asc" | "desc">("asc");
 
   const [editing, setEditing] = useState<Expenses | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -58,13 +52,14 @@ export default function ExpensesPage() {
       const res = await apiGetExpenses({
         page: pageIndex + 1,
         limit: pageSize,
+        sort,
         from: dayjs.utc(range.from).toDate(),
         to: dayjs.utc(range.to).endOf("day").toDate(),
       });
       setExpenses(res.data);
       setTotal(res.total);
     });
-  }, [pageIndex, pageSize, range, refreshKey]);
+  }, [pageIndex, pageSize, range, sort, refreshKey]);
 
   const selectedYear = useMemo(() => dayjs(range.from).year(), [range.from]);
   const selectedMonth = useMemo(
@@ -119,49 +114,25 @@ export default function ExpensesPage() {
         <CreateExpenseDialog onCreated={() => setRefreshKey((k) => k + 1)} />
       </div>
 
-      <div className="flex flex-nowrap items-end gap-2 mb-4 overflow-x-auto">
-        <DateRangeField
-          clamp={false}
-          value={range}
+      <DateRangeFilterBar
+        range={range}
+        onChange={(next) => {
+          setPageIndex(0);
+          setRange(next);
+        }}
+        unit="month"
+        onOffset={applyMonthOffset}
+        onCurrent={goToCurrentMonth}
+      >
+        <MonthPicker value={selectedMonth} onChange={handleMonthChange} />
+        <SortDirectionPicker
+          value={sort}
           onChange={(next) => {
             setPageIndex(0);
-            setRange(next);
+            setSort(next);
           }}
         />
-
-        <DateNavigator
-          unit="month"
-          onOffset={applyMonthOffset}
-          onCurrent={goToCurrentMonth}
-        />
-
-        <div className="space-y-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 w-20 justify-between">
-                {selectedMonth}月
-                <ChevronDownIcon className="ml-1 h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-20 w-20">
-              <DropdownMenuRadioGroup
-                value={String(selectedMonth)}
-                onValueChange={(val) => handleMonthChange(Number(val))}
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <DropdownMenuRadioItem
-                    key={m}
-                    value={String(m)}
-                    className="py-1 text-sm"
-                  >
-                    {m}月
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      </DateRangeFilterBar>
 
       <div className="flex-1 min-h-0">
         <ExpensesTable

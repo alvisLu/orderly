@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "@/lib/dayjs";
 import { RefreshCw } from "lucide-react";
 import {
@@ -10,12 +10,10 @@ import {
 import type { DailyOrdersReport } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Stat, StatLabel, StatValue } from "@/components/ui/stat";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import {
-  DateField,
-  DateNavigator,
-} from "@/components/shared/date-fields";
+import { DateField, DateNavigator } from "@/components/shared/date-fields";
 import { GatewayStat } from "../components/gateway-stat";
 import { usePaymentOrder } from "../hooks/use-payment-order";
 
@@ -63,6 +61,13 @@ export default function DailyReportPage() {
       .filter((g) => g.totalIn > 0 || g.totalOut > 0)
       .sort((a, b) => getPaymentRank(a.name) - getPaymentRank(b.name)) ?? [];
 
+  const summary = useMemo(() => {
+    if (rows.length === 0) return null;
+    const totalIn = rows.reduce((s, g) => s + g.totalIn, 0);
+    const totalOut = rows.reduce((s, g) => s + g.totalOut, 0);
+    return { totalIn, totalOut, net: totalIn - totalOut };
+  }, [rows]);
+
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -107,10 +112,34 @@ export default function DailyReportPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {rows.map((g) => (
-            <GatewayStat key={g.name} gateway={g} />
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 ">
+            {rows.map((g) => (
+              <GatewayStat key={g.name} gateway={g} />
+            ))}
+          </div>
+          {summary && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-6">
+              <Stat>
+                <StatLabel>收入合計</StatLabel>
+                <StatValue className="text-lg text-green-600 dark:text-green-400">
+                  +{Math.round(summary.totalIn).toLocaleString()}
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>退款合計</StatLabel>
+                <StatValue className="text-lg text-destructive">
+                  -{Math.round(summary.totalOut).toLocaleString()}
+                </StatValue>
+              </Stat>
+              <Stat>
+                <StatLabel>合計</StatLabel>
+                <StatValue className="text-lg">
+                  {Math.round(summary.net).toLocaleString()}
+                </StatValue>
+              </Stat>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, startTransition } from "react";
-import { ArrowLeft, Clock, RefreshCw } from "lucide-react";
+import { Armchair, ArrowLeft, Clock, RefreshCw } from "lucide-react";
 import dayjs from "dayjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -86,8 +86,15 @@ export function OrderHistory({ onBack }: { onBack: () => void }) {
                     {order.takeNumber && (
                       <Badge>取餐號 #{order.takeNumber}</Badge>
                     )}
-                  </div>
 
+                    {order.tableName && (
+                      <Badge>
+                        {" "}
+                        <Armchair className="size-4" />
+                        {order.tableName}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <DiningBadge isDining={order.isDining} />
                     <OrderStatusBadge
