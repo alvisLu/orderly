@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,19 +52,42 @@ type FormValues = z.infer<typeof schema>;
 
 interface Props {
   onCreated: (expense: Expenses) => void;
+  initialFrom?: Expenses;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateExpenseDialog({ onCreated }: Props) {
-  const [open, setOpen] = useState(false);
+export function CreateExpenseDialog({
+  onCreated,
+  initialFrom,
+  open: controlledOpen,
+  onOpenChange,
+}: Props) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  function setOpen(next: boolean) {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
 
-  const defaultValues: Partial<FormInput> = {
-    expendAt: dayjs().format("YYYY-MM-DD"),
-    expendType: undefined,
-    payMethod: undefined,
-    price: 0,
-    reimburse: "",
-    description: "",
-  };
+  const defaultValues: Partial<FormInput> = initialFrom
+    ? {
+        expendAt: dayjs(initialFrom.expendAt).format("YYYY-MM-DD"),
+        expendType: initialFrom.expendType as FormInput["expendType"],
+        payMethod: initialFrom.payMethod as FormInput["payMethod"],
+        price: Number(initialFrom.price),
+        reimburse: initialFrom.reimburse ?? "",
+        description: initialFrom.description ?? "",
+      }
+    : {
+        expendAt: dayjs().format("YYYY-MM-DD"),
+        expendType: undefined,
+        payMethod: undefined,
+        price: 0,
+        reimburse: "",
+        description: "",
+      };
 
   const {
     register,
@@ -76,6 +99,11 @@ export function CreateExpenseDialog({ onCreated }: Props) {
     resolver: zodResolver(schema),
     defaultValues,
   });
+
+  useEffect(() => {
+    if (open) reset(defaultValues);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialFrom]);
 
   async function onSubmit(values: FormValues) {
     try {
@@ -96,14 +124,18 @@ export function CreateExpenseDialog({ onCreated }: Props) {
     }
   }
 
+  const title = initialFrom ? "複製支出" : "新增支出";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg">新增支出</Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button size="lg">新增支出</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">新增支出</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
@@ -250,7 +282,7 @@ export function CreateExpenseDialog({ onCreated }: Props) {
               取消
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "新增中..." : "新增"}
+              {isSubmitting ? "處理中..." : initialFrom ? "複製" : "新增"}
             </Button>
           </div>
         </form>
