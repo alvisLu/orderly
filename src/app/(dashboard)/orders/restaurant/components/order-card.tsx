@@ -15,6 +15,7 @@ import {
   Copy,
   NotebookPen,
   Plus,
+  Armchair,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -264,7 +265,7 @@ function CardVisual({
               }
             : undefined
         }
-        className={`${headerBg} ${headerText} px-4 py-2 h-12 flex items-center justify-between ${
+        className={`${headerBg} ${headerText} px-4 py-2 h-12 flex items-center justify-between relative ${
           onHeaderClick ? "cursor-pointer" : ""
         }`}
       >
@@ -272,6 +273,12 @@ function CardVisual({
           {order.source === "qrcode" ? "QR" : "店面"}
           {order.takeNumber && ` #${order.takeNumber}`}
         </span>
+        {order.tableName && (
+          <span className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm flex items-center gap-1 border border-current rounded-sm px-2 py-0.5">
+            <Armchair className="size-4" />
+            {order.tableName}
+          </span>
+        )}
         {!inPopup && onToggleSelect && order.financialStatus === "pending" && (
           <Checkbox
             variant="outline"
