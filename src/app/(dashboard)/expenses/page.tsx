@@ -42,6 +42,7 @@ export default function ExpensesPage() {
 
   const [editing, setEditing] = useState<Expenses | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [cloning, setCloning] = useState<Expenses | null>(null);
   const [deleting, setDeleting] = useState<Expenses | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -139,6 +140,7 @@ export default function ExpensesPage() {
           data={expenses}
           isLoading={isLoading}
           onEdit={handleEdit}
+          onClone={setCloning}
           onDelete={setDeleting}
           serverPagination={{
             total,
@@ -161,6 +163,15 @@ export default function ExpensesPage() {
           if (!open) setEditing(null);
         }}
         onUpdated={handleUpdated}
+      />
+
+      <CreateExpenseDialog
+        open={!!cloning}
+        onOpenChange={(open) => {
+          if (!open) setCloning(null);
+        }}
+        initialFrom={cloning ?? undefined}
+        onCreated={() => setRefreshKey((k) => k + 1)}
       />
 
       <Dialog

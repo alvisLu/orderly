@@ -1,6 +1,6 @@
 {
   "name": "orderly",
-  "version": "0.1.517a",
+  "version": "0.1.517b",
   "private": true,
   "scripts": {
     "dev": "next dev",
