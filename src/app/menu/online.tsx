@@ -409,7 +409,7 @@ export function MenuClient({
           </DialogHeader>
           <Textarea
             autoFocus
-            placeholder="例：不加冰、少糖"
+            placeholder="例：不要蔥"
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             rows={4}
