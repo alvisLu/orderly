@@ -368,7 +368,7 @@ export function MenuClient({
                 readOnly
                 tabIndex={-1}
                 inputMode="none"
-                placeholder="備註（例：不加冰、少糖）"
+                placeholder="備註（例：不要蔥）"
                 value={userNote}
                 rows={3}
                 className="text-base resize-none"
