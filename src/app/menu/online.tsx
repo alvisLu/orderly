@@ -29,7 +29,6 @@ import { OrderSuccess } from "./components/order-success";
 import { ProductOptionDialog } from "./components/product-option-dialog";
 import { saveMyOrderId } from "./storage";
 
-const NAV_HEIGHT = 60;
 const UNCATEGORIZED_ID = "uncategorized";
 
 interface CartItem {
@@ -179,7 +178,7 @@ export function MenuClient({
   }
 
   return (
-    <div className="flex flex-col h-dvh bg-primary/5">
+    <div className="flex flex-col h-dvh bg-primary/10">
       {/* Table name (fixed) */}
       <div className="shrink-0 px-4 py-3 flex items-center justify-between">
         <p className="text-2xl font-semibold text-primary">{store?.name}</p>
@@ -201,7 +200,7 @@ export function MenuClient({
       >
         {/* Category nav (fixed) */}
         <ScrollSpyNav
-          style={{ height: NAV_HEIGHT }}
+          style={{ height: 48 }}
           className="shrink-0 z-10 bg-background overflow-x-auto flex-nowrap items-center px-2 shadow-sm"
         >
           {groups.map((g) => (
@@ -219,7 +218,7 @@ export function MenuClient({
         <div ref={setScrollEl} className="flex-1 overflow-y-auto min-h-0 pb-16">
           <ScrollSpyViewport className="gap-0">
             {groups.map((g) => (
-              <ScrollSpySection key={g.id} value={g.id} className="py-2">
+              <ScrollSpySection key={g.id} value={g.id} className="py-1">
                 {/* Category header */}
                 <div className="px-2">
                   <span className="inline-block text-xl font-bold text-primary px-2 py-0.5 w-full">
@@ -228,7 +227,7 @@ export function MenuClient({
                 </div>
 
                 {/* Product rows */}
-                <div className="flex flex-col gap-4 px-2">
+                <div className="flex flex-col gap-2 px-2">
                   {g.products.map((product) => (
                     <Card
                       key={product.id}
@@ -257,7 +256,7 @@ export function MenuClient({
                             ${Number(product.price)}
                           </p>
                           {product.description && (
-                            <p className="text-lg text-muted-foreground mt-1 line-clamp-2 whitespace-pre-line">
+                            <p className="text-md text-muted-foreground mt-1 line-clamp-2 whitespace-pre-line">
                               {product.description}
                             </p>
                           )}
@@ -273,12 +272,12 @@ export function MenuClient({
       </ScrollSpy>
 
       {/* Bottom cart bar */}
-      <div className="px-4 py-2.5">
+      <div className="p-2">
         <Button
-          size="2xl"
+          size="xl"
           onClick={() => setCartOpen(true)}
           disabled={cart.length <= 0}
-          className="w-full"
+          className="w-full text-lg font-bold"
         >
           {`查看購物車(${totalQuantity}) $${subtotal}`}
         </Button>
@@ -369,7 +368,7 @@ export function MenuClient({
                 readOnly
                 tabIndex={-1}
                 inputMode="none"
-                placeholder="備註（例：不加冰、少糖）"
+                placeholder="備註（例：不要蔥）"
                 value={userNote}
                 rows={3}
                 className="text-base resize-none"
@@ -410,7 +409,7 @@ export function MenuClient({
           </DialogHeader>
           <Textarea
             autoFocus
-            placeholder="例：不加冰、少糖"
+            placeholder="例：不要蔥"
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             rows={4}

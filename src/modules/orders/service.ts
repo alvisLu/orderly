@@ -1,5 +1,8 @@
 import Big from "big.js";
+import { after } from "next/server";
 import dayjs from "@/lib/dayjs";
+import { prisma } from "@/lib/prisma";
+import { sendDiscordOrderNotification } from "@/lib/discord-notification";
 import {
   appendOrderLineItems,
   findAllOrders,
@@ -177,7 +180,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       }
     : undefined;
 
-  return insertOrder({
+  const order = await insertOrder({
     ...rest,
     discount,
     lineItems,
@@ -189,6 +192,29 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       >[0]["transactions"],
     }),
   });
+
+  if (rest.source !== "store") {
+    after(async () => {
+      const store = await prisma.store.findFirst({
+        select: { discordWebhookUrl: true },
+      });
+      if (!store?.discordWebhookUrl) return;
+      await sendDiscordOrderNotification(store.discordWebhookUrl, {
+        takeNumber: order.takeNumber,
+        total: order.total.toString(),
+        tableName: order.tableName,
+        userNote: order.userNote,
+        createdAt: order.createdAt,
+        lineItems: order.lineItems.map((li) => ({
+          productName: li.product?.name ?? "找不到商品名稱",
+          quantity: li.quantity,
+          price: li.price.toString(),
+        })),
+      });
+    });
+  }
+
+  return order;
 }
 
 export async function editOrder(
