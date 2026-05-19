@@ -18,6 +18,7 @@ import {
   softDeleteOrder,
 } from "./repository";
 import type {
+  CreateOnlineOrderInput,
   CreateOrderInput,
   CreateOrderItemInput,
   DailyOrdersReport,
@@ -32,6 +33,9 @@ import type {
 import {
   OrderAlreadyCheckedOutError,
   OrderNotFoundError,
+  ProductNotFoundError,
+  ProductTypeNotFoundError,
+  TableNotFoundError,
 } from "@/lib/http-error";
 import {
   OrderStatus,
@@ -215,6 +219,100 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   }
 
   return order;
+}
+
+export async function createOnlineOrder(
+  input: CreateOnlineOrderInput
+): Promise<Order> {
+  if (input.tableName) {
+    const table = await prisma.table.findFirst({
+      where: { name: input.tableName, isActive: true },
+      select: { id: true },
+    });
+    if (!table) throw new TableNotFoundError();
+  }
+
+  const productIds = [...new Set(input.items.map((i) => i.productId))];
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      cost: true,
+      productTypes: {
+        select: {
+          productType: { select: { id: true, name: true, items: true } },
+        },
+      },
+    },
+  });
+
+  const productMap = new Map(
+    products.map((p) => {
+      const optionMap = new Map<
+        string,
+        { price: number; productTypeName: string }
+      >();
+      for (const { productType } of p.productTypes) {
+        const items = productType.items as Array<{
+          name: string;
+          price: number;
+        }>;
+        for (const item of items) {
+          optionMap.set(`${productType.id}::${item.name}`, {
+            price: item.price,
+            productTypeName: productType.name,
+          });
+        }
+      }
+      return [
+        p.id,
+        {
+          name: p.name,
+          price: p.price.toNumber(),
+          cost: p.cost.toNumber(),
+          optionMap,
+        },
+      ];
+    })
+  );
+
+  const items: CreateOrderItemInput[] = input.items.map((item) => {
+    const product = productMap.get(item.productId);
+    if (!product) throw new ProductNotFoundError();
+
+    const productOptions = item.productOptions.map((option) => {
+      const meta = product.optionMap.get(
+        `${option.productTypeId}::${option.optionName}`
+      );
+      if (!meta) throw new ProductTypeNotFoundError();
+      return {
+        name: option.optionName,
+        price: meta.price,
+        productTypeName: meta.productTypeName,
+      };
+    });
+
+    return {
+      rank: item.rank,
+      productId: item.productId,
+      quantity: item.quantity,
+      name: product.name,
+      cost: product.cost,
+      price: product.price,
+      originalPrice: product.price,
+      productOptions,
+    };
+  });
+
+  return createOrder({
+    ...input,
+    items,
+    discount: 0,
+    isDining: true,
+    source: "qrcode",
+  });
 }
 
 export async function editOrder(

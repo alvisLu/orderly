@@ -28,6 +28,18 @@ export type CreateOrderItemInput = {
   productOptions: LineItemOption[];
 };
 
+export type OnlineLineItemOption = {
+  optionName: string;
+  productTypeId: string;
+};
+
+export type CreateOnlineOrderItemInput = {
+  rank: number;
+  productId: string;
+  quantity: number;
+  productOptions: OnlineLineItemOption[];
+};
+
 export type Gateway = {
   id: string;
   name: string;
@@ -55,6 +67,14 @@ export type CreateOrderInput = {
   financialStatus?: OrderFinancialStatus;
   fulfillmentStatus?: OrderFulfillmentStatus;
   gateway?: Gateway;
+};
+
+export type CreateOnlineOrderInput = {
+  items: CreateOnlineOrderItemInput[];
+  note?: string;
+  userPhone?: string;
+  userNote?: string;
+  tableName?: string;
 };
 
 export type UpdateOrderInput = {

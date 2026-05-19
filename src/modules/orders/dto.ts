@@ -18,6 +18,18 @@ const createOrderItemDto = z.object({
   productOptions: z.array(lineItemOptionDto).default([]),
 });
 
+const onlineLineItemOptionDto = z.object({
+  optionName: z.string().min(1),
+  productTypeId: z.string().uuid(),
+});
+
+const createOnlineOrderItemDto = z.object({
+  rank: z.number().int().nonnegative(),
+  productId: z.string().uuid(),
+  quantity: z.number().int().positive(),
+  productOptions: z.array(onlineLineItemOptionDto).default([]),
+});
+
 const gatewayDto = z.object({
   id: z.string(),
   name: z.string(),
@@ -37,6 +49,14 @@ export const createOrderDto = z.object({
     .enum(["pending", "partiallyFulfilled", "fulfilled", "returned"])
     .optional(),
   gateway: gatewayDto.optional(),
+});
+
+export const createOnlineOrderDto = z.object({
+  items: z.array(createOnlineOrderItemDto).min(1).max(20),
+  note: z.string().max(200).optional(),
+  userPhone: z.string().optional(),
+  userNote: z.string().max(200).optional(),
+  tableName: z.string().max(10).optional(),
 });
 
 export const updateOrderDto = z.object({

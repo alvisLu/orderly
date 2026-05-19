@@ -11,30 +11,31 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/modules/products/types";
-import type { LineItemOption } from "@/modules/orders/types";
 import type { ProductTypeItem } from "@/modules/product-types/types";
+
+export type CartProductOption = {
+  name: string;
+  price: number;
+  productTypeId: string;
+};
 
 type SelectedOptions = Record<string, ProductTypeItem[]>;
 
 function buildOptions(
-  product: Product,
   selectedOptions: SelectedOptions
-): LineItemOption[] {
-  return Object.entries(selectedOptions).flatMap(([typeId, items]) => {
-    const typeEntry = product.productTypes.find(
-      (pt) => pt.productType.id === typeId
-    );
-    return items.map((item) => ({
+): CartProductOption[] {
+  return Object.entries(selectedOptions).flatMap(([typeId, items]) =>
+    items.map((item) => ({
       name: item.name,
       price: item.price,
-      productTypeName: typeEntry?.productType.name ?? "",
-    }));
-  });
+      productTypeId: typeId,
+    }))
+  );
 }
 
 interface ProductOptionDialogProps {
   product: Product | null;
-  onConfirm: (options: LineItemOption[], quantity: number) => void;
+  onConfirm: (options: CartProductOption[], quantity: number) => void;
   onClose: () => void;
 }
 
@@ -75,7 +76,7 @@ export function ProductOptionDialog({
   }
 
   function handleConfirm() {
-    onConfirm(buildOptions(product!, selected), quantity);
+    onConfirm(buildOptions(selected), quantity);
     setSelected({});
     setQuantity(1);
   }
