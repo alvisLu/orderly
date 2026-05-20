@@ -26,6 +26,13 @@ export class UnauthorizedError extends HttpError {
     this.name = "UnauthorizedError";
   }
 }
+
+export class RateLimitedError extends HttpError {
+  constructor() {
+    super(429, "你建立過多訂單，請 1 分鐘後再試", "0003");
+    this.name = "RateLimitedError";
+  }
+}
 export class ProductNotFoundError extends HttpError {
   constructor() {
     const status = 404;
