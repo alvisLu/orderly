@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { paginationDto } from "@/lib/dto";
+import { MAX_ITEM_QUANTITY } from "./constants";
 
 const lineItemOptionDto = z.object({
   name: z.string().min(1),
@@ -16,6 +17,18 @@ const createOrderItemDto = z.object({
   name: z.string().min(1),
   cost: z.number().nonnegative(),
   productOptions: z.array(lineItemOptionDto).default([]),
+});
+
+const onlineLineItemOptionDto = z.object({
+  optionName: z.string().min(1),
+  productTypeId: z.string().uuid(),
+});
+
+const createOnlineOrderItemDto = z.object({
+  rank: z.number().int().nonnegative(),
+  productId: z.string().uuid(),
+  quantity: z.number().int().positive().max(MAX_ITEM_QUANTITY),
+  productOptions: z.array(onlineLineItemOptionDto).default([]),
 });
 
 const gatewayDto = z.object({
@@ -37,6 +50,14 @@ export const createOrderDto = z.object({
     .enum(["pending", "partiallyFulfilled", "fulfilled", "returned"])
     .optional(),
   gateway: gatewayDto.optional(),
+});
+
+export const createOnlineOrderDto = z.object({
+  items: z.array(createOnlineOrderItemDto).min(1).max(20),
+  note: z.string().max(200).optional(),
+  userPhone: z.string().optional(),
+  userNote: z.string().max(200).optional(),
+  tableName: z.string().max(10).optional(),
 });
 
 export const updateOrderDto = z.object({

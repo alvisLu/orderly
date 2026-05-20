@@ -4,37 +4,33 @@ import { useState } from "react";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { MAX_ITEM_QUANTITY } from "@/modules/orders/constants";
 import type { Product } from "@/modules/products/types";
-import type { LineItemOption } from "@/modules/orders/types";
 import type { ProductTypeItem } from "@/modules/product-types/types";
+
+export type CartProductOption = {
+  name: string;
+  price: number;
+  productTypeId: string;
+};
 
 type SelectedOptions = Record<string, ProductTypeItem[]>;
 
-function buildOptions(
-  product: Product,
-  selectedOptions: SelectedOptions
-): LineItemOption[] {
-  return Object.entries(selectedOptions).flatMap(([typeId, items]) => {
-    const typeEntry = product.productTypes.find(
-      (pt) => pt.productType.id === typeId
-    );
-    return items.map((item) => ({
+function buildOptions(selectedOptions: SelectedOptions): CartProductOption[] {
+  return Object.entries(selectedOptions).flatMap(([typeId, items]) =>
+    items.map((item) => ({
       name: item.name,
       price: item.price,
-      productTypeName: typeEntry?.productType.name ?? "",
-    }));
-  });
+      productTypeId: typeId,
+    }))
+  );
 }
 
 interface ProductOptionDialogProps {
   product: Product | null;
-  onConfirm: (options: LineItemOption[], quantity: number) => void;
+  onConfirm: (options: CartProductOption[], quantity: number) => void;
   onClose: () => void;
 }
 
@@ -75,7 +71,7 @@ export function ProductOptionDialog({
   }
 
   function handleConfirm() {
-    onConfirm(buildOptions(product!, selected), quantity);
+    onConfirm(buildOptions(selected), quantity);
     setSelected({});
     setQuantity(1);
   }
@@ -199,7 +195,7 @@ export function ProductOptionDialog({
             <Button
               size="icon"
               variant="outline"
-              onClick={() => setQuantity((q) => q + 1)}
+              onClick={() => setQuantity((q) => Math.min(MAX_ITEM_QUANTITY, q + 1))}
             >
               <Plus className="w-4 h-4" />
             </Button>

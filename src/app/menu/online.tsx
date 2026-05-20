@@ -21,8 +21,9 @@ import {
   ScrollSpySection,
   ScrollSpyViewport,
 } from "@/components/ui/scroll-spy";
+import { MAX_ITEM_QUANTITY } from "@/modules/orders/constants";
 import type { Product } from "@/modules/products/types";
-import type { LineItemOption } from "@/modules/orders/types";
+import type { CartProductOption } from "./components/product-option-dialog";
 import { Button } from "@/components/ui/button";
 import { OrderHistory } from "./components/order-history";
 import { OrderSuccess } from "./components/order-success";
@@ -35,7 +36,7 @@ interface CartItem {
   product: Product;
   quantity: number;
   price: number;
-  productOptions: LineItemOption[];
+  productOptions: CartProductOption[];
 }
 
 interface CategoryGroup {
@@ -93,7 +94,12 @@ export function MenuClient({
     setCart((prev) =>
       prev
         .map((item, i) =>
-          i === idx ? { ...item, quantity: item.quantity + delta } : item
+          i === idx
+            ? {
+                ...item,
+                quantity: Math.min(MAX_ITEM_QUANTITY, item.quantity + delta),
+              }
+            : item
         )
         .filter((item) => item.quantity > 0)
     );
@@ -119,23 +125,19 @@ export function MenuClient({
         rank: idx,
         productId: item.product.id,
         quantity: item.quantity,
-        price: item.price,
-        originalPrice: Number(item.product.price),
-        name: item.product.name,
-        cost: Number(item.product.cost),
-        productOptions: item.productOptions,
+        productOptions: item.productOptions.map((o) => ({
+          optionName: o.name,
+          productTypeId: o.productTypeId,
+        })),
       }));
 
-      const res = await fetch("/api/menu/orders", {
+      const res = await fetch("/api/online/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
-          discount: 0,
-          isDining: true,
           tableName,
           userNote: userNote || undefined,
-          source: "qrcode",
         }),
       });
 
