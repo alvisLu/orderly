@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { paginationDto } from "@/lib/dto";
+import { MAX_ITEM_QUANTITY } from "./constants";
 
 const lineItemOptionDto = z.object({
   name: z.string().min(1),
@@ -26,7 +27,7 @@ const onlineLineItemOptionDto = z.object({
 const createOnlineOrderItemDto = z.object({
   rank: z.number().int().nonnegative(),
   productId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  quantity: z.number().int().positive().max(MAX_ITEM_QUANTITY),
   productOptions: z.array(onlineLineItemOptionDto).default([]),
 });
 

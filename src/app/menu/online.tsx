@@ -21,6 +21,7 @@ import {
   ScrollSpySection,
   ScrollSpyViewport,
 } from "@/components/ui/scroll-spy";
+import { MAX_ITEM_QUANTITY } from "@/modules/orders/constants";
 import type { Product } from "@/modules/products/types";
 import type { CartProductOption } from "./components/product-option-dialog";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,12 @@ export function MenuClient({
     setCart((prev) =>
       prev
         .map((item, i) =>
-          i === idx ? { ...item, quantity: item.quantity + delta } : item
+          i === idx
+            ? {
+                ...item,
+                quantity: Math.min(MAX_ITEM_QUANTITY, item.quantity + delta),
+              }
+            : item
         )
         .filter((item) => item.quantity > 0)
     );
