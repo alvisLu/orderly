@@ -1,5 +1,7 @@
 import apiClient from "@/lib/api-client";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOrderInput,
   CreateOrderItemInput,
   DailyOrdersReport,
@@ -32,6 +34,18 @@ export async function apiPollOrders(from: Date): Promise<PaginatedOrders> {
   const params = new URLSearchParams({ from: from.toISOString() });
   const { data } = await apiClient.get<PaginatedOrders>(
     `/orders/poll?${params}`
+  );
+  return data;
+}
+
+export async function apiGetCheckoutTransactions(
+  query?: Partial<CheckoutTransactionsQuery>
+): Promise<CheckoutTransactionRecord[]> {
+  const params = new URLSearchParams();
+  if (query?.from) params.set("from", query.from.toISOString());
+  if (query?.to) params.set("to", query.to.toISOString());
+  const { data } = await apiClient.get<CheckoutTransactionRecord[]>(
+    `/orders/transactions?${params}`
   );
   return data;
 }

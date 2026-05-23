@@ -112,6 +112,20 @@ export interface OrdersReportQuery {
   showDeleted?: boolean;
 }
 
+export interface CheckoutTransactionsQuery {
+  from?: Date;
+  to?: Date;
+}
+
+export interface CheckoutTransactionRecord {
+  orderId: string;
+  takeNumber: number | null;
+  orderCreatedAt: string;
+  amount: number;
+  gateway: Gateway;
+  date: string;
+}
+
 export interface GatewayAmount {
   name: string;
   totalIn: number;

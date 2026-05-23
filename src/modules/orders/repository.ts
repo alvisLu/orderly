@@ -7,6 +7,8 @@ import {
 } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOrderItemInput,
   DailyOrdersReport,
   LineItemOption,
@@ -234,6 +236,61 @@ function aggregateOrdersReport(rows: OrderForAggregation[]): OrdersReport {
       })
     ),
   };
+}
+
+export async function findCheckoutTransactions(
+  query: CheckoutTransactionsQuery
+): Promise<CheckoutTransactionRecord[]> {
+  const { from, to } = query;
+  const where = {
+    deletedAt: null,
+    ...((from || to) && {
+      createdAt: {
+        ...(from && { gte: from }),
+        ...(to && { lte: to }),
+      },
+    }),
+  };
+
+  try {
+    const rows = await prisma.order.findMany({
+      where,
+      select: {
+        id: true,
+        takeNumber: true,
+        transactions: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    type StoredTxn = {
+      type: "checkout" | "refund";
+      amount: number;
+      gateway: { id: string; name: string };
+      date?: string;
+    };
+
+    const result: CheckoutTransactionRecord[] = [];
+    for (const o of rows) {
+      const txns = (o.transactions as unknown as StoredTxn[] | null) ?? [];
+      for (const t of txns) {
+        if (t.type !== "checkout") continue;
+        result.push({
+          orderId: o.id,
+          takeNumber: o.takeNumber,
+          orderCreatedAt: o.createdAt.toISOString(),
+          amount: Number(t.amount),
+          gateway: t.gateway,
+          date: t.date ?? o.createdAt.toISOString(),
+        });
+      }
+    }
+    result.sort((a, b) => a.date.localeCompare(b.date));
+    return result;
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
 }
 
 export async function findOrdersReport(

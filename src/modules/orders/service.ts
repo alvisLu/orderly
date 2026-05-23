@@ -6,6 +6,7 @@ import { sendDiscordOrderNotification } from "@/lib/discord-notification";
 import {
   appendOrderLineItems,
   findAllOrders,
+  findCheckoutTransactions,
   findOrderById,
   findOrderReportsInRange,
   findOrdersReport,
@@ -18,6 +19,8 @@ import {
   softDeleteOrder,
 } from "./repository";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOnlineOrderInput,
   CreateOrderInput,
   CreateOrderItemInput,
@@ -51,6 +54,12 @@ export async function getOrdersReport(
   query: OrdersReportQuery
 ): Promise<OrdersReport> {
   return findOrdersReport(query);
+}
+
+export async function getCheckoutTransactions(
+  query: CheckoutTransactionsQuery
+): Promise<CheckoutTransactionRecord[]> {
+  return findCheckoutTransactions(query);
 }
 
 export async function regenerateOrderReports(

@@ -88,6 +88,11 @@ export const ordersReportQueryDto = z.object({
   to: z.coerce.date().optional(),
 });
 
+export const checkoutTransactionsQueryDto = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
 export const dailyOrderReportsQueryDto = z.object({
   from: z.coerce.date(),
   to: z.coerce.date(),
