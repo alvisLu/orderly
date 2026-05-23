@@ -7,6 +7,8 @@ import {
 } from "@/lib/http-error";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOrderItemInput,
   DailyOrdersReport,
   LineItemOption,
@@ -236,6 +238,61 @@ function aggregateOrdersReport(rows: OrderForAggregation[]): OrdersReport {
   };
 }
 
+export async function findCheckoutTransactions(
+  query: CheckoutTransactionsQuery
+): Promise<CheckoutTransactionRecord[]> {
+  const { from, to } = query;
+  const where = {
+    deletedAt: null,
+    ...((from || to) && {
+      createdAt: {
+        ...(from && { gte: from }),
+        ...(to && { lte: to }),
+      },
+    }),
+  };
+
+  try {
+    const rows = await prisma.order.findMany({
+      where,
+      select: {
+        id: true,
+        takeNumber: true,
+        transactions: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    type StoredTxn = {
+      type: "checkout" | "refund";
+      amount: number;
+      gateway: { id: string; name: string };
+      date?: string;
+    };
+
+    const result: CheckoutTransactionRecord[] = [];
+    for (const o of rows) {
+      const txns = (o.transactions as unknown as StoredTxn[] | null) ?? [];
+      for (const t of txns) {
+        if (t.type !== "checkout") continue;
+        result.push({
+          orderId: o.id,
+          takeNumber: o.takeNumber,
+          orderCreatedAt: o.createdAt.toISOString(),
+          amount: Number(t.amount),
+          gateway: t.gateway,
+          date: t.date ?? o.createdAt.toISOString(),
+        });
+      }
+    }
+    result.sort((a, b) => a.date.localeCompare(b.date));
+    return result;
+  } catch (e) {
+    throw new DatabaseError(String(e));
+  }
+}
+
 export async function findOrdersReport(
   query: OrdersReportQuery
 ): Promise<OrdersReport> {
@@ -313,13 +370,13 @@ export async function findOrderReportByDate(
   }
 }
 
-export async function findOrderReportsInRange(
-  from: Date,
-  to: Date
+export async function findOrderReportsByDates(
+  dates: string[]
 ): Promise<DailyOrdersReport[]> {
+  if (dates.length === 0) return [];
   try {
     const rows = await prisma.orderReport.findMany({
-      where: { date: { gte: from, lte: to } },
+      where: { date: { in: dates.map((d) => dayjs.utc(d).toDate()) } },
       orderBy: { date: "asc" },
     });
     return rows.map(rowToReport);
@@ -328,11 +385,12 @@ export async function findOrderReportsInRange(
   }
 }
 
-export async function generateOrderReportForDate(
-  date: Date
+export async function generateOrderReportForRange(
+  date: string,
+  from: Date,
+  to: Date
 ): Promise<DailyOrdersReport> {
-  const from = dayjs.utc(date).startOf("day").toDate();
-  const to = dayjs.utc(date).endOf("day").toDate();
+  const dateKey = dayjs.utc(date).toDate();
   try {
     const rows = await prisma.order.findMany({
       where: { createdAt: { gte: from, lte: to } },
@@ -362,11 +420,11 @@ export async function generateOrderReportForDate(
       byGateway: report.byGateway as unknown as Prisma.InputJsonValue,
     };
     await prisma.orderReport.upsert({
-      where: { date: from },
-      create: { date: from, ...data },
+      where: { date: dateKey },
+      create: { date: dateKey, ...data },
       update: data,
     });
-    return { ...report, date: dayjs.utc(from).format("YYYY-MM-DD") };
+    return { ...report, date };
   } catch (e) {
     throw new DatabaseError(String(e));
   }

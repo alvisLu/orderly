@@ -1,8 +1,11 @@
 import apiClient from "@/lib/api-client";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOrderInput,
   CreateOrderItemInput,
   DailyOrdersReport,
+  DailyReportBucket,
   Order,
   OrderQuery,
   OrdersReport,
@@ -36,6 +39,18 @@ export async function apiPollOrders(from: Date): Promise<PaginatedOrders> {
   return data;
 }
 
+export async function apiGetCheckoutTransactions(
+  query?: Partial<CheckoutTransactionsQuery>
+): Promise<CheckoutTransactionRecord[]> {
+  const params = new URLSearchParams();
+  if (query?.from) params.set("from", query.from.toISOString());
+  if (query?.to) params.set("to", query.to.toISOString());
+  const { data } = await apiClient.get<CheckoutTransactionRecord[]>(
+    `/orders/transactions?${params}`
+  );
+  return data;
+}
+
 export async function apiGetOrdersReport(
   query?: Partial<OrdersReportQuery>
 ): Promise<OrdersReport> {
@@ -48,30 +63,21 @@ export async function apiGetOrdersReport(
 }
 
 export async function apiGetDailyOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const params = new URLSearchParams({
-    from: from.toISOString(),
-    to: to.toISOString(),
-  });
-  const { data } = await apiClient.get<DailyOrdersReport[]>(
-    `/orders/report/list?${params}`
+  const { data } = await apiClient.post<DailyOrdersReport[]>(
+    `/orders/report/list`,
+    { buckets }
   );
   return data;
 }
 
 export async function apiRegenerateOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const params = new URLSearchParams({
-    from: from.toISOString(),
-    to: to.toISOString(),
+  const { data } = await apiClient.post<DailyOrdersReport[]>(`/orders/report`, {
+    buckets,
   });
-  const { data } = await apiClient.post<DailyOrdersReport[]>(
-    `/orders/report?${params}`
-  );
   return data;
 }
 

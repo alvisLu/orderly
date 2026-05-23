@@ -71,6 +71,7 @@ export async function insertMoneyCount(
     const row = await prisma.moneyCount.create({
       data: {
         currencies: (input.currencies ?? []) as unknown as Prisma.InputJsonValue,
+        ...(input.createdAt && { createdAt: input.createdAt }),
       },
     });
     return normalize(row);

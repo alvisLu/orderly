@@ -21,6 +21,7 @@ export type MoneyCount = Omit<PrismaMoneyCount, "currencies"> & {
 
 export interface CreateMoneyCountInput {
   currencies?: CurrencyEntry[];
+  createdAt?: Date;
 }
 
 export interface MoneyCountQuery {

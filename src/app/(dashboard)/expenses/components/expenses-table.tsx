@@ -61,7 +61,7 @@ function getColumns(
     },
     {
       id: "actions",
-      header: "",
+      header: "操作",
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
           <Button
@@ -81,7 +81,15 @@ function getColumns(
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
-
+        </div>
+      ),
+      size: 90,
+    },
+    {
+      id: "delete",
+      header: "刪除",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"

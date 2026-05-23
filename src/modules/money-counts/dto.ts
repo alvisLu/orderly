@@ -23,6 +23,7 @@ export const currenciesDto = z.array(currencyEntryDto);
 
 export const createMoneyCountDto = z.object({
   currencies: currenciesDto.default([]),
+  createdAt: z.coerce.date().optional(),
 });
 
 export const moneyCountQueryDto = paginationDto.extend({

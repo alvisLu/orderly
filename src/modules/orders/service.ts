@@ -6,11 +6,12 @@ import { sendDiscordOrderNotification } from "@/lib/discord-notification";
 import {
   appendOrderLineItems,
   findAllOrders,
+  findCheckoutTransactions,
   findOrderById,
-  findOrderReportsInRange,
+  findOrderReportsByDates,
   findOrdersReport,
   findOrdersByIds,
-  generateOrderReportForDate,
+  generateOrderReportForRange,
   insertOrder,
   mergeOrders as mergeOrdersRepo,
   updateOrder,
@@ -18,10 +19,13 @@ import {
   softDeleteOrder,
 } from "./repository";
 import type {
+  CheckoutTransactionRecord,
+  CheckoutTransactionsQuery,
   CreateOnlineOrderInput,
   CreateOrderInput,
   CreateOrderItemInput,
   DailyOrdersReport,
+  DailyReportBucket,
   Order,
   OrderQuery,
   OrdersReport,
@@ -35,8 +39,11 @@ import {
   OrderNotFoundError,
   ProductNotFoundError,
   ProductTypeNotFoundError,
+  StoreClosedError,
   TableNotFoundError,
 } from "@/lib/http-error";
+import { findFirstStore } from "@/modules/stores/repository";
+import { isStoreOpen } from "@/modules/stores/hours";
 import {
   OrderStatus,
   OrderFinancialStatus,
@@ -53,26 +60,21 @@ export async function getOrdersReport(
   return findOrdersReport(query);
 }
 
+export async function getCheckoutTransactions(
+  query: CheckoutTransactionsQuery
+): Promise<CheckoutTransactionRecord[]> {
+  return findCheckoutTransactions(query);
+}
+
 export async function regenerateOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const startUtc = dayjs.utc(from).startOf("day");
-  const endUtc = dayjs.utc(to).startOf("day");
-  const todayUtc = dayjs.utc().startOf("day");
-
-  const dates: dayjs.Dayjs[] = [];
-  let cursor = startUtc;
-  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
-    dates.push(cursor);
-    cursor = cursor.add(1, "day");
-  }
-
+  const now = Date.now();
   return Promise.all(
-    dates.map((d) =>
-      d.isAfter(todayUtc)
-        ? zeroDailyReport(d.format("YYYY-MM-DD"))
-        : generateOrderReportForDate(d.toDate())
+    buckets.map((b) =>
+      b.from.getTime() > now
+        ? zeroDailyReport(b.date)
+        : generateOrderReportForRange(b.date, b.from, b.to)
     )
   );
 }
@@ -97,34 +99,27 @@ function zeroDailyReport(date: string): DailyOrdersReport {
 }
 
 export async function getDailyOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const startUtc = dayjs.utc(from).startOf("day");
-  const endUtc = dayjs.utc(to).startOf("day");
-  const todayUtc = dayjs.utc().startOf("day");
-
-  const existing = new Map(
-    (await findOrderReportsInRange(startUtc.toDate(), endUtc.toDate())).map(
-      (r) => [r.date, r]
-    )
+  const now = Date.now();
+  const cached = new Map(
+    (await findOrderReportsByDates(buckets.map((b) => b.date))).map((r) => [
+      r.date,
+      r,
+    ])
   );
 
   const reports: DailyOrdersReport[] = [];
-  let cursor = startUtc;
-  while (cursor.isBefore(endUtc) || cursor.isSame(endUtc)) {
-    const key = cursor.format("YYYY-MM-DD");
-    const cached = existing.get(key);
-    if (cached) {
-      reports.push(cached);
-    } else if (cursor.isAfter(todayUtc)) {
-      reports.push(zeroDailyReport(key));
+  for (const b of buckets) {
+    const hit = cached.get(b.date);
+    if (hit) {
+      reports.push(hit);
+    } else if (b.from.getTime() > now) {
+      reports.push(zeroDailyReport(b.date));
     } else {
-      reports.push(await generateOrderReportForDate(cursor.toDate()));
+      reports.push(await generateOrderReportForRange(b.date, b.from, b.to));
     }
-    cursor = cursor.add(1, "day");
   }
-
   return reports;
 }
 
@@ -224,6 +219,13 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
 export async function createOnlineOrder(
   input: CreateOnlineOrderInput
 ): Promise<Order> {
+  const store = await findFirstStore();
+  const canOrder =
+    !!store &&
+    (store.onlineOrdering === "enabled" ||
+      (store.onlineOrdering === "auto" && isStoreOpen(store.opening)));
+  if (!canOrder) throw new StoreClosedError();
+
   if (input.tableName) {
     const table = await prisma.table.findFirst({
       where: { name: input.tableName, isActive: true },

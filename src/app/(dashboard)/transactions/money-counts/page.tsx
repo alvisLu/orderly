@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { toast } from "sonner";
 import {
   apiDeleteMoneyCount,
   apiGetMoneyCounts,
 } from "@/app/api/money-counts/api";
+import { apiGetCheckoutTransactions } from "@/app/api/orders/api";
 import type { MoneyCount } from "@/modules/money-counts/types";
+import type { CheckoutTransactionRecord } from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CheckoutsTable } from "./components/checkouts-table";
 import { CreateMoneyCountDialog } from "./components/create-money-count-dialog";
 import { MoneyCountCard } from "./components/money-count-card";
 
@@ -28,22 +31,30 @@ const DAILY_LIMIT = 3;
 
 export default function MoneyCountsPage() {
   const [records, setRecords] = useState<MoneyCount[]>([]);
+  const [checkouts, setCheckouts] = useState<CheckoutTransactionRecord[]>([]);
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [deleting, setDeleting] = useState<MoneyCount | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isLoading, startLoading] = useTransition();
+  const [isLoadingCheckouts, startLoadingCheckouts] = useTransition();
 
   useEffect(() => {
+    const from = dayjs.tz(date, STORE_TIME_ZONE).toDate();
+    const to = dayjs.tz(date, STORE_TIME_ZONE).endOf("day").toDate();
     startLoading(async () => {
       const res = await apiGetMoneyCounts({
         page: 1,
         limit: DAILY_LIMIT,
         sort: "asc",
-        from: dayjs.utc(date).toDate(),
-        to: dayjs.utc(date).endOf("day").toDate(),
+        from,
+        to,
       });
       setRecords(res.data);
+    });
+    startLoadingCheckouts(async () => {
+      const txns = await apiGetCheckoutTransactions({ from, to });
+      setCheckouts(txns);
     });
   }, [date, refreshKey]);
 
@@ -76,6 +87,7 @@ export default function MoneyCountsPage() {
         <h1 className="text-xl font-semibold">點錢紀錄</h1>
         <CreateMoneyCountDialog
           disabled={reachedLimit}
+          date={date}
           onCreated={() => setRefreshKey((k) => k + 1)}
         />
       </div>
@@ -91,7 +103,7 @@ export default function MoneyCountsPage() {
         />
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-6 p-1">
         {isLoading ? (
           <Card size="sm">
             <CardContent className="py-8 flex justify-center text-muted-foreground">
@@ -115,6 +127,19 @@ export default function MoneyCountsPage() {
             ))}
           </div>
         )}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">當日收款紀錄</h2>
+            {!isLoadingCheckouts && checkouts.length > 0 && (
+              <span className="text-sm text-muted-foreground tabular-nums">
+                共 {checkouts.length} 筆 · $
+                {checkouts.reduce((sum, t) => sum + t.amount, 0)}
+              </span>
+            )}
+          </div>
+          <CheckoutsTable data={checkouts} isLoading={isLoadingCheckouts} />
+        </div>
       </div>
 
       <Dialog

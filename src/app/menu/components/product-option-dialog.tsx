@@ -30,12 +30,14 @@ function buildOptions(selectedOptions: SelectedOptions): CartProductOption[] {
 
 interface ProductOptionDialogProps {
   product: Product | null;
+  disabled?: boolean;
   onConfirm: (options: CartProductOption[], quantity: number) => void;
   onClose: () => void;
 }
 
 export function ProductOptionDialog({
   product,
+  disabled = false,
   onConfirm,
   onClose,
 }: ProductOptionDialogProps) {
@@ -208,12 +210,19 @@ export function ProductOptionDialog({
             size="xl"
             variant="outline"
             className="flex-1"
-            onClick={handleConfirm}
+            onClick={onClose}
           >
             取消
           </Button>
-          <Button size="xl" className="flex-1" onClick={handleConfirm}>
-            新增 {quantity} 到購物車 ${unitPrice * quantity}
+          <Button
+            size="xl"
+            className="flex-1"
+            onClick={handleConfirm}
+            disabled={disabled}
+          >
+            {disabled
+              ? "目前未營業"
+              : `新增 ${quantity} 到購物車 $${unitPrice * quantity}`}
           </Button>
         </div>
       </DialogContent>

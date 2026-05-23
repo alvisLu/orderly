@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import dayjs from "@/lib/dayjs";
 import { apiCreateMoneyCount } from "@/app/api/money-counts/api";
 import {
   Dialog,
@@ -17,9 +18,22 @@ import { MoneyCountForm } from "./money-count-form";
 interface Props {
   onCreated: (record: MoneyCount) => void;
   disabled?: boolean;
+  date?: string;
 }
 
-export function CreateMoneyCountDialog({ onCreated, disabled }: Props) {
+function buildCreatedAt(date?: string): Date | undefined {
+  if (!date) return undefined;
+  const now = dayjs.utc();
+  return dayjs
+    .utc(date)
+    .hour(now.hour())
+    .minute(now.minute())
+    .second(now.second())
+    .millisecond(now.millisecond())
+    .toDate();
+}
+
+export function CreateMoneyCountDialog({ onCreated, disabled, date }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,6 +47,11 @@ export function CreateMoneyCountDialog({ onCreated, disabled }: Props) {
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             新增點錢紀錄
+            {date && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                {date}
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
         {open && (
@@ -42,7 +61,10 @@ export function CreateMoneyCountDialog({ onCreated, disabled }: Props) {
             onCancel={() => setOpen(false)}
             onSubmit={async (currencies) => {
               try {
-                const record = await apiCreateMoneyCount({ currencies });
+                const record = await apiCreateMoneyCount({
+                  currencies,
+                  createdAt: buildCreatedAt(date),
+                });
                 setOpen(false);
                 onCreated(record);
                 toast.success("已新增點錢紀錄");

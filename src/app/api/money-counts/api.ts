@@ -29,7 +29,10 @@ export async function apiGetMoneyCount(id: string): Promise<MoneyCount> {
 export async function apiCreateMoneyCount(
   input: CreateMoneyCountInput
 ): Promise<MoneyCount> {
-  const { data } = await apiClient.post<MoneyCount>("/money-counts", input);
+  const { data } = await apiClient.post<MoneyCount>("/money-counts", {
+    ...input,
+    ...(input.createdAt && { createdAt: input.createdAt.toISOString() }),
+  });
   return data;
 }
 

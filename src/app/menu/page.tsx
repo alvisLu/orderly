@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { findFirstStore } from "@/modules/stores/repository";
 import { isStoreOpen } from "@/modules/stores/hours";
 import { MenuClient } from "./online";
-import { StoreClosed } from "./components/store-closed";
 
 export const dynamic = "force-dynamic";
 
@@ -28,26 +27,13 @@ export default async function MenuPage({ searchParams }: Props) {
     }),
   ]);
 
-  const isClosed =
+  const canOrder = Boolean(
     store &&
-    (store.onlineOrdering === "disabled" ||
-      (store.onlineOrdering === "auto" && !isStoreOpen(store.opening)));
+      (store.onlineOrdering === "enabled" ||
+        (store.onlineOrdering === "auto" && isStoreOpen(store.opening)))
+  );
 
-  if (isClosed) {
-    return (
-      <StoreClosed
-        store={{
-          name: store.name,
-          phone: store.phone ?? undefined,
-          address: store.address ?? undefined,
-          bannerUrl: store.bannerURL ?? undefined,
-          opening: store.opening,
-        }}
-      />
-    );
-  }
-
-  if (!table) {
+  if (canOrder && !table) {
     const tables = await prisma.table.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
@@ -76,8 +62,9 @@ export default async function MenuPage({ searchParams }: Props) {
 
   return (
     <MenuClient
-      tableName={table.name}
+      tableName={table?.name}
       products={serialized}
+      canOrder={canOrder}
       store={
         store
           ? {
@@ -85,6 +72,7 @@ export default async function MenuPage({ searchParams }: Props) {
               phone: store.phone ?? undefined,
               address: store.address ?? undefined,
               bannerUrl: store.bannerURL ?? undefined,
+              opening: store.opening,
             }
           : undefined
       }
