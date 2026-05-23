@@ -9,14 +9,9 @@ const columns: ColumnDef<CheckoutTransactionRecord>[] = [
   {
     id: "index",
     header: "#",
-    cell: ({ row, table }) => {
-      const { pageIndex, pageSize } = table.getState().pagination;
-      return (
-        <span className="text-muted-foreground">
-          {pageIndex * pageSize + row.index + 1}
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.index + 1}</span>
+    ),
     size: 40,
   },
   {

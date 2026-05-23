@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { toast } from "sonner";
 import {
   apiDeleteMoneyCount,
@@ -40,8 +40,8 @@ export default function MoneyCountsPage() {
   const [isLoadingCheckouts, startLoadingCheckouts] = useTransition();
 
   useEffect(() => {
-    const from = dayjs.utc(date).toDate();
-    const to = dayjs.utc(date).endOf("day").toDate();
+    const from = dayjs.tz(date, STORE_TIME_ZONE).toDate();
+    const to = dayjs.tz(date, STORE_TIME_ZONE).endOf("day").toDate();
     startLoading(async () => {
       const res = await apiGetMoneyCounts({
         page: 1,
