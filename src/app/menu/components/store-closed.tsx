@@ -49,7 +49,7 @@ export function StoreClosed({ store }: Props) {
         </div>
 
         <Card>
-          <CardContent className="py-4 space-y-4 text-base">
+          <CardContent className="py-4 space-y-4 text-ms">
             {store.phone && (
               <div className="flex items-center gap-3">
                 <Phone className="size-5 shrink-0 text-primary" />

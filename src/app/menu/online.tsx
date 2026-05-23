@@ -28,7 +28,9 @@ import { Button } from "@/components/ui/button";
 import { OrderHistory } from "./components/order-history";
 import { OrderSuccess } from "./components/order-success";
 import { ProductOptionDialog } from "./components/product-option-dialog";
+import { StoreClosed } from "./components/store-closed";
 import { saveMyOrderId } from "./storage";
+import type { Opening } from "@/modules/stores/types";
 
 const UNCATEGORIZED_ID = "uncategorized";
 
@@ -54,6 +56,7 @@ interface StoreInfo {
   address?: string;
   description?: string;
   bannerUrl?: string;
+  opening?: Opening;
   businessHours?: { day: string; hours: string }[];
 }
 
@@ -61,15 +64,18 @@ export function MenuClient({
   tableName,
   products,
   store,
+  canOrder = true,
 }: {
-  tableName: string;
+  tableName?: string;
   products: Product[];
   store?: StoreInfo;
+  canOrder?: boolean;
 }) {
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [userNote, setUserNote] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
+  const [storeInfoOpen, setStoreInfoOpen] = useState(false);
   const [configProduct, setConfigProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ordered, setOrdered] = useState(false);
@@ -118,7 +124,7 @@ export function MenuClient({
   const totalQuantity = cart.reduce((s, item) => s + item.quantity, 0);
 
   async function handleSubmit() {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || !canOrder || !tableName) return;
     setIsSubmitting(true);
     try {
       const items = cart.map((item, idx) => ({
@@ -166,7 +172,7 @@ export function MenuClient({
     return <OrderHistory onBack={() => setViewOrders(false)} />;
   }
 
-  if (ordered) {
+  if (ordered && tableName) {
     return (
       <OrderSuccess
         tableName={tableName}
@@ -185,10 +191,12 @@ export function MenuClient({
       <div className="shrink-0 px-4 py-3 flex items-center justify-between">
         <p className="text-2xl font-semibold text-primary">{store?.name}</p>
         <div className="flex items-center gap-2">
-          <Button>桌號：{tableName}</Button>
-          <Button variant="secondary" onClick={() => setViewOrders(true)}>
-            查看訂單
-          </Button>
+          {tableName && <Button>桌號：{tableName}</Button>}
+          {tableName && (
+            <Button variant="secondary" onClick={() => setViewOrders(true)}>
+              查看訂單
+            </Button>
+          )}
         </div>
       </div>
 
@@ -275,15 +283,43 @@ export function MenuClient({
 
       {/* Bottom cart bar */}
       <div className="p-2">
-        <Button
-          size="xl"
-          onClick={() => setCartOpen(true)}
-          disabled={cart.length <= 0}
-          className="w-full text-lg font-bold"
-        >
-          {`查看購物車(${totalQuantity}) $${subtotal}`}
-        </Button>
+        {canOrder ? (
+          <Button
+            size="xl"
+            onClick={() => setCartOpen(true)}
+            disabled={cart.length <= 0}
+            className="w-full text-lg font-bold"
+          >
+            {`查看購物車(${totalQuantity}) $${subtotal}`}
+          </Button>
+        ) : (
+          <Button
+            size="xl"
+            onClick={() => setStoreInfoOpen(true)}
+            className="w-full text-lg font-bold"
+          >
+            未營業，查看店家資訊
+          </Button>
+        )}
       </div>
+
+      {/* Store info dialog (closed) */}
+      {store?.opening && (
+        <Dialog open={storeInfoOpen} onOpenChange={setStoreInfoOpen}>
+          <DialogContent className="w-full h-full max-w-none max-h-none rounded-none p-0 gap-0 overflow-y-auto">
+            <DialogTitle className="sr-only">店家資訊</DialogTitle>
+            <StoreClosed
+              store={{
+                name: store.name,
+                phone: store.phone,
+                address: store.address,
+                bannerUrl: store.bannerUrl,
+                opening: store.opening,
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Cart dialog */}
       <Dialog open={cartOpen} onOpenChange={setCartOpen}>
@@ -443,6 +479,7 @@ export function MenuClient({
       {/* Product option dialog */}
       <ProductOptionDialog
         product={configProduct}
+        disabled={!canOrder}
         onConfirm={(options, qty) => {
           if (configProduct)
             setCart((prev) => [
