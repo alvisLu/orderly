@@ -39,8 +39,11 @@ import {
   OrderNotFoundError,
   ProductNotFoundError,
   ProductTypeNotFoundError,
+  StoreClosedError,
   TableNotFoundError,
 } from "@/lib/http-error";
+import { findFirstStore } from "@/modules/stores/repository";
+import { isStoreOpen } from "@/modules/stores/hours";
 import {
   OrderStatus,
   OrderFinancialStatus,
@@ -216,6 +219,13 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
 export async function createOnlineOrder(
   input: CreateOnlineOrderInput
 ): Promise<Order> {
+  const store = await findFirstStore();
+  const canOrder =
+    !!store &&
+    (store.onlineOrdering === "enabled" ||
+      (store.onlineOrdering === "auto" && isStoreOpen(store.opening)));
+  if (!canOrder) throw new StoreClosedError();
+
   if (input.tableName) {
     const table = await prisma.table.findFirst({
       where: { name: input.tableName, isActive: true },

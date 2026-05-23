@@ -151,6 +151,16 @@ export class StoreNotFoundError extends HttpError {
   }
 }
 
+export class StoreClosedError extends HttpError {
+  constructor() {
+    const status = 409;
+    const message = "目前未營業，暫不接受點餐";
+    const code = "7001";
+    super(status, message, code);
+    this.name = "StoreClosedError";
+  }
+}
+
 export class ExpenseNotFoundError extends HttpError {
   constructor() {
     const status = 404;
