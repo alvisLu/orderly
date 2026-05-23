@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { toast } from "sonner";
 import { apiDeleteExpense, apiGetExpenses } from "@/app/api/expenses/api";
 import type { Expenses } from "@/modules/expenses/types";
@@ -54,8 +54,8 @@ export default function ExpensesPage() {
         page: pageIndex + 1,
         limit: pageSize,
         sort,
-        from: dayjs.utc(range.from).toDate(),
-        to: dayjs.utc(range.to).endOf("day").toDate(),
+        from: dayjs.tz(range.from, STORE_TIME_ZONE).toDate(),
+        to: dayjs.tz(range.to, STORE_TIME_ZONE).endOf("day").toDate(),
       });
       setExpenses(res.data);
       setTotal(res.total);

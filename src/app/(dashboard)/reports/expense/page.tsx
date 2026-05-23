@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { apiGetExpenses } from "@/app/api/expenses/api";
 import type { Expenses } from "@/modules/expenses/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,8 +32,8 @@ export default function ExpenseReportPage() {
   useEffect(() => {
     startLoading(async () => {
       const res = await apiGetExpenses({
-        from: dayjs.utc(startDate).toDate(),
-        to: dayjs.utc(endDate).endOf("day").toDate(),
+        from: dayjs.tz(startDate, STORE_TIME_ZONE).toDate(),
+        to: dayjs.tz(endDate, STORE_TIME_ZONE).endOf("day").toDate(),
         sort: "desc",
         page: 1,
         limit: 1000,

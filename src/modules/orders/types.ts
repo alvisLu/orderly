@@ -151,3 +151,9 @@ export interface OrdersReport {
 export interface DailyOrdersReport extends OrdersReport {
   date: string;
 }
+
+export interface DailyReportBucket {
+  date: string;
+  from: Date;
+  to: Date;
+}

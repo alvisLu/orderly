@@ -5,6 +5,7 @@ import type {
   CreateOrderInput,
   CreateOrderItemInput,
   DailyOrdersReport,
+  DailyReportBucket,
   Order,
   OrderQuery,
   OrdersReport,
@@ -62,30 +63,21 @@ export async function apiGetOrdersReport(
 }
 
 export async function apiGetDailyOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const params = new URLSearchParams({
-    from: from.toISOString(),
-    to: to.toISOString(),
-  });
-  const { data } = await apiClient.get<DailyOrdersReport[]>(
-    `/orders/report/list?${params}`
+  const { data } = await apiClient.post<DailyOrdersReport[]>(
+    `/orders/report/list`,
+    { buckets }
   );
   return data;
 }
 
 export async function apiRegenerateOrderReports(
-  from: Date,
-  to: Date
+  buckets: DailyReportBucket[]
 ): Promise<DailyOrdersReport[]> {
-  const params = new URLSearchParams({
-    from: from.toISOString(),
-    to: to.toISOString(),
+  const { data } = await apiClient.post<DailyOrdersReport[]>(`/orders/report`, {
+    buckets,
   });
-  const { data } = await apiClient.post<DailyOrdersReport[]>(
-    `/orders/report?${params}`
-  );
   return data;
 }
 

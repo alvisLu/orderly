@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { RefreshCw } from "lucide-react";
 import {
   apiGetDailyOrderReports,
@@ -17,6 +17,11 @@ import { DateField, DateNavigator } from "@/components/shared/date-fields";
 import { GatewayStat } from "../components/gateway-stat";
 import { usePaymentOrder } from "../hooks/use-payment-order";
 
+function buildBucket(date: string) {
+  const start = dayjs.tz(date, STORE_TIME_ZONE);
+  return { date, from: start.toDate(), to: start.endOf("day").toDate() };
+}
+
 export default function DailyReportPage() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [stats, setStats] = useState<DailyOrdersReport | null>(null);
@@ -27,8 +32,7 @@ export default function DailyReportPage() {
 
   async function recalculate() {
     setPhase("recalculating");
-    const d = dayjs.utc(date).toDate();
-    const [report] = await apiRegenerateOrderReports(d, d);
+    const [report] = await apiRegenerateOrderReports([buildBucket(date)]);
     setStats(report);
     setPhase("ready");
   }
@@ -37,8 +41,7 @@ export default function DailyReportPage() {
     let cancelled = false;
     (async () => {
       setPhase("loading");
-      const d = dayjs.utc(date).toDate();
-      const [report] = await apiGetDailyOrderReports(d, d);
+      const [report] = await apiGetDailyOrderReports([buildBucket(date)]);
       if (cancelled) return;
       setStats(report);
       setPhase("ready");

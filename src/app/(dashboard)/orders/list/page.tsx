@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { apiGetOrders, apiGetOrdersReport } from "@/app/api/orders/api";
 import type { Order, OrdersReport } from "@/modules/orders/types";
 import { useNewOrdersStore } from "@/store/new-orders";
@@ -35,8 +35,8 @@ export default function OrdersPage() {
         page: pageIndex + 1,
         limit: pageSize,
         showDeleted,
-        from: dayjs.utc(range.from).toDate(),
-        to: dayjs.utc(range.to).endOf("day").toDate(),
+        from: dayjs.tz(range.from, STORE_TIME_ZONE).toDate(),
+        to: dayjs.tz(range.to, STORE_TIME_ZONE).endOf("day").toDate(),
       });
       setOrders(res.data);
       setTotal(res.total);
@@ -47,8 +47,8 @@ export default function OrdersPage() {
     startStatsLoading(async () => {
       const s = await apiGetOrdersReport({
         showDeleted,
-        from: dayjs.utc(range.from).toDate(),
-        to: dayjs.utc(range.to).endOf("day").toDate(),
+        from: dayjs.tz(range.from, STORE_TIME_ZONE).toDate(),
+        to: dayjs.tz(range.to, STORE_TIME_ZONE).endOf("day").toDate(),
       });
       setStats(s);
     });
@@ -63,8 +63,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (newOrdersBatch.length === 0) return;
-    const fromMs = dayjs.utc(range.from).valueOf();
-    const toMs = dayjs.utc(range.to).endOf("day").valueOf();
+    const fromMs = dayjs.tz(range.from, STORE_TIME_ZONE).valueOf();
+    const toMs = dayjs.tz(range.to, STORE_TIME_ZONE).endOf("day").valueOf();
     setOrders((prev) => {
       const seen = new Set(prev.map((o) => o.id));
       const additions = newOrdersBatch.filter((o) => {

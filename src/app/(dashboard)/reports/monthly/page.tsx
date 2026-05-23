@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import dayjs from "@/lib/dayjs";
+import dayjs, { STORE_TIME_ZONE } from "@/lib/dayjs";
 import { RefreshCw } from "lucide-react";
 import {
   apiGetDailyOrderReports,
@@ -24,6 +24,21 @@ import { GatewayStat } from "../components/gateway-stat";
 import { GatewayTotalInChart } from "../components/gateway-totalin-chart";
 import { usePaymentOrder } from "../hooks/use-payment-order";
 
+function buildBuckets(startDate: string, endDate: string) {
+  const buckets = [];
+  let cursor = dayjs.tz(startDate, STORE_TIME_ZONE);
+  const end = dayjs.tz(endDate, STORE_TIME_ZONE);
+  while (cursor.isBefore(end) || cursor.isSame(end, "day")) {
+    buckets.push({
+      date: cursor.format("YYYY-MM-DD"),
+      from: cursor.toDate(),
+      to: cursor.endOf("day").toDate(),
+    });
+    cursor = cursor.add(1, "day");
+  }
+  return buckets;
+}
+
 export default function MonthlyReportPage() {
   const [startDate, setStartDate] = useState(
     dayjs().startOf("month").format("YYYY-MM-DD")
@@ -39,8 +54,7 @@ export default function MonthlyReportPage() {
   function recalculate() {
     startRecalculating(async () => {
       const r = await apiRegenerateOrderReports(
-        dayjs.utc(startDate).toDate(),
-        dayjs.utc(endDate).toDate()
+        buildBuckets(startDate, endDate)
       );
       setReports(r);
     });
@@ -48,10 +62,7 @@ export default function MonthlyReportPage() {
 
   useEffect(() => {
     startLoading(async () => {
-      const r = await apiGetDailyOrderReports(
-        dayjs.utc(startDate).toDate(),
-        dayjs.utc(endDate).toDate()
-      );
+      const r = await apiGetDailyOrderReports(buildBuckets(startDate, endDate));
       setReports(r);
     });
   }, [startDate, endDate]);

@@ -93,9 +93,16 @@ export const checkoutTransactionsQueryDto = z.object({
   to: z.coerce.date().optional(),
 });
 
-export const dailyOrderReportsQueryDto = z.object({
-  from: z.coerce.date(),
-  to: z.coerce.date(),
+export const dailyReportBucketsDto = z.object({
+  buckets: z
+    .array(
+      z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        from: z.coerce.date(),
+        to: z.coerce.date(),
+      })
+    )
+    .min(1),
 });
 
 export const orderPollQueryDto = z.object({
