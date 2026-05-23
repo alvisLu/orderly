@@ -9,7 +9,10 @@ import {
 } from "@/app/api/money-counts/api";
 import { apiGetCheckoutTransactions } from "@/app/api/orders/api";
 import type { MoneyCount } from "@/modules/money-counts/types";
-import type { CheckoutTransactionRecord } from "@/modules/orders/types";
+import type {
+  CheckoutTransactionRecord,
+  Gateway,
+} from "@/modules/orders/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,8 +29,29 @@ import {
 import { CheckoutsTable } from "./components/checkouts-table";
 import { CreateMoneyCountDialog } from "./components/create-money-count-dialog";
 import { MoneyCountCard } from "./components/money-count-card";
+import { Badge } from "@/components/ui/badge";
 
 const DAILY_LIMIT = 3;
+
+function groupCheckoutsByGateway(
+  checkouts: CheckoutTransactionRecord[]
+): { gateway: Gateway; items: CheckoutTransactionRecord[] }[] {
+  const groups = new Map<
+    string,
+    { gateway: Gateway; items: CheckoutTransactionRecord[] }
+  >();
+  for (const c of checkouts) {
+    const key = c.gateway?.id ?? "unknown";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        gateway: c.gateway ?? { id: "unknown", name: "未知" },
+        items: [],
+      });
+    }
+    groups.get(key)!.items.push(c);
+  }
+  return Array.from(groups.values());
+}
 
 export default function MoneyCountsPage() {
   const [records, setRecords] = useState<MoneyCount[]>([]);
@@ -104,6 +128,9 @@ export default function MoneyCountsPage() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-6 p-1">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">現金點錢紀錄</h2>
+        </div>
         {isLoading ? (
           <Card size="sm">
             <CardContent className="py-8 flex justify-center text-muted-foreground">
@@ -128,17 +155,30 @@ export default function MoneyCountsPage() {
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">當日收款紀錄</h2>
-            {!isLoadingCheckouts && checkouts.length > 0 && (
-              <span className="text-sm text-muted-foreground tabular-nums">
-                共 {checkouts.length} 筆 · $
-                {checkouts.reduce((sum, t) => sum + t.amount, 0)}
-              </span>
-            )}
+            <h2 className="text-base font-semibold">收款紀錄</h2>
           </div>
-          <CheckoutsTable data={checkouts} isLoading={isLoadingCheckouts} />
+
+          {isLoadingCheckouts ? (
+            <CheckoutsTable data={[]} isLoading />
+          ) : checkouts.length === 0 ? (
+            <CheckoutsTable data={[]} />
+          ) : (
+            groupCheckoutsByGateway(checkouts).map(({ gateway, items }) => (
+              <div key={gateway.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="third" size="lg">
+                    {gateway.name}
+                  </Badge>
+                  <Badge variant="outline" size="lg">
+                    訂單: ${items.reduce((sum, t) => sum + t.amount, 0)}
+                  </Badge>
+                </div>
+                <CheckoutsTable data={items} />
+              </div>
+            ))
+          )}
         </div>
       </div>
 

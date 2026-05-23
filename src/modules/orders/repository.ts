@@ -262,6 +262,7 @@ export async function findCheckoutTransactions(
         createdAt: true,
       },
       orderBy: { createdAt: "asc" },
+      take: 1000,
     });
 
     type StoredTxn = {

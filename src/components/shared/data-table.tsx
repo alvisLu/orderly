@@ -212,15 +212,16 @@ export function DataTable<TData>({
                     ))}
                   </TableRow>
                 ))}
-                {Array.from({
-                  length: pageSize - table.getRowModel().rows.length,
-                }).map((_, i) => (
-                  <TableRow key={`skeleton-${i}`} className="h-16">
-                    <TableCell colSpan={columns.length}>
-                      <Skeleton className="h-5 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {pagination &&
+                  Array.from({
+                    length: pageSize - table.getRowModel().rows.length,
+                  }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`} className="h-16">
+                      <TableCell colSpan={columns.length}>
+                        <Skeleton className="h-5 w-full" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </>
             ) : (
               <TableRow>
