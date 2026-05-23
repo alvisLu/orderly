@@ -18,9 +18,12 @@ export function ProductsPageContent() {
   const [total, setTotal] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, startLoading] = useTransition();
   const [categories, setCategories] = useState<Category[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+
+  const refreshProducts = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
     apiGetCategories().then(setCategories);
@@ -47,7 +50,7 @@ export function ProductsPageContent() {
       setProducts(res.data);
       setTotal(res.total);
     });
-  }, [searchParams, pageIndex, pageSize]);
+  }, [searchParams, pageIndex, pageSize, refreshKey]);
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -56,6 +59,7 @@ export function ProductsPageContent() {
         <CreateProductDialog
           categories={categories}
           productTypes={productTypes}
+          onChanged={refreshProducts}
         />
       </div>
       <SearchProduct categories={categories} />
@@ -65,6 +69,7 @@ export function ProductsPageContent() {
           isLoading={isLoading}
           categories={categories}
           productTypes={productTypes}
+          onChanged={refreshProducts}
           serverPagination={{
             total,
             pageIndex,

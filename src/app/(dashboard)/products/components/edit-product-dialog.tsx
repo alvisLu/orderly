@@ -72,10 +72,12 @@ export function EditProductDialog({
   product,
   categories,
   productTypes,
+  onChanged,
 }: {
   product: Product;
   categories: Category[];
   productTypes: ProductType[];
+  onChanged?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -91,6 +93,7 @@ export function EditProductDialog({
       await apiDeleteProduct(product.id);
       setOpen(false);
       router.refresh();
+      onChanged?.();
     } catch {
       toast.error("刪除商品失敗");
     } finally {
@@ -202,6 +205,7 @@ export function EditProductDialog({
     await apiUpdateProduct(product.id, { ...values, imageUrls });
     setOpen(false);
     router.refresh();
+    onChanged?.();
   }
 
   return (

@@ -70,9 +70,11 @@ type FormValues = z.infer<typeof schema>;
 export function CreateProductDialog({
   categories,
   productTypes,
+  onChanged,
 }: {
   categories: Category[];
   productTypes: ProductType[];
+  onChanged?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [isUploading, startUploading] = useTransition();
@@ -183,6 +185,7 @@ export function CreateProductDialog({
       setImageUrls([]);
       setOpen(false);
       router.refresh();
+      onChanged?.();
     } catch (error) {
       toast.error(`新增商品失敗: ${error}`);
     }

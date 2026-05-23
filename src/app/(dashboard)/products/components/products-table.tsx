@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 
 function getColumns(
   categories: Category[],
-  productTypes: ProductType[]
+  productTypes: ProductType[],
+  onChanged?: () => void
 ): ColumnDef<Product>[] {
   return [
     {
@@ -52,6 +53,7 @@ function getColumns(
             product={row.original}
             categories={categories}
             productTypes={productTypes}
+            onChanged={onChanged}
           />
           <span>{row.getValue<string>("name")}</span>
         </div>
@@ -79,6 +81,7 @@ function getColumns(
           productId={row.original.id}
           field="isPosAvailable"
           checked={row.getValue("isPosAvailable")}
+          onChanged={onChanged}
         />
       ),
     },
@@ -90,6 +93,7 @@ function getColumns(
           productId={row.original.id}
           field="isMenuAvailable"
           checked={row.getValue("isMenuAvailable")}
+          onChanged={onChanged}
         />
       ),
     },
@@ -111,6 +115,7 @@ function getColumns(
           productId={row.original.id}
           field="isFavorite"
           checked={row.getValue("isFavorite")}
+          onChanged={onChanged}
         />
       ),
     },
@@ -123,6 +128,7 @@ interface Props {
   productTypes: ProductType[];
   isLoading?: boolean;
   serverPagination?: ServerPagination;
+  onChanged?: () => void;
 }
 
 export function ProductsTable({
@@ -131,10 +137,11 @@ export function ProductsTable({
   productTypes,
   isLoading,
   serverPagination,
+  onChanged,
 }: Props) {
   return (
     <DataTable
-      columns={getColumns(categories, productTypes)}
+      columns={getColumns(categories, productTypes, onChanged)}
       data={data}
       pagination
       isLoading={isLoading}
