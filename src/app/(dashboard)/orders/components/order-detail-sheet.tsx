@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import dayjs from "dayjs";
-import { ChevronDown, Lock, User, Store } from "lucide-react";
+import { Lock, User, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,6 @@ import { DiningBadge } from "@/components/shared/dining-badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type {
   Order,
   LineItemOption,
@@ -171,99 +165,14 @@ export function OrderDetailSheet({
               </DialogTitle>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-2 px-6 py-3 items-center justify-between border-b">
-              <div className="flex gap-2 items-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="outline" disabled={isUpdating}>
-                      出貨狀態 <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => setFulfillmentStatus("fulfilled")}
-                    >
-                      已出餐
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setFulfillmentStatus("partiallyFulfilled")}
-                    >
-                      部分出餐
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setFulfillmentStatus("returned")}
-                    >
-                      已退貨
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setFulfillmentStatus("pending")}
-                    >
-                      待出餐
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="outline" disabled={isUpdating}>
-                      付款狀態 <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => setFinancialStatus("paid")}
-                    >
-                      付款
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setFinancialStatus("refunded")}
-                    >
-                      退款
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setFinancialStatus("pending")}
-                    >
-                      未付款
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="outline" disabled={isUpdating}>
-                      訂單狀態 <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setOrderStatus("pending")}>
-                      未處理
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setOrderStatus("processing")}
-                    >
-                      處理中
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setOrderStatus("done")}>
-                      完成
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setOrderStatus("cancelled")}
-                    >
-                      取消
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="flex gap-2">
-                <FinancialStatusBadge status={financialStatus} />
-                <FulfillmentStatusBadge status={fulfillmentStatus} />
-                <OrderStatusBadge
-                  status={orderStatus}
-                  deletedAt={order.deletedAt}
-                />
-              </div>
+            {/* Status badges */}
+            <div className="flex gap-2 px-6 py-3 items-center border-b">
+              <FinancialStatusBadge status={financialStatus} />
+              <FulfillmentStatusBadge status={fulfillmentStatus} />
+              <OrderStatusBadge
+                status={orderStatus}
+                deletedAt={order.deletedAt}
+              />
             </div>
 
             {/* Scrollable content */}
