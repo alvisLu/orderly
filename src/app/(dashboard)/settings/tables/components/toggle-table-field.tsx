@@ -5,8 +5,11 @@ import { Switch } from "@/components/ui/switch";
 import { apiUpdateTable } from "@/app/api/tables/api";
 import type { Table } from "@/modules/tables/types";
 
+type ToggleField = "isActive" | "isPhoneRequired";
+
 interface Props {
   tableId: string;
+  field?: ToggleField;
   checked: boolean;
   onUpdated: (table: Table) => void;
   onPendingChange?: (pending: boolean) => void;
@@ -14,6 +17,7 @@ interface Props {
 
 export function ToggleTableField({
   tableId,
+  field = "isActive",
   checked,
   onUpdated,
   onPendingChange,
@@ -26,7 +30,7 @@ export function ToggleTableField({
 
   function handleChange(value: boolean) {
     startTransition(async () => {
-      const updated = await apiUpdateTable(tableId, { isActive: value });
+      const updated = await apiUpdateTable(tableId, { [field]: value });
       onUpdated(updated);
     });
   }

@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 const schema = z.object({
   name: z.string().min(1, "請輸入桌位名稱"),
   isActive: z.boolean().default(true),
+  isPhoneRequired: z.boolean().default(false),
 });
 
 type FormInput = z.input<typeof schema>;
@@ -42,13 +43,14 @@ export function CreateTableDialog({ onCreated }: Props) {
     resolver: zodResolver(schema),
     defaultValues: {
       isActive: true,
+      isPhoneRequired: false,
     },
   });
 
   async function onSubmit(values: FormValues) {
     try {
       await apiCreateTable(values);
-      reset({ isActive: true });
+      reset({ isActive: true, isPhoneRequired: false });
       setOpen(false);
       onCreated();
     } catch {
@@ -83,6 +85,20 @@ export function CreateTableDialog({ onCreated }: Props) {
             <Controller
               control={control}
               name="isActive"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label className="text-base">要求輸入手機</Label>
+            <Controller
+              control={control}
+              name="isPhoneRequired"
               render={({ field }) => (
                 <Switch
                   checked={field.value}

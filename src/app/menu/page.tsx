@@ -63,6 +63,7 @@ export default async function MenuPage({ searchParams }: Props) {
   return (
     <MenuClient
       tableName={table?.name}
+      isPhoneRequired={table?.isPhoneRequired ?? false}
       products={serialized}
       canOrder={canOrder}
       store={
