@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -62,11 +63,13 @@ interface StoreInfo {
 
 export function MenuClient({
   tableName,
+  isPhoneRequired,
   products,
   store,
   canOrder = true,
 }: {
   tableName?: string;
+  isPhoneRequired: boolean;
   products: Product[];
   store?: StoreInfo;
   canOrder?: boolean;
@@ -82,6 +85,9 @@ export function MenuClient({
   const [viewOrders, setViewOrders] = useState(false);
   const [noteEditOpen, setNoteEditOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [phoneDraft, setPhoneDraft] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
   // Group products by category, ordered by category rank (uncategorized last)
   const groups: CategoryGroup[] = (() => {
@@ -123,7 +129,18 @@ export function MenuClient({
 
   const totalQuantity = cart.reduce((s, item) => s + item.quantity, 0);
 
-  async function handleSubmit() {
+  function handleSubmit() {
+    if (cart.length === 0 || !canOrder || !tableName) return;
+    if (isPhoneRequired) {
+      setPhoneDraft("");
+      setPhoneError("");
+      setPhoneDialogOpen(true);
+      return;
+    }
+    void submitOrder();
+  }
+
+  async function submitOrder(userPhone?: string) {
     if (cart.length === 0 || !canOrder || !tableName) return;
     setIsSubmitting(true);
     try {
@@ -144,12 +161,20 @@ export function MenuClient({
           items,
           tableName,
           userNote: userNote || undefined,
+          userPhone,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.error ?? "送出失敗");
+        if (err.code === "4004") {
+          setPhoneDraft("");
+          setPhoneError("");
+          setPhoneDialogOpen(true);
+        } else {
+          setPhoneDialogOpen(false);
+        }
         return;
       }
 
@@ -159,9 +184,20 @@ export function MenuClient({
       setCart([]);
       setUserNote("");
       setCartOpen(false);
+      setPhoneDialogOpen(false);
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handlePhoneConfirm() {
+    const cleaned = phoneDraft.replace(/\D/g, "");
+    if (!/^09\d{8}$/.test(cleaned)) {
+      setPhoneError("請輸入 09 開頭 10 碼");
+      return;
+    }
+    setPhoneError("");
+    void submitOrder(cleaned);
   }
 
   function handleCancel() {
@@ -435,6 +471,52 @@ export function MenuClient({
                 {isSubmitting ? "送出中..." : "送出訂單"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phone dialog */}
+      <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-2xl">請輸入手機號碼</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1">
+            <Input
+              autoFocus
+              type="tel"
+              inputMode="numeric"
+              placeholder="0912345678"
+              value={phoneDraft}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setPhoneDraft(raw);
+                if (phoneError) setPhoneError("");
+              }}
+              className="text-base"
+            />
+            {phoneError && (
+              <p className="text-sm text-destructive">{phoneError}</p>
+            )}
+          </div>
+          <div className="flex flex-row gap-2">
+            <Button
+              size="xl"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setPhoneDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              取消
+            </Button>
+            <Button
+              size="xl"
+              className="flex-1"
+              onClick={handlePhoneConfirm}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "送出中..." : "確認並送出"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -2,8 +2,13 @@ import type { Table } from "@/generated/prisma/client";
 
 export type { Table };
 
-export type CreateTableInput = Pick<Table, "name" | "isActive">;
-export type UpdateTableInput = Partial<Pick<Table, "name" | "isActive">>;
+export type CreateTableInput = Pick<
+  Table,
+  "name" | "isActive" | "isPhoneRequired"
+>;
+export type UpdateTableInput = Partial<
+  Pick<Table, "name" | "isActive" | "isPhoneRequired">
+>;
 
 export interface TableQuery {
   page: number;

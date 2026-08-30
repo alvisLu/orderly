@@ -41,6 +41,7 @@ import {
   ProductTypeNotFoundError,
   StoreClosedError,
   TableNotFoundError,
+  UserPhoneRequiredError,
 } from "@/lib/http-error";
 import { findFirstStore } from "@/modules/stores/repository";
 import { isStoreOpen } from "@/modules/stores/hours";
@@ -229,9 +230,15 @@ export async function createOnlineOrder(
   if (input.tableName) {
     const table = await prisma.table.findFirst({
       where: { name: input.tableName, isActive: true },
-      select: { id: true },
+      select: { id: true, isPhoneRequired: true },
     });
     if (!table) throw new TableNotFoundError();
+    if (
+      table.isPhoneRequired &&
+      (!input.userPhone || !/^09\d{8}$/.test(input.userPhone))
+    ) {
+      throw new UserPhoneRequiredError();
+    }
   }
 
   const productIds = [...new Set(input.items.map((i) => i.productId))];

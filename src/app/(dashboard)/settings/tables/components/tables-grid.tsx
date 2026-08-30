@@ -81,8 +81,9 @@ interface TableCardProps {
 function TableCard({ table, onUpdated, onDelete }: TableCardProps) {
   const url = buildMenuUrl(table.name);
   const [namePending, setNamePending] = useState(false);
-  const [togglePending, setTogglePending] = useState(false);
-  const isUpdating = namePending || togglePending;
+  const [activePending, setActivePending] = useState(false);
+  const [phonePending, setPhonePending] = useState(false);
+  const isUpdating = namePending || activePending || phonePending;
 
   return (
     <Card size="sm" className="relative">
@@ -138,8 +139,20 @@ function TableCard({ table, onUpdated, onDelete }: TableCardProps) {
           <span className="text-sm text-muted-foreground">啟用</span>
           <ToggleTableField
             tableId={table.id}
+            field="isActive"
             checked={table.isActive}
             onUpdated={onUpdated}
+            onPendingChange={setActivePending}
+          />
+        </div>
+        <div className="flex w-full items-center justify-between">
+          <span className="text-sm text-muted-foreground">要求輸入手機</span>
+          <ToggleTableField
+            tableId={table.id}
+            field="isPhoneRequired"
+            checked={table.isPhoneRequired}
+            onUpdated={onUpdated}
+            onPendingChange={setPhonePending}
           />
         </div>
       </CardContent>

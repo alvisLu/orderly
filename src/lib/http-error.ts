@@ -121,6 +121,16 @@ export class OrderNotAppendableError extends HttpError {
   }
 }
 
+export class UserPhoneRequiredError extends HttpError {
+  constructor() {
+    const status = 400;
+    const message = "請輸入 09 開頭 10 碼手機號碼";
+    const code = "4004";
+    super(status, message, code);
+    this.name = "UserPhoneRequiredError";
+  }
+}
+
 export class PaymentNotFoundError extends HttpError {
   constructor() {
     const status = 404;

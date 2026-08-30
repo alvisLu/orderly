@@ -387,17 +387,33 @@ function CardVisual({
           )}
         </div>
 
-        {/* Client note */}
-        {order.userNote && (
-          <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
-            <Label>客戶備註:</Label>
-            {order.userNote}
-          </p>
+        {/* Client phone & note */}
+        {(order.userPhone || order.userNote) && (
+          <div className="space-y-1 text-sm border border-border rounded-md px-3 py-2">
+            {order.userPhone && (
+              <div className="flex items-center gap-2">
+                <Label>客戶電話:</Label>
+                <span>{order.userPhone}</span>
+              </div>
+            )}
+            {order.userNote && (
+              <div
+                className={`flex flex-col gap-0.5 ${
+                  order.userPhone ? "border-t border-border pt-2" : ""
+                }`}
+              >
+                <Label>客人備註:</Label>
+                <span className="whitespace-pre-wrap break-words">
+                  {order.userNote}
+                </span>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Staff note */}
         {order.note && (
-          <p className="text-sm text-muted-foreground border border-border rounded-md px-3 py-2">
+          <p className="text-sm border border-border rounded-md px-3 py-2">
             <Label>備註:</Label>
             {order.note}
           </p>
