@@ -2,6 +2,9 @@
   "name": "orderly",
   "version": "1.26.830a",
   "private": true,
+  "engines": {
+    "node": "^24.22.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && pnpm db:deploy:auto && next build",
